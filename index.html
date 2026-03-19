@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homuth Learning Hub</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #0f3460;
+    --highlight: #e94560;
+    --green: #4ecca3;
+    --yellow: #f0c040;
+    --text: #eee;
+    --text-dim: #aaa;
+    --logan: #4fc3f7;
+    --cole: #81c784;
+    --mackenzie: #f48fb1;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Top Bar ── */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--card);
+    border-bottom: 2px solid var(--accent);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .top-bar h1 { font-size: 1.2rem; white-space: nowrap; }
+  .child-tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .child-tab {
+    padding: 8px 18px;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    background: var(--accent);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .child-tab:hover { opacity: 0.85; }
+  .child-tab.active-logan { border-color: var(--logan); background: rgba(79,195,247,0.2); }
+  .child-tab.active-cole { border-color: var(--cole); background: rgba(129,199,132,0.2); }
+  .child-tab.active-mackenzie { border-color: var(--mackenzie); background: rgba(244,143,177,0.2); }
+
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+  .mode-toggle label { cursor: pointer; }
+  .toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background: var(--green);
+    border-radius: 28px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .toggle-switch.on {
+    background: var(--highlight);
+  }
+  .toggle-knob {
+    position: absolute;
+    width: 22px; height: 22px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  .toggle-switch.on .toggle-knob {
+    transform: translateX(24px);
+  }
+
+  /* ── Screens ── */
+  .screen { display: none; padding: 20px; max-width: 800px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ── Home Screen ── */
+  .home-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+  }
+  .home-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+  }
+  .home-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .home-card.logan { border-color: var(--logan); }
+  .home-card.cole { border-color: var(--cole); }
+  .home-card.mackenzie { border-color: var(--mackenzie); }
+  .home-card .emoji { font-size: 3rem; margin-bottom: 10px; }
+  .home-card .name { font-size: 1.4rem; font-weight: 700; }
+  .home-card .info { color: var(--text-dim); margin-top: 6px; font-size: 0.9rem; }
+
+  /* ── Subject Selection ── */
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .subject-btn {
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .subject-btn:hover { border-color: var(--highlight); background: rgba(233,69,96,0.1); }
+  .subject-btn .subj-icon { font-size: 2.2rem; display: block; margin-bottom: 8px; }
+
+  /* ── Quiz Screen ── */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quiz-meta { font-size: 0.85rem; color: var(--text-dim); }
+  .question-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 40px 30px;
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .question-text {
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 20px;
+  }
+  .answer-text {
+    font-size: 1.4rem;
+    color: var(--green);
+    font-weight: 600;
+    margin: 16px 0;
+    padding: 12px 24px;
+    background: rgba(78,204,163,0.1);
+    border-radius: 10px;
+    border: 1px solid var(--green);
+  }
+  .quiz-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #fff;
+  }
+  .btn:hover { transform: scale(1.03); }
+  .btn:active { transform: scale(0.97); }
+  .btn-show { background: var(--accent); border: 2px solid var(--highlight); }
+  .btn-correct { background: #2e7d32; }
+  .btn-difficulty { background: #e65100; }
+  .btn-incorrect { background: #c62828; }
+  .btn-finish { background: var(--highlight); }
+  .btn-next { background: var(--accent); }
+  .btn-back { background: var(--accent); }
+  .btn-primary { background: var(--highlight); }
+
+  /* ── Report Screen ── */
+  .report {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 16px;
+  }
+  .report h2 { margin-bottom: 16px; color: var(--highlight); }
+  .report h3 { margin: 16px 0 8px; }
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 20px;
+  }
+  .report-table th, .report-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--accent);
+  }
+  .report-table th { color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; }
+  .stat-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+  }
+  .stat-box {
+    background: var(--accent);
+    border-radius: 10px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+  }
+  .stat-box .stat-val { font-size: 1.8rem; font-weight: 700; }
+  .stat-box .stat-label { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+  .grade-bar {
+    height: 20px;
+    background: var(--accent);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 4px 0;
+  }
+  .grade-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s;
+  }
+
+  /* ── Word Entry ── */
+  .word-entry-form {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .word-entry-form input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+  }
+  .word-entry-form input:focus {
+    outline: none;
+    border-color: var(--highlight);
+  }
+  .word-list {
+    margin-top: 16px;
+  }
+  .word-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    border-radius: 20px;
+    padding: 6px 14px;
+    margin: 4px;
+    font-size: 0.95rem;
+  }
+  .word-chip .remove-word {
+    cursor: pointer;
+    color: var(--highlight);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .word-chip .remove-word:hover { color: #ff6b6b; }
+
+  /* ── Misc ── */
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .section-sub { color: var(--text-dim); font-size: 0.9rem; }
+  .mt-20 { margin-top: 20px; }
+
+  @media (max-width: 600px) {
+    .question-text { font-size: 1.3rem; }
+    .btn { padding: 12px 18px; font-size: 1rem; }
+    .top-bar h1 { font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ── -->
+<div class="top-bar" id="topBar">
+  <h1>Homuth Learning Hub</h1>
+  <div class="child-tabs" id="childTabs"></div>
+  <div class="mode-toggle">
+    <label>Focused</label>
+    <div class="toggle-switch" id="modeToggle" onclick="toggleMode()">
+      <div class="toggle-knob"></div>
+    </div>
+    <label>Distracted</label>
+  </div>
+</div>
+
+<!-- ── Home Screen ── -->
+<div class="screen active" id="homeScreen">
+  <div style="text-align:center; margin-top: 40px;">
+    <h2>Who's learning today?</h2>
+    <p class="section-sub">Pick a learner to get started</p>
+  </div>
+  <div class="home-cards" id="homeCards"></div>
+</div>
+
+<!-- ── Subject Screen ── -->
+<div class="screen" id="subjectScreen">
+  <div>
+    <p class="section-sub" id="subjectWho"></p>
+    <h2 class="section-title">Choose a Subject</h2>
+  </div>
+  <div class="subject-grid" id="subjectGrid"></div>
+  <div class="mt-20" style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-back" onclick="showScreen('home')">Back</button>
+    <button class="btn btn-primary" onclick="showScreen('wordEntry')">✏️ Word Entry</button>
+  </div>
+</div>
+
+<!-- ── Word Entry Screen ── -->
+<div class="screen" id="wordEntryScreen">
+  <div>
+    <p class="section-sub" id="wordEntryWho"></p>
+    <h2 class="section-title">Word Entry</h2>
+    <p class="section-sub">Add words for English practice. These will appear as spelling questions.</p>
+  </div>
+  <div class="word-entry-form">
+    <input type="text" id="wordInput" placeholder="Type a word and press Enter or Add" autocomplete="off">
+    <button class="btn btn-primary" id="addWordBtn" onclick="addWord()">Add</button>
+  </div>
+  <div class="word-list" id="wordList"></div>
+  <div class="mt-20">
+    <button class="btn btn-back" onclick="showScreen('subject')">Back to Subjects</button>
+  </div>
+</div>
+
+<!-- ── Quiz Screen ── -->
+<div class="screen" id="quizScreen">
+  <div class="quiz-header">
+    <div>
+      <span class="quiz-meta" id="quizInfo"></span>
+    </div>
+    <div>
+      <button class="btn btn-finish" onclick="finishQuiz()">Finish Program</button>
+    </div>
+  </div>
+  <div class="question-card" id="questionCard">
+    <div class="question-text" id="questionText"></div>
+    <div class="answer-text" id="answerText" style="display:none"></div>
+    <div class="quiz-buttons" id="quizButtons"></div>
+  </div>
+</div>
+
+<!-- ── Report Screen ── -->
+<div class="screen" id="reportScreen">
+  <button class="btn btn-back" onclick="showScreen('subject')">Back to Subjects</button>
+  <div class="report" id="reportContent"></div>
+  <div class="mt-20">
+    <button class="btn btn-primary" onclick="showScreen('subject')">Continue Learning</button>
+    <button class="btn btn-back" onclick="showScreen('home')">Switch Learner</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA & STATE
+// ═══════════════════════════════════════════
+
+const CHILDREN = {
+  logan:     { name: 'Logan',     grade: 4, emoji: '🏒', color: 'logan',     info: 'Grade 4', startDecile: { math: 50, english: 50, science: 50 } },
+  cole:      { name: 'Cole',      grade: 1, emoji: '🏒', color: 'cole',      info: 'Grade 1 · Reading Focus', startDecile: { math: 15, english: 15, science: 15 } },
+  mackenzie: { name: 'Mackenzie', grade: 0, emoji: '🌟', color: 'mackenzie', info: 'JK in September', startDecile: { math: 5, english: 5, science: 5 } }
+};
+
+const SUBJECTS = [
+  { id: 'all',     name: 'All Subjects', icon: '🎯' },
+  { id: 'math',    name: 'Math',    icon: '🔢' },
+  { id: 'english', name: 'English', icon: '📖' },
+  { id: 'science', name: 'Science', icon: '🔬' }
+];
+
+// Difficulty level: 0-59 where level = grade*10 + decile
+// Grade 0 = JK/SK, Grade 1-5
+
+let state = {
+  activeChild: null,
+  distracted: false,
+  sessions: {} // keyed by childId, stores per-child progress
+};
+
+let quizState = null; // current quiz session
+
+function getSession(childId) {
+  if (!state.sessions[childId]) {
+    const child = CHILDREN[childId];
+    state.sessions[childId] = {
+      levels: {
+        math: child.startDecile.math,
+        english: child.startDecile.english,
+        science: child.startDecile.science
+      },
+      history: {} // keyed by subject, array of question results
+    };
+  }
+  return state.sessions[childId];
+}
+
+function saveState() {
+  try { localStorage.setItem('homuth_learning', JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('homuth_learning');
+    if (s) {
+      const parsed = JSON.parse(s);
+      state.sessions = parsed.sessions || {};
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+//  QUESTION GENERATORS
+// ═══════════════════════════════════════════
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// ── MATH ──
+
+function genMath(level, distracted) {
+  const grade = Math.floor(level / 10);
+  const decile = level % 10;
+
+  if (grade <= 0) return genMathK(decile, distracted);
+  if (grade === 1) return genMath1(decile, distracted);
+  if (grade === 2) return genMath2(decile, distracted);
+  if (grade === 3) return genMath3(decile, distracted);
+  if (grade === 4) return genMath4(decile, distracted);
+  return genMath5(decile, distracted);
+}
+
+// Distracted math = mental math only: small numbers, single-step, no need for paper
+function genMathK(d, dist) {
+  if (d < 3) {
+    const n = randInt(1, 5);
+    return { q: `What comes after ${n}?`, a: `${n + 1}` };
+  }
+  if (d < 6) {
+    const a = randInt(1, 3), b = randInt(1, 3);
+    return { q: `What is ${a} plus ${b}?`, a: `${a + b}` };
+  }
+  const a = randInt(1, 5), b = randInt(1, 5);
+  return { q: `What is ${a} plus ${b}?`, a: `${a + b}` };
+}
+
+function genMath1(d, dist) {
+  if (dist) {
+    // Mental math: simple addition/subtraction within 20
+    return pick([
+      (() => { const a=randInt(1,9),b=randInt(1,9); return { q:`What is ${a} plus ${b}?`, a:`${a+b}` }; })(),
+      (() => { const a=randInt(5,15),b=randInt(1,a); return { q:`What is ${a} minus ${b}?`, a:`${a-b}` }; })(),
+      (() => { const n=randInt(2,10); return { q:`What is double ${n}?`, a:`${n*2}` }; })()
+    ]);
+  }
+  if (d < 3) {
+    const a = randInt(1, 8), b = randInt(1, 8);
+    return { q: `${a} + ${b} = ?`, a: `${a + b}` };
+  }
+  if (d < 6) {
+    const a = randInt(5, 15), b = randInt(1, a);
+    return pick([
+      { q: `${a} - ${b} = ?`, a: `${a - b}` },
+      { q: `${a} + ${b} = ?`, a: `${a + b}` }
+    ]);
+  }
+  const a = randInt(8, 18), b = randInt(1, a);
+  return pick([
+    { q: `${a} - ${b} = ?`, a: `${a - b}` },
+    (() => { const x=randInt(2,9),y=randInt(2,9),z=randInt(1,5); return { q:`${x} + ${y} + ${z} = ?`, a:`${x+y+z}` }; })()
+  ]);
+}
+
+function genMath2(d, dist) {
+  if (dist) {
+    // Mental math: easy two-digit +/-, simple times tables
+    return pick([
+      (() => { const a=randInt(10,30),b=randInt(1,10); return { q:`What is ${a} plus ${b}?`, a:`${a+b}` }; })(),
+      (() => { const a=randInt(10,25),b=randInt(1,a); return { q:`What is ${a} minus ${b}?`, a:`${a-b}` }; })(),
+      (() => { const a=randInt(2,5),b=randInt(2,5); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const n=randInt(5,20); return { q:`What is double ${n}?`, a:`${n*2}` }; })()
+    ]);
+  }
+  if (d < 3) {
+    const a = randInt(10, 50), b = randInt(1, 20);
+    return pick([
+      { q: `${a} + ${b} = ?`, a: `${a + b}` },
+      { q: `${a} - ${b} = ?`, a: `${a - b}` }
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(20,80),b=randInt(10,40); return { q:`${a} + ${b} = ?`, a:`${a+b}` }; })(),
+      (() => { const a=randInt(2,5),b=randInt(2,5); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(30,99),b=randInt(10,60); return { q:`${a} + ${b} = ?`, a:`${a+b}` }; })(),
+    (() => { const a=randInt(2,6),b=randInt(2,6); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })(),
+    (() => { const a=randInt(50,99),b=randInt(10,49); return { q:`${a} - ${b} = ?`, a:`${a-b}` }; })()
+  ]);
+}
+
+function genMath3(d, dist) {
+  if (dist) {
+    // Mental math: times tables, simple division, round number add/sub
+    return pick([
+      (() => { const a=randInt(2,9),b=randInt(2,9); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const a=randInt(2,9),b=randInt(2,9); const p=a*b; return { q:`What is ${p} divided by ${a}?`, a:`${b}` }; })(),
+      (() => { const a=randInt(10,50),b=randInt(10,50); return { q:`What is ${a} plus ${b}?`, a:`${a+b}` }; })(),
+      (() => { const a=randInt(20,50),b=randInt(5,a); return { q:`What is ${a} minus ${b}?`, a:`${a-b}` }; })(),
+      (() => { const n=randInt(10,50); return { q:`What is double ${n}?`, a:`${n*2}` }; })(),
+      (() => { const n=pick([10,20,30,40,50,100]); return { q:`What is half of ${n}?`, a:`${n/2}` }; })()
+    ]);
+  }
+  if (d < 3) {
+    const a = randInt(2, 9), b = randInt(2, 9);
+    return { q: `${a} × ${b} = ?`, a: `${a * b}` };
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(3,9),b=randInt(2,9); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })(),
+      (() => { const a=randInt(2,9),b=randInt(2,9); const p=a*b; return { q:`${p} ÷ ${a} = ?`, a:`${b}` }; })(),
+      (() => { const a=randInt(100,500),b=randInt(50,200); return { q:`${a} - ${b} = ?`, a:`${a-b}` }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(6,12),b=randInt(4,12); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })(),
+    (() => { const a=randInt(2,12),b=randInt(2,12); const p=a*b; return { q:`${p} ÷ ${a} = ?`, a:`${b}` }; })(),
+    (() => { const n=randInt(2,8),d2=pick([2,4,8]); return { q:`What fraction is ${n} out of ${n*d2}?`, a:`1/${d2}` }; })()
+  ]);
+}
+
+function genMath4(d, dist) {
+  if (dist) {
+    // Mental math: times tables up to 12, simple division, percentages of round numbers
+    return pick([
+      (() => { const a=randInt(3,12),b=randInt(3,12); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const a=pick([2,3,4,5,6,8,10,12]),b=randInt(2,10); const p=a*b; return { q:`What is ${p} divided by ${a}?`, a:`${b}` }; })(),
+      (() => { const p=pick([10,25,50]); const n=pick([20,40,60,80,100,200]); return { q:`What is ${p} percent of ${n}?`, a:`${p*n/100}` }; })(),
+      (() => { const n=pick([12,15,18,24,36,48,50]); return { q:`What is half of ${n}?`, a:`${n/2}` }; })(),
+      (() => { const a=randInt(25,75),b=randInt(10,25); return { q:`What is ${a} plus ${b}?`, a:`${a+b}` }; })(),
+      (() => { const a=randInt(50,100),b=randInt(10,40); return { q:`What is ${a} minus ${b}?`, a:`${a-b}` }; })()
+    ]);
+  }
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(7,12),b=randInt(6,12); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })(),
+      (() => { const a=randInt(12,50),b=randInt(3,9); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(12,99),b=randInt(2,9); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })(),
+      (() => { const n=randInt(1,7),d2=randInt(2,10); const n2=randInt(1,d2-1); return { q:`${n}/${d2} + ${n2}/${d2} = ?`, a:`${n+n2}/${d2}` }; })(),
+      (() => { const a=randInt(100,999),b=randInt(100,999); return { q:`${a} + ${b} = ?`, a:`${a+b}` }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(10,50),b=randInt(10,30); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })(),
+    (() => { const w=randInt(1,5); const f=pick(['.25','.5','.75']); return { q:`${w}${f} + ${randInt(1,3)}${pick(['.25','.5','.75'])} = ?`, a: (() => { const a2=parseFloat(`${w}${f}`),b2=parseFloat(`${randInt(1,3)}${pick(['.25','.5','.75'])}`); return `${a2+b2}`; })() }; })(),
+    (() => { const a=randInt(1000,5000),b=randInt(500,2000); return { q:`${a} - ${b} = ?`, a:`${a-b}` }; })()
+  ]);
+}
+
+function genMath5(d, dist) {
+  if (dist) {
+    // Mental math: harder times tables, percentages, division
+    return pick([
+      (() => { const a=randInt(6,12),b=randInt(6,15); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const p=pick([10,20,25,50,75]); const n=pick([40,60,80,100,200,400]); return { q:`What is ${p} percent of ${n}?`, a:`${p*n/100}` }; })(),
+      (() => { const a=pick([3,4,5,6,7,8,9,12]),b=randInt(3,12); const p=a*b; return { q:`What is ${p} divided by ${a}?`, a:`${b}` }; })(),
+      (() => { const n=randInt(15,99); return { q:`What is double ${n}?`, a:`${n*2}` }; })(),
+      (() => { const a=randInt(2,9); return { q:`What is ${a} squared?`, a:`${a*a}` }; })(),
+      (() => { const a=randInt(50,200),b=randInt(25,100); return { q:`What is ${a} minus ${b}?`, a:`${a-b}` }; })()
+    ]);
+  }
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(20,99),b=randInt(10,50); return { q:`${a} × ${b} = ?`, a:`${a*b}` }; })(),
+      (() => { const p=randInt(10,90); return { q:`What is ${p}% of 100?`, a:`${p}` }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const n1=randInt(1,5),d1=pick([3,4,5,6,8]),n2=randInt(1,3),d2=d1; return { q:`${n1}/${d1} + ${n2}/${d2} = ?`, a:`${n1+n2}/${d1}` }; })(),
+      (() => { const p=pick([10,15,20,25,50]); const n=pick([60,80,100,200,400]); return { q:`What is ${p}% of ${n}?`, a:`${p*n/100}` }; })(),
+      (() => { const a=parseFloat(`${randInt(1,9)}.${randInt(1,9)}`),b=parseFloat(`${randInt(1,9)}.${randInt(1,9)}`); return { q:`${a} + ${b} = ?`, a:`${(a+b).toFixed(1)}` }; })()
+    ]);
+  }
+  return pick([
+    (() => { const n1=randInt(1,5),d1=pick([3,4,6,8]),n2=randInt(1,5),d2=pick([3,4,6,8]); const lcd=lcm(d1,d2); const ans_n=(n1*lcd/d1)+(n2*lcd/d2); const g=gcd(Math.abs(ans_n),lcd); return { q:`${n1}/${d1} + ${n2}/${d2} = ?`, a:`${ans_n/g}/${lcd/g}` }; })(),
+    (() => { const p=pick([5,10,15,20,25,30,40,50,75]); const n=pick([40,60,80,120,200,300]); return { q:`What is ${p}% of ${n}?`, a:`${p*n/100}` }; })(),
+    (() => { const a=randInt(100,999); const b=randInt(10,99); const q2=Math.floor(a/b); const r=a%b; return { q:`${a} ÷ ${b} = ? remainder ?`, a:`${q2} remainder ${r}` }; })()
+  ]);
+}
+
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function lcm(a, b) { return (a * b) / gcd(a, b); }
+
+// ── ENGLISH ──
+
+const SIGHT_WORDS_K = ['the','and','a','to','in','is','it','my','we','he','she','go','no','so','do','up','am','at','on','an','if','or','be','me','us'];
+const SIGHT_WORDS_1 = ['was','are','his','her','has','had','but','not','you','all','can','will','one','two','said','what','when','them','from','just','been','your','each','make','like','long','look','many','some','time','very','after','could','other','into','more','than','come','they','were','with','have','this','that','word','their','there'];
+const SPELLING_2 = ['because','friend','school','people','great','thought','through','before','enough','together','different','important','between','another','something','everyone','animal','beautiful','children','family'];
+const SPELLING_3 = ['separate','necessary','probably','beginning','business','calendar','describe','favorite','library','sentence','surprise','tomorrow','weather','February','Wednesday','interesting','experiment','paragraph','knowledge','especially'];
+const SPELLING_4 = ['accommodate','occasionally','immediately','unfortunately','independent','environment','temperature','government','particular','restaurant','embarrass','disappoint','exaggerate','guarantee','privilege','conscience','discipline','maintenance','occurrence','professional'];
+const SPELLING_5 = ['abbreviation','acknowledgement','circumstances','correspondence','encyclopedia','extraordinary','miscellaneous','simultaneously','sophisticated','controversial','discrimination','characteristic','approximately','communication','investigation','philosophical','pronunciation','representative','transformation','vulnerability'];
+
+const VOCAB_3 = [
+  {w:'enormous',d:'very large',s:'The enormous elephant blocked the path.'},
+  {w:'courage',d:'bravery',s:'It took courage to speak up.'},
+  {w:'ancient',d:'very old',s:'The ancient ruins were fascinating.'},
+  {w:'peculiar',d:'strange or odd',s:'There was a peculiar smell in the air.'},
+  {w:'brief',d:'short in time',s:'He gave a brief speech.'},
+  {w:'generous',d:'willing to give',s:'She was generous with her time.'},
+  {w:'observe',d:'to watch carefully',s:'We observe the birds every morning.'},
+  {w:'gradually',d:'slowly over time',s:'The sky gradually turned orange.'}
+];
+const VOCAB_4 = [
+  {w:'persistent',d:'not giving up',s:'Her persistent effort paid off.'},
+  {w:'consequence',d:'result of an action',s:'The consequence of not studying was a low grade.'},
+  {w:'elaborate',d:'detailed and complex',s:'He gave an elaborate explanation.'},
+  {w:'reluctant',d:'unwilling or hesitant',s:'She was reluctant to try the new food.'},
+  {w:'significant',d:'important or meaningful',s:'It was a significant discovery.'},
+  {w:'absurd',d:'ridiculous',s:'The idea was completely absurd.'},
+  {w:'flexible',d:'able to bend or adapt',s:'A flexible schedule is helpful.'},
+  {w:'abundant',d:'more than enough',s:'There was an abundant supply of water.'}
+];
+const VOCAB_5 = [
+  {w:'ambiguous',d:'having more than one meaning',s:'The instructions were ambiguous.'},
+  {w:'inevitable',d:'certain to happen',s:'Change is inevitable.'},
+  {w:'meticulous',d:'very careful and precise',s:'She was meticulous in her work.'},
+  {w:'plausible',d:'seeming reasonable',s:'His excuse was barely plausible.'},
+  {w:'tentative',d:'not certain or fixed',s:'We made tentative plans for Saturday.'},
+  {w:'unanimous',d:'fully in agreement',s:'The vote was unanimous.'},
+  {w:'vivid',d:'very clear and bright',s:'She had vivid memories of the trip.'},
+  {w:'subtle',d:'not obvious',s:'There was a subtle difference in color.'}
+];
+
+// Sentence starters for grammar
+const GRAMMAR_FIX = {
+  1: [
+    {q:'Fix: "i like dogs"', a:'I like dogs.'},
+    {q:'Fix: "she run fast"', a:'She runs fast.'},
+    {q:'Fix: "the cat is big it is black"', a:'The cat is big. It is black.'},
+    {q:'What punctuation ends a question?', a:'A question mark (?)'},
+    {q:'Fix: "him went to school"', a:'He went to school.'},
+    {q:'Fix: "we has two cats"', a:'We have two cats.'},
+  ],
+  2: [
+    {q:'Fix: "their going to the park"', a:'They\'re going to the park.'},
+    {q:'Fix: "me and him went outside"', a:'He and I went outside.'},
+    {q:'What is a noun?', a:'A person, place, or thing'},
+    {q:'What is a verb?', a:'An action word (something you do)'},
+    {q:'Fix: "the dogs bone was big"', a:'The dog\'s bone was big.'},
+    {q:'Fix: "yesterday i go to school"', a:'Yesterday I went to school.'},
+  ],
+  3: [
+    {q:'Fix: "their are too many people hear"', a:'There are too many people here.'},
+    {q:'What is an adjective?', a:'A word that describes a noun'},
+    {q:'Fix: "the boys hat is red"', a:'The boy\'s hat is red.'},
+    {q:'Name the two parts of a sentence', a:'Subject and predicate'},
+    {q:'Fix: "him and me went to the store its far away"', a:'He and I went to the store. It\'s far away.'},
+    {q:'What is the past tense of "run"?', a:'Ran'},
+  ],
+  4: [
+    {q:'Fix: "the childrens toys was everywhere"', a:'The children\'s toys were everywhere.'},
+    {q:'What is an adverb?', a:'A word that describes a verb, adjective, or other adverb'},
+    {q:'Fix: "accept for me everyone went"', a:'Except for me, everyone went.'},
+    {q:'What is a compound sentence?', a:'Two independent clauses joined by a conjunction'},
+    {q:'Fix: "its to late too go their"', a:'It\'s too late to go there.'},
+    {q:'What is the difference between "affect" and "effect"?', a:'Affect is a verb (to influence), effect is a noun (a result)'},
+  ],
+  5: [
+    {q:'Fix: "neither the boys or the girl were ready"', a:'Neither the boys nor the girl was ready.'},
+    {q:'What is a metaphor?', a:'A comparison without using "like" or "as"'},
+    {q:'What is a simile?', a:'A comparison using "like" or "as"'},
+    {q:'Fix: "who\'s book is this that your reading"', a:'Whose book is this that you\'re reading?'},
+    {q:'What is the difference between "than" and "then"?', a:'Than is for comparison, then is for time/sequence'},
+    {q:'What is an independent clause?', a:'A group of words with a subject and verb that can stand alone as a sentence'},
+  ]
+};
+
+// Audio-friendly English questions for distracted mode
+// Must be fully understandable when read aloud & answerable without seeing a screen
+const AUDIO_ENGLISH_K = [
+  {q:'What letter comes after B?', a:'C'},
+  {q:'What letter comes after F?', a:'G'},
+  {q:'What letter comes after M?', a:'N'},
+  {q:'What letter comes before D?', a:'C'},
+  {q:'What sound does "cat" start with?', a:'The "C" sound'},
+  {q:'What sound does "dog" start with?', a:'The "D" sound'},
+  {q:'What sound does "fish" start with?', a:'The "F" sound'},
+  {q:'What rhymes with "cat"?', a:'Hat, bat, mat, sat'},
+  {q:'What rhymes with "dog"?', a:'Log, fog, hog'},
+  {q:'What rhymes with "sun"?', a:'Fun, run, bun'},
+  {q:'Spell the word "go"', a:'G - O'},
+  {q:'Spell the word "me"', a:'M - E'},
+  {q:'Spell the word "up"', a:'U - P'},
+  {q:'Spell the word "no"', a:'N - O'},
+];
+const AUDIO_ENGLISH_1 = [
+  {q:'Spell the word "was"', a:'W - A - S'},
+  {q:'Spell the word "said"', a:'S - A - I - D'},
+  {q:'Spell the word "come"', a:'C - O - M - E'},
+  {q:'Spell the word "have"', a:'H - A - V - E'},
+  {q:'Spell the word "they"', a:'T - H - E - Y'},
+  {q:'Spell the word "like"', a:'L - I - K - E'},
+  {q:'Spell the word "from"', a:'F - R - O - M'},
+  {q:'Spell the word "make"', a:'M - A - K - E'},
+  {q:'Spell the word "that"', a:'T - H - A - T'},
+  {q:'Spell the word "this"', a:'T - H - I - S'},
+  {q:'Spell the word "with"', a:'W - I - T - H'},
+  {q:'Spell the word "what"', a:'W - H - A - T'},
+  {q:'What rhymes with "cake"?', a:'Make, lake, bake, take'},
+  {q:'What rhymes with "night"?', a:'Light, right, fight, sight'},
+  {q:'What rhymes with "ball"?', a:'Tall, call, wall, fall'},
+  {q:'What is the opposite of "hot"?', a:'Cold'},
+  {q:'What is the opposite of "big"?', a:'Small'},
+  {q:'What is the opposite of "fast"?', a:'Slow'},
+  {q:'What is the opposite of "happy"?', a:'Sad'},
+  {q:'What is the opposite of "up"?', a:'Down'},
+];
+const AUDIO_ENGLISH_2 = [
+  {q:'Spell the word "friend"', a:'F - R - I - E - N - D'},
+  {q:'Spell the word "school"', a:'S - C - H - O - O - L'},
+  {q:'Spell the word "people"', a:'P - E - O - P - L - E'},
+  {q:'Spell the word "great"', a:'G - R - E - A - T'},
+  {q:'Spell the word "before"', a:'B - E - F - O - R - E'},
+  {q:'Spell the word "because"', a:'B - E - C - A - U - S - E'},
+  {q:'What is the opposite of "quiet"?', a:'Loud'},
+  {q:'What is the opposite of "light"?', a:'Heavy or dark'},
+  {q:'What is the opposite of "difficult"?', a:'Easy'},
+  {q:'What is a noun?', a:'A person, place, or thing'},
+  {q:'What is a verb?', a:'An action word — something you do'},
+  {q:'Give me a word that means the same as "happy"', a:'Glad, joyful, cheerful'},
+  {q:'Give me a word that means the same as "big"', a:'Large, huge, enormous'},
+  {q:'What rhymes with "train"?', a:'Rain, brain, main, plain'},
+  {q:'What rhymes with "bright"?', a:'Light, night, right, sight'},
+];
+const AUDIO_ENGLISH_34 = [
+  {q:'What does "enormous" mean?', a:'Very large'},
+  {q:'What does "courage" mean?', a:'Bravery'},
+  {q:'What does "ancient" mean?', a:'Very old'},
+  {q:'What does "peculiar" mean?', a:'Strange or odd'},
+  {q:'What does "generous" mean?', a:'Willing to give'},
+  {q:'What does "observe" mean?', a:'To watch carefully'},
+  {q:'What does "persistent" mean?', a:'Not giving up'},
+  {q:'What does "consequence" mean?', a:'The result of an action'},
+  {q:'What does "reluctant" mean?', a:'Unwilling or hesitant'},
+  {q:'What does "absurd" mean?', a:'Ridiculous or silly'},
+  {q:'What is the past tense of "run"?', a:'Ran'},
+  {q:'What is the past tense of "go"?', a:'Went'},
+  {q:'What is the past tense of "eat"?', a:'Ate'},
+  {q:'What is the past tense of "swim"?', a:'Swam'},
+  {q:'What is the past tense of "think"?', a:'Thought'},
+  {q:'What is the past tense of "catch"?', a:'Caught'},
+  {q:'What is an adjective?', a:'A word that describes a noun'},
+  {q:'What is an adverb?', a:'A word that describes a verb, adjective, or other adverb'},
+  {q:'What is a synonym for "quick"?', a:'Fast, rapid, speedy'},
+  {q:'What is a synonym for "angry"?', a:'Mad, furious, upset'},
+  {q:'What is a synonym for "smart"?', a:'Intelligent, clever, bright'},
+  {q:'What is the opposite of "brave"?', a:'Cowardly'},
+  {q:'What is the opposite of "generous"?', a:'Selfish or greedy'},
+  {q:'What is the opposite of "ancient"?', a:'Modern or new'},
+  {q:'Give me a word that rhymes with "space"', a:'Race, face, place, trace'},
+];
+const AUDIO_ENGLISH_5 = [
+  {q:'What does "ambiguous" mean?', a:'Having more than one meaning'},
+  {q:'What does "inevitable" mean?', a:'Certain to happen'},
+  {q:'What does "meticulous" mean?', a:'Very careful and precise'},
+  {q:'What does "plausible" mean?', a:'Seeming reasonable'},
+  {q:'What does "unanimous" mean?', a:'Fully in agreement'},
+  {q:'What does "subtle" mean?', a:'Not obvious'},
+  {q:'What is a metaphor?', a:'A comparison without using like or as'},
+  {q:'What is a simile?', a:'A comparison using like or as'},
+  {q:'What is the difference between "than" and "then"?', a:'Than is for comparison, then is for time or sequence'},
+  {q:'What is a synonym for "complicated"?', a:'Complex, intricate, difficult'},
+  {q:'What is the opposite of "temporary"?', a:'Permanent'},
+  {q:'What is the past tense of "teach"?', a:'Taught'},
+  {q:'What is the past tense of "bring"?', a:'Brought'},
+  {q:'What does "elaborate" mean?', a:'Detailed and complex'},
+];
+
+function genEnglish(level, distracted) {
+  const grade = Math.floor(level / 10);
+  const decile = level % 10;
+
+  // Mix in custom words (~30% chance if any exist)
+  const customWords = state.activeChild ? getCustomWords(state.activeChild) : [];
+  if (customWords.length > 0 && Math.random() < 0.3) {
+    const w = pick(customWords);
+    if (distracted) {
+      return { q: `Spell the word "${w}"`, a: w.toUpperCase() };
+    } else {
+      return { q: `Spell the word: "${w}"`, a: w.toUpperCase() };
+    }
+  }
+
+  // DISTRACTED MODE: audio-friendly + occasional "look at screen" reading words
+  if (distracted) {
+    // ~20% chance of a "read this word" question (requires brief screen glance)
+    if (Math.random() < 0.2) {
+      let wordPool;
+      if (grade <= 0) wordPool = SIGHT_WORDS_K;
+      else if (grade === 1) wordPool = SIGHT_WORDS_1;
+      else if (grade === 2) wordPool = SPELLING_2;
+      else if (grade <= 4) wordPool = SPELLING_3;
+      else wordPool = SPELLING_4;
+      const w = pick(wordPool);
+      return { q: `Look at the screen — read this word: ${w.toUpperCase()}`, a: w };
+    }
+    if (grade <= 0) return pick(AUDIO_ENGLISH_K);
+    if (grade === 1) return pick(AUDIO_ENGLISH_1);
+    if (grade === 2) return pick(AUDIO_ENGLISH_2);
+    if (grade <= 4) return pick(AUDIO_ENGLISH_34);
+    return pick(AUDIO_ENGLISH_5);
+  }
+
+  // FOCUSED MODE: full range including spelling, fix-the-sentence, etc.
+  if (grade <= 0) {
+    return pick([
+      (() => { const l = String.fromCharCode(65 + randInt(0,25)); return { q:`What letter comes after ${l}?`, a: l==='Z' ? 'A (back to start!)' : String.fromCharCode(l.charCodeAt(0)+1) }; })(),
+      (() => { const w = pick(SIGHT_WORDS_K); return { q:`Spell the word: "${w}"`, a: w.split('').join(' - ').toUpperCase() }; })(),
+      (() => { const w = pick(SIGHT_WORDS_K); return { q:`What sound does "${w}" start with?`, a: `The "${w[0].toUpperCase()}" sound` }; })()
+    ]);
+  }
+
+  let pool = [];
+
+  if (grade === 1) {
+    const w = pick(SIGHT_WORDS_1);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    pool.push(...GRAMMAR_FIX[1]);
+  } else if (grade === 2) {
+    const w = pick(decile < 5 ? SIGHT_WORDS_1 : SPELLING_2);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    pool.push(...(GRAMMAR_FIX[2] || GRAMMAR_FIX[1]));
+  } else if (grade === 3) {
+    const w = pick(decile < 5 ? SPELLING_2 : SPELLING_3);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    const v = pick(VOCAB_3);
+    pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
+    pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
+    pool.push(...GRAMMAR_FIX[3]);
+  } else if (grade === 4) {
+    const w = pick(decile < 5 ? SPELLING_3 : SPELLING_4);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    const v = pick(VOCAB_4);
+    pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
+    pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
+    pool.push(...GRAMMAR_FIX[4]);
+  } else {
+    const w = pick(decile < 5 ? SPELLING_4 : SPELLING_5);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    const v = pick(VOCAB_5);
+    pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
+    pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
+    pool.push(...(GRAMMAR_FIX[5] || GRAMMAR_FIX[4]));
+  }
+
+  return pool.length > 0 ? pick(pool) : { q: 'Spell "cat"', a: 'C-A-T' };
+}
+
+// ── SCIENCE ──
+
+const SCIENCE_Q = {
+  0: [
+    {q:'What do plants need to grow?', a:'Water, sunlight, and soil'},
+    {q:'How many legs does a spider have?', a:'8'},
+    {q:'What season comes after winter?', a:'Spring'},
+    {q:'Is the sun a star or a planet?', a:'A star'},
+    {q:'What do you use your nose for?', a:'Smelling'},
+    {q:'Name an animal that lives in water', a:'Fish (or whale, dolphin, etc.)'},
+    {q:'What color is the sky on a clear day?', a:'Blue'},
+    {q:'Does ice feel hot or cold?', a:'Cold'},
+  ],
+  1: [
+    {q:'What are the 3 states of matter?', a:'Solid, liquid, and gas'},
+    {q:'What planet do we live on?', a:'Earth'},
+    {q:'What do magnets do?', a:'Attract or repel certain metals'},
+    {q:'What does a thermometer measure?', a:'Temperature'},
+    {q:'Where does rain come from?', a:'Clouds'},
+    {q:'What happens to water when it freezes?', a:'It turns into ice (solid)'},
+    {q:'What do lungs do?', a:'Help you breathe'},
+    {q:'Name the closest star to Earth', a:'The Sun'},
+    {q:'What kind of animal is a frog?', a:'An amphibian'},
+    {q:'What season do leaves fall?', a:'Autumn/Fall'},
+  ],
+  2: [
+    {q:'What is the water cycle?', a:'Evaporation, condensation, precipitation'},
+    {q:'What is Earth\'s natural satellite?', a:'The Moon'},
+    {q:'What do herbivores eat?', a:'Plants'},
+    {q:'What do carnivores eat?', a:'Meat/other animals'},
+    {q:'What force pulls things toward Earth?', a:'Gravity'},
+    {q:'How many planets are in our solar system?', a:'8'},
+    {q:'What is the largest planet?', a:'Jupiter'},
+    {q:'What part of the plant makes food?', a:'Leaves (photosynthesis)'},
+    {q:'What do we call an animal that eats both plants and animals?', a:'Omnivore'},
+    {q:'Is sound faster in air or water?', a:'Water'},
+  ],
+  3: [
+    {q:'What are the inner planets?', a:'Mercury, Venus, Earth, Mars'},
+    {q:'What is photosynthesis?', a:'How plants use sunlight to make food from CO2 and water'},
+    {q:'What is the food chain?', a:'The path of energy from one organism to another'},
+    {q:'What are the 3 types of rock?', a:'Igneous, sedimentary, metamorphic'},
+    {q:'What causes day and night?', a:'Earth rotating on its axis'},
+    {q:'What is an ecosystem?', a:'A community of living things and their environment'},
+    {q:'What type of energy does the sun give us?', a:'Light and heat energy'},
+    {q:'What is friction?', a:'A force that slows things down when surfaces rub together'},
+    {q:'Name the 4 oceans', a:'Pacific, Atlantic, Indian, Arctic (+ Southern)'},
+    {q:'What is condensation?', a:'When gas turns into liquid (e.g., water vapor to water)'},
+  ],
+  4: [
+    {q:'What is the difference between weather and climate?', a:'Weather is short-term; climate is long-term patterns'},
+    {q:'What are the parts of a cell?', a:'Cell membrane, cytoplasm, nucleus'},
+    {q:'What is the formula for speed?', a:'Speed = Distance ÷ Time'},
+    {q:'What causes the seasons?', a:'Earth\'s tilt on its axis as it orbits the Sun'},
+    {q:'What is the difference between a producer and consumer?', a:'Producers make food (plants); consumers eat other organisms'},
+    {q:'What is electricity?', a:'The flow of electric charge (electrons)'},
+    {q:'What is an adaptation?', a:'A trait that helps an organism survive in its environment'},
+    {q:'What are conductors and insulators?', a:'Conductors allow electricity/heat to flow; insulators block it'},
+    {q:'What is erosion?', a:'The wearing away of Earth\'s surface by wind, water, or ice'},
+    {q:'How does the moon cause tides?', a:'The moon\'s gravity pulls on Earth\'s water'},
+  ],
+  5: [
+    {q:'What is the law of conservation of energy?', a:'Energy cannot be created or destroyed, only transformed'},
+    {q:'What is the difference between physical and chemical change?', a:'Physical changes appearance; chemical creates new substances'},
+    {q:'What is the atomic number?', a:'The number of protons in an atom'},
+    {q:'What is natural selection?', a:'Organisms with helpful traits survive and reproduce more'},
+    {q:'What is the pH scale?', a:'Measures how acidic or basic a substance is (0-14)'},
+    {q:'What is the difference between mass and weight?', a:'Mass is amount of matter; weight is force of gravity on mass'},
+    {q:'What are renewable energy sources?', a:'Solar, wind, hydro, geothermal — naturally replenished'},
+    {q:'What is the greenhouse effect?', a:'Gases in atmosphere trap heat, warming the Earth'},
+    {q:'Name the layers of the Earth', a:'Crust, mantle, outer core, inner core'},
+    {q:'What is the circulatory system?', a:'Heart, blood vessels, and blood that transport nutrients and oxygen'},
+  ]
+};
+
+function genScience(level, distracted) {
+  const grade = Math.min(5, Math.max(0, Math.floor(level / 10)));
+  const questions = SCIENCE_Q[grade] || SCIENCE_Q[0];
+  let q = pick(questions);
+  if (distracted && q.a.length > 60) {
+    // Try to find a shorter answer for distracted mode
+    const shorter = questions.filter(x => x.a.length < 40);
+    if (shorter.length > 0) q = pick(shorter);
+  }
+  return q;
+}
+
+// ── MASTER GENERATOR ──
+
+function generateQuestion(subject, level, distracted) {
+  switch (subject) {
+    case 'math': return genMath(level, distracted);
+    case 'english': return genEnglish(level, distracted);
+    case 'science': return genScience(level, distracted);
+    default: return genMath(level, distracted);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  UI LOGIC
+// ═══════════════════════════════════════════
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  switch(name) {
+    case 'home':
+      document.getElementById('homeScreen').classList.add('active');
+      break;
+    case 'subject':
+      document.getElementById('subjectScreen').classList.add('active');
+      renderSubjectScreen();
+      break;
+    case 'quiz':
+      document.getElementById('quizScreen').classList.add('active');
+      break;
+    case 'report':
+      document.getElementById('reportScreen').classList.add('active');
+      break;
+    case 'wordEntry':
+      document.getElementById('wordEntryScreen').classList.add('active');
+      renderWordEntry();
+      break;
+  }
+}
+
+function selectChild(id) {
+  state.activeChild = id;
+  saveState();
+  renderChildTabs();
+  showScreen('subject');
+}
+
+function renderHome() {
+  const container = document.getElementById('homeCards');
+  container.innerHTML = '';
+  for (const [id, child] of Object.entries(CHILDREN)) {
+    const card = document.createElement('div');
+    card.className = `home-card ${child.color}`;
+    card.onclick = () => selectChild(id);
+    card.innerHTML = `
+      <div class="emoji">${child.emoji}</div>
+      <div class="name">${child.name}</div>
+      <div class="info">${child.info}</div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+function renderChildTabs() {
+  const container = document.getElementById('childTabs');
+  container.innerHTML = '';
+  for (const [id, child] of Object.entries(CHILDREN)) {
+    const btn = document.createElement('button');
+    btn.className = `child-tab ${state.activeChild === id ? `active-${child.color}` : ''}`;
+    btn.textContent = child.name;
+    btn.onclick = () => {
+      // Save current quiz state if active
+      if (quizState) saveQuizState();
+      selectChild(id);
+    };
+    container.appendChild(btn);
+  }
+}
+
+function renderSubjectScreen() {
+  const child = CHILDREN[state.activeChild];
+  document.getElementById('subjectWho').textContent = `${child.emoji} ${child.name} — ${child.info}`;
+  const grid = document.getElementById('subjectGrid');
+  grid.innerHTML = '';
+  const session = getSession(state.activeChild);
+
+  // No science for Cole or Mackenzie
+  const noScience = (state.activeChild === 'cole' || state.activeChild === 'mackenzie');
+  const availableSubjects = noScience ? SUBJECTS.filter(s => s.id !== 'science') : SUBJECTS;
+
+  for (const subj of availableSubjects) {
+    const btn = document.createElement('div');
+    btn.className = 'subject-btn';
+    if (subj.id === 'all') {
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Rotates through all subjects</div>
+      `;
+    } else {
+      const lvl = session.levels[subj.id];
+      const grade = Math.floor(lvl / 10);
+      const decile = lvl % 10;
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Level: Grade ${grade}.${decile}</div>
+      `;
+    }
+    btn.onclick = () => startQuiz(subj.id);
+    grid.appendChild(btn);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  WORD ENTRY
+// ═══════════════════════════════════════════
+
+function getCustomWords(childId) {
+  try {
+    const data = localStorage.getItem('homuth_words_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveCustomWords(childId, words) {
+  try { localStorage.setItem('homuth_words_' + childId, JSON.stringify(words)); } catch(e) {}
+}
+
+function renderWordEntry() {
+  const child = CHILDREN[state.activeChild];
+  document.getElementById('wordEntryWho').textContent = `${child.emoji} ${child.name} — ${child.info}`;
+  const words = getCustomWords(state.activeChild);
+  const container = document.getElementById('wordList');
+  if (words.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-top:12px;">No custom words yet. Add some above!</p>';
+  } else {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-bottom:8px;">' + words.length + ' word' + (words.length !== 1 ? 's' : '') + ':</p>' +
+      words.map((w, i) => `<span class="word-chip">${w} <span class="remove-word" onclick="removeWord(${i})">×</span></span>`).join('');
+  }
+  document.getElementById('wordInput').focus();
+}
+
+function addWord() {
+  const input = document.getElementById('wordInput');
+  const word = input.value.trim().toLowerCase();
+  if (!word) return;
+  const words = getCustomWords(state.activeChild);
+  if (!words.includes(word)) {
+    words.push(word);
+    saveCustomWords(state.activeChild, words);
+  }
+  input.value = '';
+  input.focus();
+  renderWordEntry();
+}
+
+function removeWord(index) {
+  const words = getCustomWords(state.activeChild);
+  words.splice(index, 1);
+  saveCustomWords(state.activeChild, words);
+  renderWordEntry();
+}
+
+// Enter key to add word
+document.getElementById('wordInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addWord(); }
+});
+
+// ═══════════════════════════════════════════
+//  QUIZ ENGINE
+// ═══════════════════════════════════════════
+
+function saveQuizState() {
+  if (!quizState) return;
+  const session = getSession(quizState.childId);
+  if (quizState.isAll) {
+    for (const s of quizState.childSubjects) {
+      session.levels[s] = quizState.currentLevels[s];
+    }
+  } else {
+    session.levels[quizState.subject] = quizState.currentLevel;
+    if (!session.history[quizState.subject]) session.history[quizState.subject] = [];
+    session.history[quizState.subject] = quizState.results;
+  }
+  saveState();
+}
+
+const CORE_SUBJECTS = ['math', 'english', 'science'];
+
+function getChildSubjects(childId) {
+  if (childId === 'cole' || childId === 'mackenzie') return ['math', 'english'];
+  return CORE_SUBJECTS;
+}
+
+function startQuiz(subject) {
+  const childId = state.activeChild;
+  const session = getSession(childId);
+  const isAll = subject === 'all';
+  const childSubjects = getChildSubjects(childId);
+
+  // For "all" mode, we track levels per subject individually
+  const startLevels = {};
+  if (isAll) {
+    for (const s of childSubjects) startLevels[s] = session.levels[s];
+  } else {
+    startLevels[subject] = session.levels[subject];
+  }
+
+  const prevHistory = isAll ? [] : (session.history[subject] || []);
+
+  quizState = {
+    childId,
+    subject,
+    isAll,
+    currentLevels: { ...startLevels },
+    currentLevel: isAll ? session.levels['math'] : session.levels[subject],
+    startLevels: { ...startLevels },
+    startLevel: isAll ? null : session.levels[subject],
+    currentSubject: isAll ? childSubjects[0] : subject,
+    childSubjects,
+    subjectRotation: 0,
+    questionNum: 0,
+    results: [...prevHistory],
+    sessionResults: [],
+    repeatQueue: [],
+    showingAnswer: false,
+    currentQuestion: null
+  };
+
+  showScreen('quiz');
+  nextQuestion();
+}
+
+function nextQuestion() {
+  quizState.questionNum++;
+  const distracted = state.distracted;
+
+  // Rotate subject in "all" mode
+  if (quizState.isAll) {
+    quizState.currentSubject = quizState.childSubjects[quizState.subjectRotation % quizState.childSubjects.length];
+    quizState.currentLevel = quizState.currentLevels[quizState.currentSubject];
+    quizState.subjectRotation++;
+  }
+
+  // Check repeat queue
+  let fromRepeat = false;
+  const repeatIdx = quizState.repeatQueue.findIndex(r => r.repeatAtNum <= quizState.questionNum);
+  let question;
+
+  if (repeatIdx >= 0) {
+    question = quizState.repeatQueue[repeatIdx].question;
+    quizState.repeatQueue.splice(repeatIdx, 1);
+    fromRepeat = true;
+    // Use the subject from the repeat queue item
+    if (quizState.isAll && quizState.repeatQueue[repeatIdx - 1]) {
+      // subject already set from rotation, keep it
+    }
+  } else {
+    question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+  }
+
+  quizState.currentQuestion = question;
+  quizState.currentQuestion._fromRepeat = fromRepeat;
+  quizState.currentQuestion._subject = quizState.currentSubject;
+  quizState.showingAnswer = false;
+
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const child = CHILDREN[quizState.childId];
+  const grade = Math.floor(quizState.currentLevel / 10);
+  const decile = quizState.currentLevel % 10;
+  const currentSubjName = quizState.isAll
+    ? SUBJECTS.find(s => s.id === quizState.currentSubject).name
+    : SUBJECTS.find(s => s.id === quizState.subject).name;
+  const distracted = state.distracted;
+
+  document.getElementById('quizInfo').textContent =
+    `${child.emoji} ${child.name} | ${currentSubjName} | Grade ${grade}.${decile} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
+
+  document.getElementById('questionText').textContent = quizState.currentQuestion.q;
+
+  const answerEl = document.getElementById('answerText');
+  const buttonsEl = document.getElementById('quizButtons');
+
+  if (quizState.showingAnswer) {
+    answerEl.textContent = quizState.currentQuestion.a;
+    answerEl.style.display = 'block';
+    buttonsEl.innerHTML = `
+      <button class="btn btn-correct" onclick="recordAnswer('correct')">✓ Correct</button>
+      <button class="btn btn-difficulty" onclick="recordAnswer('difficulty')">~ With Difficulty</button>
+      <button class="btn btn-incorrect" onclick="recordAnswer('incorrect')">✗ Incorrect</button>
+    `;
+  } else {
+    answerEl.style.display = 'none';
+    buttonsEl.innerHTML = `
+      <button class="btn btn-show" onclick="showAnswer()">Show Answer</button>
+    `;
+  }
+}
+
+function showAnswer() {
+  quizState.showingAnswer = true;
+  renderQuiz();
+}
+
+function recordAnswer(result) {
+  const q = quizState.currentQuestion;
+  const levelBefore = quizState.currentLevel;
+
+  // Record
+  const record = {
+    question: q.q,
+    answer: q.a,
+    result,
+    level: quizState.currentLevel,
+    subject: quizState.currentSubject,
+    timestamp: Date.now()
+  };
+  quizState.results.push(record);
+  quizState.sessionResults.push(record);
+
+  // Adaptive difficulty (only adjust if not a repeat question)
+  if (!q._fromRepeat) {
+    if (result === 'correct') {
+      quizState.currentLevel = Math.min(59, quizState.currentLevel + 2);
+    } else if (result === 'difficulty') {
+      quizState.currentLevel = Math.min(59, quizState.currentLevel + 1);
+    } else {
+      quizState.currentLevel = Math.max(0, quizState.currentLevel - 2);
+    }
+    // Update per-subject level in "all" mode
+    if (quizState.isAll) {
+      quizState.currentLevels[quizState.currentSubject] = quizState.currentLevel;
+    }
+  }
+
+  // Spaced repetition
+  if (result === 'incorrect') {
+    quizState.repeatQueue.push({ question: { q: q.q, a: q.a }, repeatAtNum: quizState.questionNum + 5 });
+    quizState.repeatQueue.push({ question: { q: q.q, a: q.a }, repeatAtNum: quizState.questionNum + 15 });
+  } else if (result === 'difficulty') {
+    quizState.repeatQueue.push({ question: { q: q.q, a: q.a }, repeatAtNum: quizState.questionNum + 10 });
+  }
+
+  saveQuizState();
+  nextQuestion();
+}
+
+function finishQuiz() {
+  saveQuizState();
+
+  const results = quizState.sessionResults;
+  const childName = CHILDREN[quizState.childId].name;
+  const isAll = quizState.isAll;
+
+  const total = results.length;
+  const correct = results.filter(r => r.result === 'correct').length;
+  const difficulty = results.filter(r => r.result === 'difficulty').length;
+  const incorrect = results.filter(r => r.result === 'incorrect').length;
+  const pct = total > 0 ? Math.round(correct / total * 100) : 0;
+
+  let html = `
+    <h2>${childName}'s ${isAll ? 'All Subjects' : SUBJECTS.find(s => s.id === quizState.subject).name} Report</h2>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-val">${total}</div>
+        <div class="stat-label">Questions</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" style="color:var(--green)">${correct}</div>
+        <div class="stat-label">Correct</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" style="color:var(--yellow)">${difficulty}</div>
+        <div class="stat-label">With Difficulty</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" style="color:var(--highlight)">${incorrect}</div>
+        <div class="stat-label">Incorrect</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">${pct}%</div>
+        <div class="stat-label">Accuracy</div>
+      </div>
+    </div>
+  `;
+
+  // Grade level report — per subject in "all" mode, single subject otherwise
+  const subjectsToReport = isAll ? quizState.childSubjects : [quizState.subject];
+
+  for (const subj of subjectsToReport) {
+    const subjLabel = SUBJECTS.find(s => s.id === subj).name;
+    const finalLevel = isAll ? quizState.currentLevels[subj] : quizState.currentLevel;
+    const startLevel = isAll ? quizState.startLevels[subj] : quizState.startLevel;
+    const finalGrade = Math.floor(finalLevel / 10);
+    const finalDecile = finalLevel % 10;
+    const startGrade = Math.floor(startLevel / 10);
+    const startDecile = startLevel % 10;
+    const gradeColor = finalLevel >= startLevel ? 'var(--green)' : 'var(--highlight)';
+    const gradeWidth = ((finalDecile + 1) / 10) * 100;
+
+    html += `
+      <h3 style="margin-top:20px;">${subjLabel}</h3>
+      <table class="report-table">
+        <tr><th>Metric</th><th>Value</th></tr>
+        <tr><td>Starting Level</td><td>Grade ${startGrade}, Decile ${startDecile}/10</td></tr>
+        <tr><td>Final Level</td><td style="color:${gradeColor};font-weight:700">Grade ${finalGrade}, Decile ${finalDecile}/10</td></tr>
+        <tr><td>Change</td><td>${finalLevel >= startLevel ? '↑' : '↓'} ${Math.abs(finalLevel - startLevel)} levels</td></tr>
+      </table>
+      <p style="margin-bottom:4px;font-size:0.9rem;">Grade ${finalGrade} Position (Decile ${finalDecile}/10):</p>
+      <div class="grade-bar">
+        <div class="grade-fill" style="width:${gradeWidth}%;background:${gradeColor}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text-dim);margin-top:2px;">
+        <span>Grade ${finalGrade}.0</span><span>Grade ${finalGrade}.5</span><span>Grade ${finalGrade}.9</span>
+      </div>
+    `;
+  }
+
+  let recentWrong = results.filter(r => r.result === 'incorrect').slice(-5);
+  if (recentWrong.length > 0) {
+    html += `<h3 style="margin-top:20px;">Questions to Review</h3>
+    <table class="report-table">
+      <tr><th>Question</th><th>Answer</th></tr>
+      ${recentWrong.map(r => `<tr><td>${r.question}</td><td>${r.answer}</td></tr>`).join('')}
+    </table>`;
+  }
+
+  // Level history mini-chart
+  if (results.length > 1) {
+    const levels = results.map(r => r.level);
+    const minL = Math.min(...levels);
+    const maxL = Math.max(...levels);
+    html += `<h3>Difficulty Progression</h3><div style="font-family:monospace;font-size:0.8rem;color:var(--text-dim);line-height:1.6;">`;
+    const step = Math.max(1, Math.floor(results.length / 20));
+    for (let i = 0; i < results.length; i += step) {
+      const r = results[i];
+      const g = Math.floor(r.level / 10);
+      const d = r.level % 10;
+      const bar = '█'.repeat(Math.max(1, Math.round((r.level - minL + 1) / Math.max(1, maxL - minL + 1) * 20)));
+      const color = r.result === 'correct' ? 'var(--green)' : r.result === 'difficulty' ? 'var(--yellow)' : 'var(--highlight)';
+      html += `<div>Q${String(i+1).padStart(3,' ')} <span style="color:${color}">${bar}</span> G${g}.${d}</div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('reportContent').innerHTML = html;
+  showScreen('report');
+  quizState = null;
+}
+
+// ═══════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════
+
+document.addEventListener('keydown', (e) => {
+  if (!quizState) return;
+
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if (!quizState.showingAnswer) {
+      showAnswer();
+    }
+  } else if (quizState.showingAnswer) {
+    if (e.key === '1' || e.key === 'c' || e.key === 'C') recordAnswer('correct');
+    else if (e.key === '2' || e.key === 'd' || e.key === 'D') recordAnswer('difficulty');
+    else if (e.key === '3' || e.key === 'i' || e.key === 'I') recordAnswer('incorrect');
+  }
+});
+
+// ═══════════════════════════════════════════
+//  MODE TOGGLE
+// ═══════════════════════════════════════════
+
+function toggleMode() {
+  state.distracted = !state.distracted;
+  updateToggleVisual();
+  saveState();
+}
+
+function updateToggleVisual() {
+  const el = document.getElementById('modeToggle');
+  if (state.distracted) {
+    el.classList.add('on');
+  } else {
+    el.classList.remove('on');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+
+loadState();
+updateToggleVisual();
+renderHome();
+renderChildTabs();
+</script>
+</body>
+</html>
