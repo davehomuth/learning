@@ -1316,6 +1316,10 @@ function renderQuiz() {
       <button class="btn btn-difficulty" onclick="recordAnswer('difficulty')">~ With Difficulty</button>
       <button class="btn btn-incorrect" onclick="recordAnswer('incorrect')">✗ Incorrect</button>
       <button class="btn" style="background:var(--accent);margin-top:8px;" onclick="skipQuestion()">⏭ Skip Question</button>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:12px;">
+        <button onclick="nudgeLevel(-1)" style="font-size:0.65rem;padding:4px 8px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;">▼ decile</button>
+        <button onclick="nudgeLevel(1)" style="font-size:0.65rem;padding:4px 8px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;">▲ decile</button>
+      </div>
     `;
   } else {
     answerEl.style.display = 'none';
@@ -1328,6 +1332,16 @@ function renderQuiz() {
 
 function showAnswer() {
   quizState.showingAnswer = true;
+  renderQuiz();
+}
+
+function nudgeLevel(delta) {
+  const newLevel = Math.max(0, Math.min(59, quizState.currentLevel + delta));
+  quizState.currentLevel = newLevel;
+  if (quizState.isAll) {
+    quizState.currentLevels[quizState.currentSubject] = newLevel;
+  }
+  // Update the info line to reflect the change
   renderQuiz();
 }
 
