@@ -1315,17 +1315,30 @@ function renderQuiz() {
       <button class="btn btn-correct" onclick="recordAnswer('correct')">✓ Correct</button>
       <button class="btn btn-difficulty" onclick="recordAnswer('difficulty')">~ With Difficulty</button>
       <button class="btn btn-incorrect" onclick="recordAnswer('incorrect')">✗ Incorrect</button>
+      <button class="btn" style="background:var(--accent);margin-top:8px;" onclick="skipQuestion()">⏭ Skip Question</button>
     `;
   } else {
     answerEl.style.display = 'none';
     buttonsEl.innerHTML = `
       <button class="btn btn-show" onclick="showAnswer()">Show Answer</button>
+      <button class="btn" style="background:var(--accent);margin-top:8px;" onclick="skipQuestion()">⏭ Skip Question</button>
     `;
   }
 }
 
 function showAnswer() {
   quizState.showingAnswer = true;
+  renderQuiz();
+}
+
+function skipQuestion() {
+  // Skip without affecting difficulty or subject rotation
+  const distracted = state.distracted;
+  const question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+  question._subject = quizState.currentSubject;
+  quizState.currentQuestion = question;
+  quizState.showingAnswer = false;
+  quizState.questionNum++;
   renderQuiz();
 }
 
