@@ -415,7 +415,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub</h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.4</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -455,6 +455,11 @@
     <p class="section-sub">Pick a learner to get started</p>
   </div>
   <div class="home-cards" id="homeCards"></div>
+  <div style="text-align:center;margin-top:30px;">
+    <button onclick="exportProgress()" style="font-size:0.7rem;padding:6px 12px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;margin:4px;">📤 Backup Progress</button>
+    <button onclick="document.getElementById('importFile').click()" style="font-size:0.7rem;padding:6px 12px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;margin:4px;">📥 Restore Progress</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importProgress(event)">
+  </div>
 </div>
 
 <!-- ── Subject Screen ── -->
@@ -2108,6 +2113,44 @@ function stopVoiceRecognition() {
   voiceListening = false;
   const statusEl = document.getElementById('voiceStatus');
   if (statusEl) { statusEl.textContent = ''; statusEl.className = 'voice-status'; }
+}
+
+// ═══════════════════════════════════════════
+//  PROGRESS BACKUP / RESTORE
+// ═══════════════════════════════════════════
+
+function exportProgress() {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'homuth-learning-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importProgress(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (parsed.sessions) {
+        state.sessions = parsed.sessions;
+        saveState();
+        alert('Progress restored successfully!');
+        location.reload();
+      } else {
+        alert('Invalid backup file');
+      }
+    } catch(err) {
+      alert('Error reading backup: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
 }
 
 // ═══════════════════════════════════════════
