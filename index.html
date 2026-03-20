@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>Homuth Learning Hub</title>
 <style>
   :root {
@@ -53,6 +55,10 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
   }
   .child-tab:hover { opacity: 0.85; }
   .child-tab.active-logan { border-color: var(--logan); background: rgba(79,195,247,0.2); }
@@ -74,6 +80,11 @@
     border-radius: 28px;
     cursor: pointer;
     transition: 0.3s;
+    border: none;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .toggle-switch.on {
     background: var(--highlight);
@@ -109,6 +120,12 @@
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     border: 2px solid transparent;
+    color: var(--text);
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    width: 100%;
   }
   .home-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
   .home-card.logan { border-color: var(--logan); }
@@ -319,9 +336,9 @@
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
-    <div class="toggle-switch" id="modeToggle" onclick="toggleMode()">
+    <button type="button" class="toggle-switch" id="modeToggle" ontouchend="event.preventDefault(); toggleMode();" onclick="toggleMode();">
       <div class="toggle-knob"></div>
-    </div>
+    </button>
     <label>Distracted</label>
   </div>
 </div>
@@ -398,7 +415,7 @@
 // ═══════════════════════════════════════════
 
 const CHILDREN = {
-  logan:     { name: 'Logan',     grade: 4, emoji: '🏒', color: 'logan',     info: 'Grade 4', startDecile: { math: 50, english: 50, science: 50 } },
+  logan:     { name: 'Logan',     grade: 4, emoji: '🏒', color: 'logan',     info: 'Grade 4', startDecile: { math: 50, english: 50, science: 45 } },
   cole:      { name: 'Cole',      grade: 1, emoji: '🏒', color: 'cole',      info: 'Grade 1 · Reading Focus', startDecile: { math: 15, english: 15, science: 15 } },
   mackenzie: { name: 'Mackenzie', grade: 0, emoji: '🌟', color: 'mackenzie', info: 'JK in September', startDecile: { math: 5, english: 5, science: 5 } }
 };
@@ -1041,9 +1058,10 @@ function renderHome() {
   const container = document.getElementById('homeCards');
   container.innerHTML = '';
   for (const [id, child] of Object.entries(CHILDREN)) {
-    const card = document.createElement('div');
+    const card = document.createElement('button');
+    card.type = 'button';
     card.className = `home-card ${child.color}`;
-    card.onclick = () => selectChild(id);
+    card.addEventListener('click', () => selectChild(id));
     card.innerHTML = `
       <div class="emoji">${child.emoji}</div>
       <div class="name">${child.name}</div>
@@ -1058,13 +1076,14 @@ function renderChildTabs() {
   container.innerHTML = '';
   for (const [id, child] of Object.entries(CHILDREN)) {
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = `child-tab ${state.activeChild === id ? `active-${child.color}` : ''}`;
     btn.textContent = child.name;
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
       // Save current quiz state if active
       if (quizState) saveQuizState();
       selectChild(id);
-    };
+    });
     container.appendChild(btn);
   }
 }
@@ -1230,9 +1249,21 @@ function nextQuestion() {
 
   // Rotate subject in "all" mode
   if (quizState.isAll) {
-    quizState.currentSubject = quizState.childSubjects[quizState.subjectRotation % quizState.childSubjects.length];
+    // Logan gets science ~15% of the time; others rotate equally
+    if (quizState.childId === 'logan' && quizState.childSubjects.includes('science')) {
+      const r = Math.random();
+      if (r < 0.15) {
+        quizState.currentSubject = 'science';
+      } else if (r < 0.575) {
+        quizState.currentSubject = 'math';
+      } else {
+        quizState.currentSubject = 'english';
+      }
+    } else {
+      quizState.currentSubject = quizState.childSubjects[quizState.subjectRotation % quizState.childSubjects.length];
+      quizState.subjectRotation++;
+    }
     quizState.currentLevel = quizState.currentLevels[quizState.currentSubject];
-    quizState.subjectRotation++;
   }
 
   // Check repeat queue
