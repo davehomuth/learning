@@ -415,7 +415,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.6</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.7</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -1874,7 +1874,15 @@ function skipQuestion() {
   stopVoiceRecognition();
   window.speechSynthesis.cancel();
   const distracted = state.distracted;
-  const question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+  let question;
+  if (quizState.isWordStudy) {
+    question = genWordStudy(quizState.childId);
+    if (!question) { alert('No words left in your list!'); showScreen('subject'); return; }
+  } else if (quizState.isNewWords) {
+    question = genNewWord(quizState.currentLevel);
+  } else {
+    question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+  }
   question._subject = quizState.currentSubject;
   quizState.currentQuestion = question;
   quizState.showingAnswer = false;
