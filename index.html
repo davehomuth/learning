@@ -415,7 +415,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.5</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.6</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -537,7 +537,9 @@ const SUBJECTS = [
   { id: 'all',     name: 'All Subjects', icon: '🎯' },
   { id: 'math',    name: 'Math',    icon: '🔢' },
   { id: 'english', name: 'English', icon: '📖' },
-  { id: 'science', name: 'Science', icon: '🔬' }
+  { id: 'science', name: 'Science', icon: '🔬' },
+  { id: 'wordStudy', name: 'Word Study', icon: '✏️' },
+  { id: 'newWords',  name: 'New Words',  icon: '📚' }
 ];
 
 // Difficulty level: 0-59 where level = grade*10 + decile
@@ -566,10 +568,15 @@ function getSession(childId) {
       levels: {
         math: child.startDecile.math,
         english: child.startDecile.english,
-        science: child.startDecile.science
+        science: child.startDecile.science,
+        newWords: child.startDecile.english
       },
       history: {} // keyed by subject, array of question results
     };
+    // Ensure newWords exists on older sessions
+    if (!state.sessions[childId].levels.newWords) {
+      state.sessions[childId].levels.newWords = state.sessions[childId].levels.english;
+    }
   }
   return state.sessions[childId];
 }
@@ -829,6 +836,122 @@ const VOCAB_5 = [
   {w:'vivid',d:'very clear and bright',s:'She had vivid memories of the trip.'},
   {w:'subtle',d:'not obvious',s:'There was a subtle difference in color.'}
 ];
+
+// ── NEW WORDS BANK (organized by grade level, ~20+ per grade for adaptive decile spread) ──
+const NEW_WORDS = {
+  0: [
+    {w:'happy',d:'feeling good or glad',s:'The happy puppy wagged its tail.'},
+    {w:'big',d:'large in size',s:'The big truck drove down the road.'},
+    {w:'fast',d:'moving quickly',s:'The fast bunny hopped away.'},
+    {w:'cold',d:'not warm, low temperature',s:'The ice cream is very cold.'},
+    {w:'soft',d:'not hard, gentle to touch',s:'The soft blanket kept me warm.'},
+    {w:'loud',d:'making a lot of noise',s:'The loud thunder scared the cat.'},
+    {w:'kind',d:'nice and caring',s:'The kind girl shared her snack.'},
+    {w:'brave',d:'not afraid, courageous',s:'The brave firefighter went into the building.'},
+    {w:'tiny',d:'very very small',s:'The tiny ant carried a crumb.'},
+    {w:'shiny',d:'bright and reflecting light',s:'The shiny star twinkled at night.'},
+  ],
+  1: [
+    {w:'curious',d:'wanting to know or learn',s:'The curious kitten explored the garden.'},
+    {w:'gentle',d:'soft and careful',s:'Be gentle with the baby bird.'},
+    {w:'proud',d:'feeling good about something you did',s:'She was proud of her drawing.'},
+    {w:'calm',d:'quiet and peaceful',s:'The calm lake had no waves.'},
+    {w:'tricky',d:'hard to do or understand',s:'The tricky puzzle took a long time.'},
+    {w:'enormous',d:'very very big',s:'The enormous whale swam in the ocean.'},
+    {w:'excited',d:'very happy about something coming',s:'He was excited about his birthday.'},
+    {w:'clever',d:'smart and quick-thinking',s:'The clever fox found the food.'},
+    {w:'grumpy',d:'feeling cranky or annoyed',s:'The grumpy troll guarded the bridge.'},
+    {w:'fragile',d:'easy to break',s:'The fragile egg cracked when it fell.'},
+    {w:'fierce',d:'strong and powerful',s:'The fierce lion roared loudly.'},
+    {w:'cozy',d:'warm and comfortable',s:'The cozy bed made her sleepy.'},
+  ],
+  2: [
+    {w:'patient',d:'able to wait without getting upset',s:'She was patient while waiting in line.'},
+    {w:'confident',d:'believing in yourself',s:'The confident speaker stood up tall.'},
+    {w:'gorgeous',d:'very beautiful',s:'The gorgeous sunset turned the sky orange.'},
+    {w:'ancient',d:'very very old',s:'The ancient castle was hundreds of years old.'},
+    {w:'dangerous',d:'could hurt you, not safe',s:'Swimming in the deep river is dangerous.'},
+    {w:'brilliant',d:'very smart or very bright',s:'She had a brilliant idea to solve the problem.'},
+    {w:'mysterious',d:'hard to explain or understand',s:'The mysterious noise came from the attic.'},
+    {w:'delicious',d:'tasting really good',s:'The delicious cake disappeared quickly.'},
+    {w:'exhausted',d:'very very tired',s:'After running all day, he was exhausted.'},
+    {w:'incredible',d:'hard to believe, amazing',s:'The magician did an incredible trick.'},
+    {w:'determined',d:'not giving up no matter what',s:'The determined climber reached the top.'},
+    {w:'ordinary',d:'normal, not special',s:'It was just an ordinary Tuesday.'},
+  ],
+  3: [
+    {w:'anxious',d:'feeling worried or nervous',s:'She felt anxious before the big test.'},
+    {w:'magnificent',d:'extremely beautiful or impressive',s:'The magnificent palace had golden walls.'},
+    {w:'ridiculous',d:'very silly or unreasonable',s:'Wearing a swimsuit in winter is ridiculous.'},
+    {w:'investigate',d:'to look into something carefully',s:'The detective will investigate the crime.'},
+    {w:'essential',d:'absolutely necessary',s:'Water is essential for life.'},
+    {w:'hesitant',d:'unsure, pausing before doing something',s:'He was hesitant to jump into the cold pool.'},
+    {w:'precise',d:'exact and accurate',s:'The scientist made precise measurements.'},
+    {w:'tremendous',d:'extremely large or great',s:'There was a tremendous explosion of fireworks.'},
+    {w:'commotion',d:'a lot of noise and confusion',s:'The dog caused a commotion in the park.'},
+    {w:'gloomy',d:'dark and sad-looking',s:'The gloomy weather made everyone stay inside.'},
+    {w:'accomplish',d:'to complete or achieve something',s:'She worked hard to accomplish her goal.'},
+    {w:'peculiar',d:'strange or unusual',s:'There was a peculiar smell coming from the kitchen.'},
+    {w:'catastrophe',d:'a terrible disaster',s:'The flood was a catastrophe for the town.'},
+    {w:'obvious',d:'easy to see or understand',s:'It was obvious that the dog ate the cookies.'},
+  ],
+  4: [
+    {w:'consequence',d:'what happens as a result of something',s:'The consequence of not studying was a poor grade.'},
+    {w:'persistent',d:'keeping going and not giving up',s:'Her persistent practice made her a great pianist.'},
+    {w:'elaborate',d:'very detailed and complex',s:'He gave an elaborate explanation of his invention.'},
+    {w:'reluctant',d:'not wanting to do something',s:'She was reluctant to try the strange food.'},
+    {w:'significant',d:'important or meaningful',s:'The discovery was significant for science.'},
+    {w:'absurd',d:'completely ridiculous or unreasonable',s:'The idea of a flying car seemed absurd.'},
+    {w:'inevitable',d:'certain to happen, unavoidable',s:'Winter snow in Canada is inevitable.'},
+    {w:'bewildered',d:'completely confused and puzzled',s:'The bewildered tourist was lost in the city.'},
+    {w:'compromise',d:'both sides giving up something to agree',s:'They reached a compromise about bedtime.'},
+    {w:'exaggerate',d:'to make something sound bigger than it is',s:'He tends to exaggerate how far he can throw.'},
+    {w:'skeptical',d:'not easily convinced, doubtful',s:'She was skeptical about the magic trick.'},
+    {w:'versatile',d:'able to do many different things',s:'A versatile player can play any position.'},
+    {w:'legitimate',d:'real, genuine, allowed by rules',s:'He had a legitimate reason for being late.'},
+    {w:'dilemma',d:'a difficult choice between two options',s:'She faced a dilemma: study or help her friend.'},
+    {w:'contemplate',d:'to think deeply about something',s:'He sat quietly to contemplate the problem.'},
+    {w:'distinguish',d:'to tell the difference between things',s:'Can you distinguish between the two sounds?'},
+  ],
+  5: [
+    {w:'ambiguous',d:'having more than one possible meaning',s:'The ambiguous instructions confused everyone.'},
+    {w:'meticulous',d:'extremely careful about details',s:'The meticulous artist painted every tiny leaf.'},
+    {w:'plausible',d:'seeming reasonable or likely true',s:'His excuse was barely plausible.'},
+    {w:'tentative',d:'not certain or definite',s:'We made tentative plans for the weekend.'},
+    {w:'unanimous',d:'everyone fully agrees',s:'The vote to cancel homework was unanimous.'},
+    {w:'subtle',d:'not obvious, hard to notice',s:'There was a subtle change in her expression.'},
+    {w:'contradict',d:'to say the opposite of what someone said',s:'The evidence seemed to contradict his story.'},
+    {w:'scrutinize',d:'to examine very closely and carefully',s:'The teacher will scrutinize every answer.'},
+    {w:'procrastinate',d:'to keep putting off what you should do',s:'He tends to procrastinate on his homework.'},
+    {w:'articulate',d:'able to express ideas clearly',s:'The articulate speaker captivated the audience.'},
+    {w:'perseverance',d:'continuing despite difficulty',s:'Her perseverance through injuries was inspiring.'},
+    {w:'hypothesis',d:'an educated guess that can be tested',s:'The scientist formed a hypothesis about plant growth.'},
+    {w:'comprehensive',d:'including everything, thorough',s:'The book provides a comprehensive guide to birds.'},
+    {w:'undermine',d:'to weaken or damage gradually',s:'Lies can undermine trust between friends.'},
+    {w:'innovative',d:'introducing new ideas or methods',s:'The innovative design won the science fair.'},
+    {w:'resilient',d:'able to recover quickly from difficulty',s:'The resilient team bounced back after the loss.'},
+  ]
+};
+
+function genNewWord(level) {
+  const grade = Math.min(5, Math.max(0, Math.floor(level / 10)));
+  const words = NEW_WORDS[grade] || NEW_WORDS[0];
+  const w = pick(words);
+  return { q: `What does "${w.w}" mean?`, a: w.d, _sentence: w.s, _word: w.w };
+}
+
+function genWordStudy(childId) {
+  const words = getCustomWords(childId);
+  if (words.length === 0) return null;
+  const w = pick(words);
+  if (childId === 'cole' || childId === 'mackenzie') {
+    // Show the word, they have to pronounce it
+    return { q: `Read this word aloud:`, a: w, _displayWord: w.toUpperCase(), _customWord: w };
+  } else {
+    // Logan: spell the word (read it to him, he spells it)
+    return { q: `Spell the word: "${w}"`, a: w.toUpperCase().split('').join(' - '), _customWord: w };
+  }
+}
 
 // Sentence starters for grammar
 const GRAMMAR_FIX = {
@@ -1414,6 +1537,32 @@ function renderSubjectScreen() {
         ${subj.name}
         <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Rotates through all subjects</div>
       `;
+    } else if (subj.id === 'wordStudy') {
+      const wordCount = getCustomWords(state.activeChild).length;
+      const modeDesc = (state.activeChild === 'cole' || state.activeChild === 'mackenzie')
+        ? 'Pronounce words from your list' : 'Spell words from your list';
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">${modeDesc}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">${wordCount} word${wordCount !== 1 ? 's' : ''} in list</div>
+      `;
+      if (wordCount === 0) {
+        btn.style.opacity = '0.5';
+        btn.onclick = () => { alert('Add words in Word Entry first!'); showScreen('wordEntry'); };
+        grid.appendChild(btn);
+        continue;
+      }
+    } else if (subj.id === 'newWords') {
+      const lvl = session.levels.newWords || session.levels.english;
+      const grade = Math.floor(lvl / 10);
+      const decile = lvl % 10;
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Learn new vocabulary</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">Level: Grade ${grade}.${decile}</div>
+      `;
     } else {
       const lvl = session.levels[subj.id];
       const grade = Math.floor(lvl / 10);
@@ -1488,6 +1637,19 @@ document.getElementById('wordInput').addEventListener('keydown', function(e) {
 //  QUIZ ENGINE
 // ═══════════════════════════════════════════
 
+function removeWordFromQuiz(word) {
+  const words = getCustomWords(quizState.childId);
+  const idx = words.indexOf(word);
+  if (idx >= 0) {
+    words.splice(idx, 1);
+    saveCustomWords(quizState.childId, words);
+  }
+  // Visual feedback
+  event.target.textContent = '✓ Removed!';
+  event.target.disabled = true;
+  event.target.style.background = 'var(--accent)';
+}
+
 function saveQuizState() {
   if (!quizState) return;
   const session = getSession(quizState.childId);
@@ -1495,7 +1657,9 @@ function saveQuizState() {
     for (const s of quizState.childSubjects) {
       session.levels[s] = quizState.currentLevels[s];
     }
-  } else {
+  } else if (quizState.isNewWords) {
+    session.levels.newWords = quizState.currentLevel;
+  } else if (!quizState.isWordStudy) {
     session.levels[quizState.subject] = quizState.currentLevel;
     if (!session.history[quizState.subject]) session.history[quizState.subject] = [];
     session.history[quizState.subject] = quizState.results;
@@ -1513,14 +1677,20 @@ function getChildSubjects(childId) {
 function startQuiz(subject) {
   const childId = state.activeChild;
   const session = getSession(childId);
+  // Ensure newWords level exists
+  if (!session.levels.newWords) session.levels.newWords = session.levels.english;
   const isAll = subject === 'all';
+  const isWordStudy = subject === 'wordStudy';
+  const isNewWords = subject === 'newWords';
   const childSubjects = getChildSubjects(childId);
 
   // For "all" mode, we track levels per subject individually
   const startLevels = {};
   if (isAll) {
     for (const s of childSubjects) startLevels[s] = session.levels[s];
-  } else {
+  } else if (isNewWords) {
+    startLevels.newWords = session.levels.newWords;
+  } else if (!isWordStudy) {
     startLevels[subject] = session.levels[subject];
   }
 
@@ -1530,10 +1700,12 @@ function startQuiz(subject) {
     childId,
     subject,
     isAll,
+    isWordStudy,
+    isNewWords,
     currentLevels: { ...startLevels },
-    currentLevel: isAll ? session.levels['math'] : session.levels[subject],
+    currentLevel: isAll ? session.levels['math'] : (isNewWords ? session.levels.newWords : (isWordStudy ? 0 : session.levels[subject])),
     startLevels: { ...startLevels },
-    startLevel: isAll ? null : session.levels[subject],
+    startLevel: isAll ? null : (isNewWords ? session.levels.newWords : (isWordStudy ? 0 : session.levels[subject])),
     currentSubject: isAll ? childSubjects[0] : subject,
     childSubjects,
     subjectRotation: 0,
@@ -1543,8 +1715,8 @@ function startQuiz(subject) {
     repeatQueue: [],
     showingAnswer: false,
     currentQuestion: null,
-    correctRun: 0,   // consecutive correct answers (for adaptive)
-    incorrectRun: 0  // consecutive incorrect answers (for adaptive)
+    correctRun: 0,
+    incorrectRun: 0
   };
 
   streak = 0;
@@ -1586,10 +1758,15 @@ function nextQuestion() {
     question = quizState.repeatQueue[repeatIdx].question;
     quizState.repeatQueue.splice(repeatIdx, 1);
     fromRepeat = true;
-    // Use the subject from the repeat queue item
-    if (quizState.isAll && quizState.repeatQueue[repeatIdx - 1]) {
-      // subject already set from rotation, keep it
+  } else if (quizState.isWordStudy) {
+    question = genWordStudy(quizState.childId);
+    if (!question) {
+      alert('No words in your list! Add words in Word Entry first.');
+      showScreen('subject');
+      return;
     }
+  } else if (quizState.isNewWords) {
+    question = genNewWord(quizState.currentLevel);
   } else {
     question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
   }
@@ -1624,19 +1801,40 @@ function renderQuiz() {
   document.getElementById('quizInfo').textContent =
     `${child.emoji} ${child.name} | ${currentSubjName} | Grade ${grade}.${decile} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
 
-  document.getElementById('questionText').textContent = quizState.currentQuestion.q;
+  // Word Study: show large display word for Cole/Mackenzie to read
+  const questionTextEl = document.getElementById('questionText');
+  if (quizState.isWordStudy && quizState.currentQuestion._displayWord && !quizState.showingAnswer) {
+    questionTextEl.innerHTML = quizState.currentQuestion.q + '<div style="font-size:3rem;margin-top:20px;font-weight:800;letter-spacing:4px;">' + quizState.currentQuestion._displayWord + '</div>';
+  } else {
+    questionTextEl.textContent = quizState.currentQuestion.q;
+  }
 
   const answerEl = document.getElementById('answerText');
   const buttonsEl = document.getElementById('quizButtons');
 
   if (quizState.showingAnswer) {
-    answerEl.textContent = quizState.currentQuestion.a;
+    // Build answer display
+    let answerHTML = quizState.currentQuestion.a;
+    // New Words: show example sentence
+    if (quizState.isNewWords && quizState.currentQuestion._sentence) {
+      answerHTML += `<div style="font-size:0.9rem;color:var(--text-dim);margin-top:10px;font-style:italic;font-weight:400;">Example: "${quizState.currentQuestion._sentence}"</div>`;
+    }
+    answerEl.innerHTML = answerHTML;
     answerEl.style.display = 'block';
+
+    // Build buttons
+    let extraButtons = '';
+    // Word Study: add Remove from List button
+    if (quizState.isWordStudy && quizState.currentQuestion._customWord) {
+      extraButtons += `<button class="btn" style="background:#7b1fa2;margin-top:8px;" onclick="removeWordFromQuiz('${quizState.currentQuestion._customWord.replace(/'/g, "\\'")}')">🗑 Remove from List</button>`;
+    }
+
     buttonsEl.innerHTML = `
       <button class="btn btn-correct" onclick="recordAnswer('correct')">✓ Correct</button>
       <button class="btn btn-difficulty" onclick="recordAnswer('difficulty')">~ With Difficulty</button>
       <button class="btn btn-incorrect" onclick="recordAnswer('incorrect')">✗ Incorrect</button>
       <button class="btn" style="background:var(--accent);margin-top:8px;" onclick="skipQuestion()">⏭ Skip Question</button>
+      ${extraButtons}
       <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:12px;">
         <button onclick="nudgeLevel(-1)" style="font-size:0.65rem;padding:4px 8px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;">▼ decile</button>
         <button onclick="nudgeLevel(1)" style="font-size:0.65rem;padding:4px 8px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;">▲ decile</button>
