@@ -415,7 +415,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.4</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.5</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -575,12 +575,20 @@ function getSession(childId) {
 }
 
 function saveState() {
-  try { localStorage.setItem('homuth_learning', JSON.stringify(state)); } catch(e) {}
+  try {
+    const data = JSON.stringify(state);
+    localStorage.setItem('homuth_learning', data);
+    // Auto-backup: save a second copy with timestamp
+    localStorage.setItem('homuth_learning_backup', data);
+    localStorage.setItem('homuth_learning_backup_time', new Date().toISOString());
+  } catch(e) {}
 }
 
 function loadState() {
   try {
-    const s = localStorage.getItem('homuth_learning');
+    let s = localStorage.getItem('homuth_learning');
+    // Fall back to backup if primary is missing
+    if (!s) s = localStorage.getItem('homuth_learning_backup');
     if (s) {
       const parsed = JSON.parse(s);
       state.sessions = parsed.sessions || {};
@@ -1534,7 +1542,9 @@ function startQuiz(subject) {
     sessionResults: [],
     repeatQueue: [],
     showingAnswer: false,
-    currentQuestion: null
+    currentQuestion: null,
+    correctRun: 0,   // consecutive correct answers (for adaptive)
+    incorrectRun: 0  // consecutive incorrect answers (for adaptive)
   };
 
   streak = 0;
@@ -1714,14 +1724,26 @@ function recordAnswer(result) {
   quizState.results.push(record);
   quizState.sessionResults.push(record);
 
-  // Adaptive difficulty (only adjust if not a repeat question)
+  // Adaptive difficulty — need 3 correct to move up 1 decile, 3 incorrect to move down 1
   if (!q._fromRepeat) {
     if (result === 'correct') {
-      quizState.currentLevel = Math.min(59, quizState.currentLevel + 2);
+      quizState.correctRun++;
+      quizState.incorrectRun = 0;
+      if (quizState.correctRun >= 3) {
+        quizState.currentLevel = Math.min(59, quizState.currentLevel + 1);
+        quizState.correctRun = 0;
+      }
     } else if (result === 'difficulty') {
-      quizState.currentLevel = Math.min(59, quizState.currentLevel + 1);
+      // Doesn't break correct run but doesn't add to it; resets incorrect run
+      quizState.incorrectRun = 0;
     } else {
-      quizState.currentLevel = Math.max(0, quizState.currentLevel - 2);
+      // incorrect
+      quizState.incorrectRun++;
+      quizState.correctRun = 0;
+      if (quizState.incorrectRun >= 3) {
+        quizState.currentLevel = Math.max(0, quizState.currentLevel - 1);
+        quizState.incorrectRun = 0;
+      }
     }
     // Update per-subject level in "all" mode
     if (quizState.isAll) {
