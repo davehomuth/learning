@@ -312,6 +312,87 @@
   }
   .word-chip .remove-word:hover { color: #ff6b6b; }
 
+  /* ── Feature Toggles Bar ── */
+  .feature-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 6px 20px;
+    background: rgba(15,52,96,0.5);
+    border-bottom: 1px solid var(--accent);
+    flex-wrap: wrap;
+  }
+  .feature-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .feature-toggle label { cursor: pointer; white-space: nowrap; }
+  .feat-btn {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid var(--text-dim);
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: 0.3s;
+  }
+  .feat-btn.on {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .feat-knob {
+    position: absolute;
+    width: 14px; height: 14px;
+    left: 2px; top: 2px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  .feat-btn.on .feat-knob {
+    transform: translateX(16px);
+  }
+
+  /* ── Streak ── */
+  .streak-display {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--yellow);
+    min-height: 24px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Timer ── */
+  .timer-display {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    min-height: 36px;
+  }
+  .timer-display.warning { color: var(--yellow); }
+  .timer-display.danger { color: var(--highlight); animation: pulse 0.5s infinite alternate; }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
+
+  /* ── Voice Recognition ── */
+  .voice-status {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    min-height: 20px;
+    margin-top: 8px;
+  }
+  .voice-status.listening { color: var(--highlight); }
+
   /* ── Misc ── */
   .section-title {
     font-size: 1.3rem;
@@ -325,6 +406,8 @@
     .question-text { font-size: 1.3rem; }
     .btn { padding: 12px 18px; font-size: 1rem; }
     .top-bar h1 { font-size: 1rem; }
+    .feature-bar { gap: 8px; padding: 6px 10px; }
+    .feature-toggle { font-size: 0.7rem; }
   }
 </style>
 </head>
@@ -340,6 +423,28 @@
       <div class="toggle-knob"></div>
     </button>
     <label>Distracted</label>
+  </div>
+</div>
+
+<!-- ── Feature Toggles ── -->
+<div class="feature-bar">
+  <div class="feature-toggle">
+    <label>🔊 TTS</label>
+    <button type="button" class="feat-btn" id="ttsToggle" ontouchend="event.preventDefault(); toggleFeature('tts');" onclick="toggleFeature('tts');">
+      <div class="feat-knob"></div>
+    </button>
+  </div>
+  <div class="feature-toggle">
+    <label>🎤 Voice</label>
+    <button type="button" class="feat-btn" id="voiceToggle" ontouchend="event.preventDefault(); toggleFeature('voice');" onclick="toggleFeature('voice');">
+      <div class="feat-knob"></div>
+    </button>
+  </div>
+  <div class="feature-toggle">
+    <label>⏱ Timer</label>
+    <button type="button" class="feat-btn" id="timerToggle" ontouchend="event.preventDefault(); toggleFeature('timer');" onclick="toggleFeature('timer');">
+      <div class="feat-knob"></div>
+    </button>
   </div>
 </div>
 
@@ -392,10 +497,13 @@
       <button class="btn btn-finish" onclick="finishQuiz()">Finish Program</button>
     </div>
   </div>
+  <div class="streak-display" id="streakDisplay"></div>
+  <div class="timer-display" id="timerDisplay"></div>
   <div class="question-card" id="questionCard">
     <div class="question-text" id="questionText"></div>
     <div class="answer-text" id="answerText" style="display:none"></div>
     <div class="quiz-buttons" id="quizButtons"></div>
+    <div class="voice-status" id="voiceStatus"></div>
   </div>
 </div>
 
@@ -433,10 +541,18 @@ const SUBJECTS = [
 let state = {
   activeChild: null,
   distracted: false,
+  tts: false,
+  voice: false,
+  timer: false,
   sessions: {} // keyed by childId, stores per-child progress
 };
 
 let quizState = null; // current quiz session
+let streak = 0;
+let bestStreak = 0;
+let timerInterval = null;
+let timerSeconds = 0;
+const TIMER_DURATION = { focused: 30, distracted: 45 }; // seconds per question
 
 function getSession(childId) {
   if (!state.sessions[childId]) {
@@ -463,6 +579,10 @@ function loadState() {
     if (s) {
       const parsed = JSON.parse(s);
       state.sessions = parsed.sessions || {};
+      if (parsed.tts !== undefined) state.tts = parsed.tts;
+      if (parsed.voice !== undefined) state.voice = parsed.voice;
+      if (parsed.timer !== undefined) state.timer = parsed.timer;
+      if (parsed.distracted !== undefined) state.distracted = parsed.distracted;
     }
   } catch(e) {}
 }
@@ -1412,6 +1532,9 @@ function startQuiz(subject) {
     currentQuestion: null
   };
 
+  streak = 0;
+  bestStreak = 0;
+
   showScreen('quiz');
   nextQuestion();
 }
@@ -1462,6 +1585,16 @@ function nextQuestion() {
   quizState.showingAnswer = false;
 
   renderQuiz();
+  updateStreakDisplay();
+
+  // TTS: read the question aloud
+  speak(question.q);
+
+  // Start timer
+  if (state.timer) startTimer();
+
+  // Start voice recognition
+  if (state.voice) startVoiceRecognition();
 }
 
 function renderQuiz() {
@@ -1505,7 +1638,11 @@ function renderQuiz() {
 
 function showAnswer() {
   quizState.showingAnswer = true;
+  stopTimer();
+  stopVoiceRecognition();
   renderQuiz();
+  // TTS: read the answer
+  speak('The answer is: ' + quizState.currentQuestion.a);
 }
 
 function nudgeLevel(delta) {
@@ -1520,6 +1657,9 @@ function nudgeLevel(delta) {
 
 function skipQuestion() {
   // Skip without affecting difficulty or subject rotation
+  stopTimer();
+  stopVoiceRecognition();
+  window.speechSynthesis.cancel();
   const distracted = state.distracted;
   const question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
   question._subject = quizState.currentSubject;
@@ -1527,11 +1667,35 @@ function skipQuestion() {
   quizState.showingAnswer = false;
   quizState.questionNum++;
   renderQuiz();
+  updateStreakDisplay();
+  speak(question.q);
+  if (state.timer) startTimer();
+  if (state.voice) startVoiceRecognition();
 }
 
 function recordAnswer(result) {
   const q = quizState.currentQuestion;
   const levelBefore = quizState.currentLevel;
+
+  // Streak tracking and sounds
+  if (result === 'correct') {
+    streak++;
+    if (streak > bestStreak) bestStreak = streak;
+    if (streak >= 5 && streak % 5 === 0) {
+      playSound('streak');
+      speak(`Amazing! ${streak} in a row!`);
+    } else {
+      playSound('correct');
+    }
+  } else if (result === 'incorrect') {
+    if (streak >= 3) speak(`Streak ended at ${streak}`);
+    streak = 0;
+    playSound('incorrect');
+  } else {
+    // difficulty — don't break streak but don't grow it
+    playSound('correct');
+  }
+  updateStreakDisplay();
 
   // Record
   const record = {
@@ -1574,6 +1738,9 @@ function recordAnswer(result) {
 
 function finishQuiz() {
   saveQuizState();
+  stopTimer();
+  stopVoiceRecognition();
+  window.speechSynthesis.cancel();
 
   const results = quizState.sessionResults;
   const childName = CHILDREN[quizState.childId].name;
@@ -1608,6 +1775,10 @@ function finishQuiz() {
       <div class="stat-box">
         <div class="stat-val">${pct}%</div>
         <div class="stat-label">Accuracy</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" style="color:var(--yellow)">🔥 ${bestStreak}</div>
+        <div class="stat-label">Best Streak</div>
       </div>
     </div>
   `;
@@ -1715,11 +1886,237 @@ function updateToggleVisual() {
 }
 
 // ═══════════════════════════════════════════
+//  FEATURE TOGGLES (TTS, Voice, Timer)
+// ═══════════════════════════════════════════
+
+function toggleFeature(feat) {
+  state[feat] = !state[feat];
+  updateFeatureToggles();
+  saveState();
+  // Stop voice recognition if toggled off
+  if (feat === 'voice' && !state.voice) stopVoiceRecognition();
+  // Stop timer if toggled off
+  if (feat === 'timer' && !state.timer) stopTimer();
+}
+
+function updateFeatureToggles() {
+  ['tts', 'voice', 'timer'].forEach(f => {
+    const el = document.getElementById(f + 'Toggle');
+    if (el) {
+      if (state[f]) el.classList.add('on');
+      else el.classList.remove('on');
+    }
+  });
+}
+
+// ── Text-to-Speech ──
+
+function speak(text) {
+  if (!state.tts) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.9;
+  u.pitch = 1;
+  u.lang = 'en-CA';
+  window.speechSynthesis.speak(u);
+}
+
+// ── Sound Effects (Web Audio API) ──
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  // Ensure AudioContext is resumed (iOS requires user gesture)
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'correct') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);
+    osc.frequency.setValueAtTime(659, now + 0.1);
+    osc.frequency.setValueAtTime(784, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  } else if (type === 'streak') {
+    // Triumphant ascending arpeggio
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);
+    osc.frequency.setValueAtTime(659, now + 0.08);
+    osc.frequency.setValueAtTime(784, now + 0.16);
+    osc.frequency.setValueAtTime(1047, now + 0.24);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc.start(now);
+    osc.stop(now + 0.5);
+  } else if (type === 'incorrect') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.setValueAtTime(150, now + 0.15);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } else if (type === 'timerWarning') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } else if (type === 'timeUp') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.setValueAtTime(200, now + 0.2);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  }
+}
+
+function updateStreakDisplay() {
+  const el = document.getElementById('streakDisplay');
+  if (!el) return;
+  if (streak >= 3) {
+    el.textContent = `🔥 Streak: ${streak}!` + (streak >= 5 ? ' 🔥🔥' : '') + (streak >= 10 ? '🔥' : '');
+    el.style.display = 'block';
+  } else if (streak > 0) {
+    el.textContent = `✓ ${streak} in a row`;
+    el.style.display = 'block';
+  } else {
+    el.textContent = '';
+  }
+}
+
+// ── Timer ──
+
+function startTimer() {
+  stopTimer();
+  if (!state.timer) return;
+  timerSeconds = state.distracted ? TIMER_DURATION.distracted : TIMER_DURATION.focused;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    updateTimerDisplay();
+    if (timerSeconds === 10) playSound('timerWarning');
+    if (timerSeconds === 5) playSound('timerWarning');
+    if (timerSeconds <= 0) {
+      playSound('timeUp');
+      stopTimer();
+      // Auto show answer when time is up
+      if (quizState && !quizState.showingAnswer) {
+        showAnswer();
+      }
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  const el = document.getElementById('timerDisplay');
+  if (el) { el.textContent = ''; el.className = 'timer-display'; }
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timerDisplay');
+  if (!el || !state.timer) { if (el) el.textContent = ''; return; }
+  el.textContent = `⏱ ${timerSeconds}s`;
+  el.className = 'timer-display';
+  if (timerSeconds <= 5) el.classList.add('danger');
+  else if (timerSeconds <= 10) el.classList.add('warning');
+}
+
+// ── Voice Recognition ──
+
+let recognition = null;
+let voiceListening = false;
+
+function startVoiceRecognition() {
+  if (!state.voice) return;
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('voiceStatus').textContent = 'Voice not supported on this browser';
+    return;
+  }
+  stopVoiceRecognition();
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-CA';
+
+  const statusEl = document.getElementById('voiceStatus');
+
+  recognition.onstart = () => {
+    voiceListening = true;
+    if (statusEl) { statusEl.textContent = '🎤 Listening...'; statusEl.className = 'voice-status listening'; }
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+    if (statusEl) statusEl.textContent = `🎤 Heard: "${transcript}"`;
+
+    if (event.results[0].isFinal && quizState) {
+      // Check if the heard answer matches
+      const answer = quizState.currentQuestion.a.toLowerCase().trim();
+      const heard = transcript;
+
+      // Simple matching: check if the answer starts with what was heard, or vice versa
+      const match = answer.includes(heard) || heard.includes(answer) ||
+        // For numeric answers
+        heard.replace(/[^0-9.-]/g, '') === answer.replace(/[^0-9.-]/g, '');
+
+      if (statusEl) {
+        statusEl.textContent = match ? `🎤 "${transcript}" ✓ Sounds right!` : `🎤 "${transcript}"`;
+      }
+    }
+  };
+
+  recognition.onerror = (event) => {
+    voiceListening = false;
+    if (event.error !== 'aborted' && event.error !== 'no-speech') {
+      if (statusEl) statusEl.textContent = `🎤 ${event.error}`;
+    }
+  };
+
+  recognition.onend = () => {
+    voiceListening = false;
+    // Auto-restart if still in quiz and voice is on
+    if (state.voice && quizState && !quizState.showingAnswer) {
+      setTimeout(() => { if (state.voice && quizState && !quizState.showingAnswer) startVoiceRecognition(); }, 300);
+    } else {
+      if (statusEl) { statusEl.textContent = ''; statusEl.className = 'voice-status'; }
+    }
+  };
+
+  recognition.start();
+}
+
+function stopVoiceRecognition() {
+  if (recognition) {
+    try { recognition.abort(); } catch(e) {}
+    recognition = null;
+  }
+  voiceListening = false;
+  const statusEl = document.getElementById('voiceStatus');
+  if (statusEl) { statusEl.textContent = ''; statusEl.className = 'voice-status'; }
+}
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 
 loadState();
 updateToggleVisual();
+updateFeatureToggles();
 renderHome();
 renderChildTabs();
 </script>
