@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.4</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.5</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -475,6 +475,7 @@
   <div class="mt-20" style="display:flex;gap:10px;flex-wrap:wrap;">
     <button class="btn btn-back" onclick="showScreen('home')">Back</button>
     <button class="btn btn-primary" onclick="showScreen('wordEntry')">✏️ Word Entry</button>
+    <button class="btn" style="background:#1565c0;" onclick="showScreen('flashcardEntry')">🃏 Flashcard Entry</button>
   </div>
 </div>
 
@@ -498,6 +499,44 @@
     <h3 style="margin-bottom:10px;color:var(--green);">📚 Mastered Words Archive</h3>
     <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:10px;">Tap ↩ to move a word back to the active list.</p>
     <div id="archiveList"></div>
+  </div>
+</div>
+
+<!-- ── Flashcard Entry Screen ── -->
+<div class="screen" id="flashcardEntryScreen">
+  <div>
+    <p class="section-sub" id="flashcardEntryWho"></p>
+    <h2 class="section-title">Custom Flashcards</h2>
+    <p class="section-sub">Add your own question &amp; answer flashcards.</p>
+  </div>
+
+  <!-- Single Entry -->
+  <div style="margin-top:16px;">
+    <h3 style="font-size:1rem;margin-bottom:8px;">Add One:</h3>
+    <div class="word-entry-form" style="flex-direction:column;">
+      <input type="text" id="flashcardQ" placeholder="Question" autocomplete="off" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--accent);background:var(--bg);color:var(--text);font-size:1rem;">
+      <input type="text" id="flashcardA" placeholder="Answer" autocomplete="off" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--accent);background:var(--bg);color:var(--text);font-size:1rem;margin-top:8px;">
+      <button class="btn btn-primary" style="margin-top:8px;" onclick="addFlashcard()">Add Flashcard</button>
+    </div>
+  </div>
+
+  <!-- Bulk Paste -->
+  <div style="margin-top:20px;">
+    <h3 style="font-size:1rem;margin-bottom:8px;">Bulk Paste:</h3>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px;">Format: Q: question on one line, A: answer on the next. Blank lines between pairs are OK.</p>
+    <textarea id="bulkFlashcards" placeholder="Q: What is 7 × 8?&#10;A: 56&#10;&#10;Q: What is the capital of Canada?&#10;A: Ottawa" style="width:100%;min-height:150px;padding:12px;border-radius:8px;border:1px solid var(--accent);background:var(--bg);color:var(--text);font-size:0.9rem;font-family:inherit;resize:vertical;"></textarea>
+    <button class="btn" style="background:#1565c0;margin-top:8px;" onclick="bulkAddFlashcards()">Import All</button>
+  </div>
+
+  <!-- Existing Flashcard List -->
+  <div style="margin-top:20px;">
+    <h3 style="font-size:1rem;margin-bottom:8px;" id="flashcardCountLabel">Your Flashcards:</h3>
+    <div id="flashcardList"></div>
+  </div>
+
+  <div class="mt-20" style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-back" onclick="showScreen('subject')">Back to Subjects</button>
+    <button class="btn" style="background:#c62828;" id="clearAllFlashcardsBtn" onclick="clearAllFlashcards()">🗑 Clear All</button>
   </div>
 </div>
 
@@ -536,7 +575,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -577,7 +616,8 @@ const SUBJECTS = [
   { id: 'english', name: 'English', icon: '📖' },
   { id: 'science', name: 'Science', icon: '🔬' },
   { id: 'wordStudy', name: 'Word Study', icon: '✏️' },
-  { id: 'newWords',  name: 'New Words',  icon: '📚' }
+  { id: 'newWords',  name: 'New Words',  icon: '📚' },
+  { id: 'custom',    name: 'Custom Flashcards', icon: '🃏' }
 ];
 
 // Difficulty level: 0-59 where level = grade*10 + decile
@@ -1669,6 +1709,10 @@ function showScreen(name) {
       document.getElementById('wordEntryScreen').classList.add('active');
       renderWordEntry();
       break;
+    case 'flashcardEntry':
+      document.getElementById('flashcardEntryScreen').classList.add('active');
+      renderFlashcardEntry();
+      break;
   }
 }
 
@@ -1794,6 +1838,20 @@ function renderSubjectScreen() {
         <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Learn new vocabulary</div>
         <div style="font-size:0.7rem;color:var(--text-dim);">Level: Grade ${grade}.${decile}</div>
       `;
+    } else if (subj.id === 'custom') {
+      const cardCount = getCustomFlashcards(state.activeChild).length;
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Your own Q&A cards</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">${cardCount} card${cardCount !== 1 ? 's' : ''}</div>
+      `;
+      if (cardCount === 0) {
+        btn.style.opacity = '0.5';
+        btn.onclick = () => { alert('Add flashcards first!'); showScreen('flashcardEntry'); };
+        grid.appendChild(btn);
+        continue;
+      }
     } else {
       const lvl = session.levels[subj.id];
       const grade = Math.floor(lvl / 10);
@@ -1957,6 +2015,123 @@ document.getElementById('wordInput').addEventListener('keydown', function(e) {
 });
 
 // ═══════════════════════════════════════════
+//  CUSTOM FLASHCARDS
+// ═══════════════════════════════════════════
+
+function getCustomFlashcards(childId) {
+  try {
+    const data = localStorage.getItem('homuth_flashcards_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveCustomFlashcards(childId, cards) {
+  try { localStorage.setItem('homuth_flashcards_' + childId, JSON.stringify(cards)); } catch(e) {}
+}
+
+function addFlashcard() {
+  const qInput = document.getElementById('flashcardQ');
+  const aInput = document.getElementById('flashcardA');
+  const q = qInput.value.trim();
+  const a = aInput.value.trim();
+  if (!q || !a) { alert('Please enter both a question and an answer.'); return; }
+  const cards = getCustomFlashcards(state.activeChild);
+  cards.push({ q: q, a: a });
+  saveCustomFlashcards(state.activeChild, cards);
+  qInput.value = '';
+  aInput.value = '';
+  qInput.focus();
+  renderFlashcardEntry();
+}
+
+function bulkAddFlashcards() {
+  const textarea = document.getElementById('bulkFlashcards');
+  const text = textarea.value.trim();
+  if (!text) { alert('Paste some Q&A pairs first.'); return; }
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  const cards = getCustomFlashcards(state.activeChild);
+  let added = 0;
+  let currentQ = null;
+  for (const line of lines) {
+    if (line.match(/^Q:\s*/i)) {
+      currentQ = line.replace(/^Q:\s*/i, '').trim();
+    } else if (line.match(/^A:\s*/i) && currentQ) {
+      const a = line.replace(/^A:\s*/i, '').trim();
+      if (currentQ && a) {
+        cards.push({ q: currentQ, a: a });
+        added++;
+      }
+      currentQ = null;
+    }
+  }
+  if (added === 0) {
+    alert('No valid Q&A pairs found. Use format:\nQ: question\nA: answer');
+    return;
+  }
+  saveCustomFlashcards(state.activeChild, cards);
+  textarea.value = '';
+  alert(added + ' flashcard' + (added !== 1 ? 's' : '') + ' added!');
+  renderFlashcardEntry();
+}
+
+function removeFlashcard(index) {
+  const cards = getCustomFlashcards(state.activeChild);
+  cards.splice(index, 1);
+  saveCustomFlashcards(state.activeChild, cards);
+  renderFlashcardEntry();
+}
+
+function clearAllFlashcards() {
+  if (!confirm('Delete ALL custom flashcards for ' + CHILDREN[state.activeChild].name + '?')) return;
+  saveCustomFlashcards(state.activeChild, []);
+  renderFlashcardEntry();
+}
+
+function renderFlashcardEntry() {
+  const child = CHILDREN[state.activeChild];
+  document.getElementById('flashcardEntryWho').textContent = child.emoji + ' ' + child.name + ' — ' + child.info;
+  const cards = getCustomFlashcards(state.activeChild);
+  const label = document.getElementById('flashcardCountLabel');
+  label.textContent = 'Your Flashcards (' + cards.length + '):';
+  const container = document.getElementById('flashcardList');
+  if (cards.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-top:8px;">No custom flashcards yet. Add some above!</p>';
+  } else {
+    container.innerHTML = cards.map((c, i) =>
+      '<div style="background:var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:0.85rem;font-weight:600;color:var(--text);">Q: ' + escapeHTML(c.q) + '</div>' +
+          '<div style="font-size:0.8rem;color:var(--green);margin-top:2px;">A: ' + escapeHTML(c.a) + '</div>' +
+        '</div>' +
+        '<button onclick="removeFlashcard(' + i + ')" style="background:none;border:none;color:var(--highlight);font-size:1.2rem;cursor:pointer;padding:0 4px;flex-shrink:0;">×</button>' +
+      '</div>'
+    ).join('');
+  }
+  // Hide clear button if empty
+  document.getElementById('clearAllFlashcardsBtn').style.display = cards.length > 0 ? '' : 'none';
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function genCustomFlashcard(childId) {
+  const cards = getCustomFlashcards(childId);
+  if (cards.length === 0) return null;
+  const c = pick(cards);
+  return { q: c.q, a: c.a, _isCustomFlashcard: true };
+}
+
+// Enter key on flashcard question input moves to answer input
+document.getElementById('flashcardQ').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('flashcardA').focus(); }
+});
+// Enter key on flashcard answer input submits
+document.getElementById('flashcardA').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addFlashcard(); }
+});
+
+// ═══════════════════════════════════════════
 //  QUIZ ENGINE
 // ═══════════════════════════════════════════
 
@@ -1997,6 +2172,7 @@ function startQuiz(subject) {
   const isNewWords = subject === 'newWords';
   const isER = subject === 'erQuestions';
   const isResearch = subject === 'newResearch';
+  const isCustom = subject === 'custom';
   const childSubjects = getChildSubjects(childId);
 
   // For "all" mode, we track levels per subject individually
@@ -2007,13 +2183,13 @@ function startQuiz(subject) {
     startLevels.newWords = session.levels.newWords;
   } else if (isER || isResearch) {
     startLevels[subject] = session.levels[subject] || 30;
-  } else if (!isWordStudy) {
+  } else if (!isWordStudy && !isCustom) {
     startLevels[subject] = session.levels[subject];
   }
 
   const prevHistory = isAll ? [] : (session.history[subject] || []);
 
-  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : (isWordStudy ? 0 : session.levels[subject]))));
+  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : ((isWordStudy || isCustom) ? 0 : session.levels[subject]))));
 
   quizState = {
     childId,
@@ -2022,6 +2198,7 @@ function startQuiz(subject) {
     isWordStudy,
     isNewWords,
     isER,
+    isCustom,
     isResearch,
     currentLevels: { ...startLevels },
     currentLevel: isAll ? session.levels[childSubjects[0]] : startLevel,
@@ -2088,6 +2265,13 @@ function nextQuestion() {
     }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
+  } else if (quizState.isCustom) {
+    question = genCustomFlashcard(quizState.childId);
+    if (!question) {
+      alert('No flashcards! Add some in Flashcard Entry first.');
+      showScreen('subject');
+      return;
+    }
   } else if (quizState.isER) {
     question = genERQuestion(quizState.currentLevel);
   } else if (quizState.isResearch) {
@@ -2226,6 +2410,9 @@ function skipQuestion() {
     if (!question) { alert('No words left in your list!'); showScreen('subject'); return; }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
+  } else if (quizState.isCustom) {
+    question = genCustomFlashcard(quizState.childId);
+    if (!question) { alert('No flashcards left!'); showScreen('subject'); return; }
   } else if (quizState.isER) {
     question = genERQuestion(quizState.currentLevel);
   } else if (quizState.isResearch) {
