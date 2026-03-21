@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.3</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.4</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -536,11 +536,14 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '1.9';
+const APP_VERSION = '2.4';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
   if (location.protocol === 'file:') return;
+  // Prevent infinite reload loop: if we already tried updating, don't try again
+  const params = new URLSearchParams(location.search);
+  if (params.get('updated') === '1') return;
   const baseUrl = location.href.split('?')[0].split('#')[0];
   const versionUrl = baseUrl.replace(/index\.html$/, '').replace(/\/$/, '') + '/version.txt';
   fetch(versionUrl + '?_=' + Date.now(), { cache: 'no-store' })
@@ -550,8 +553,8 @@ const APP_VERSION = '1.9';
       const remoteVersion = remote.trim();
       if (remoteVersion !== APP_VERSION) {
         console.log('Update available: ' + APP_VERSION + ' → ' + remoteVersion);
-        // Force reload bypassing cache
-        location.replace(location.pathname + '?v=' + remoteVersion + '&t=' + Date.now());
+        // Force reload bypassing cache, with updated=1 to prevent loop
+        location.replace(location.pathname + '?v=' + remoteVersion + '&t=' + Date.now() + '&updated=1');
       }
     })
     .catch(() => {}); // silently fail if offline
