@@ -19,6 +19,7 @@
     --logan: #4fc3f7;
     --cole: #81c784;
     --mackenzie: #f48fb1;
+    --daddy: #ffa726;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -64,6 +65,7 @@
   .child-tab.active-logan { border-color: var(--logan); background: rgba(79,195,247,0.2); }
   .child-tab.active-cole { border-color: var(--cole); background: rgba(129,199,132,0.2); }
   .child-tab.active-mackenzie { border-color: var(--mackenzie); background: rgba(244,143,177,0.2); }
+  .child-tab.active-daddy { border-color: var(--daddy); background: rgba(255,167,38,0.2); }
 
   .mode-toggle {
     display: flex;
@@ -131,6 +133,7 @@
   .home-card.logan { border-color: var(--logan); }
   .home-card.cole { border-color: var(--cole); }
   .home-card.mackenzie { border-color: var(--mackenzie); }
+  .home-card.daddy { border-color: var(--daddy); }
   .home-card .emoji { font-size: 3rem; margin-bottom: 10px; }
   .home-card .name { font-size: 1.4rem; font-weight: 700; }
   .home-card .info { color: var(--text-dim); margin-top: 6px; font-size: 0.9rem; }
@@ -415,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.0</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.1</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -561,7 +564,8 @@ const APP_VERSION = '1.9';
 const CHILDREN = {
   logan:     { name: 'Logan',     grade: 4, emoji: '🏒', color: 'logan',     info: 'Grade 4', startDecile: { math: 50, english: 50, science: 45 } },
   cole:      { name: 'Cole',      grade: 1, emoji: '🏒', color: 'cole',      info: 'Grade 1 · Reading Focus', startDecile: { math: 15, english: 15, science: 15 } },
-  mackenzie: { name: 'Mackenzie', grade: 0, emoji: '🌟', color: 'mackenzie', info: 'JK in September', startDecile: { math: 5, english: 5, science: 5 } }
+  mackenzie: { name: 'Mackenzie', grade: 0, emoji: '🌟', color: 'mackenzie', info: 'JK in September', startDecile: { math: 5, english: 5, science: 5 } },
+  daddy:     { name: 'Daddy',     grade: 0, emoji: '🩺', color: 'daddy',     info: 'Emergency Medicine', startDecile: { erQuestions: 30, newResearch: 30 } }
 };
 
 const SUBJECTS = [
@@ -595,19 +599,33 @@ const TIMER_DURATION = { focused: 30, distracted: 45 }; // seconds per question
 function getSession(childId) {
   if (!state.sessions[childId]) {
     const child = CHILDREN[childId];
-    state.sessions[childId] = {
-      levels: {
-        math: child.startDecile.math,
-        english: child.startDecile.english,
-        science: child.startDecile.science,
-        newWords: child.startDecile.english
-      },
-      history: {} // keyed by subject, array of question results
-    };
-    // Ensure newWords exists on older sessions
-    if (!state.sessions[childId].levels.newWords) {
-      state.sessions[childId].levels.newWords = state.sessions[childId].levels.english;
+    if (childId === 'daddy') {
+      state.sessions[childId] = {
+        levels: {
+          erQuestions: child.startDecile.erQuestions || 30,
+          newResearch: child.startDecile.newResearch || 30
+        },
+        history: {}
+      };
+    } else {
+      state.sessions[childId] = {
+        levels: {
+          math: child.startDecile.math,
+          english: child.startDecile.english,
+          science: child.startDecile.science,
+          newWords: child.startDecile.english
+        },
+        history: {}
+      };
+      if (!state.sessions[childId].levels.newWords) {
+        state.sessions[childId].levels.newWords = state.sessions[childId].levels.english;
+      }
     }
+  }
+  // Ensure daddy sessions have ER levels on older saves
+  if (childId === 'daddy') {
+    if (!state.sessions[childId].levels.erQuestions) state.sessions[childId].levels.erQuestions = 30;
+    if (!state.sessions[childId].levels.newResearch) state.sessions[childId].levels.newResearch = 30;
   }
   return state.sessions[childId];
 }
@@ -938,6 +956,174 @@ const NEW_WORDS = {
     {w:'resilient',d:'able to recover quickly from difficulty',s:'The resilient team bounced back after the loss.'},
   ]
 };
+
+// ═══════════════════════════════════════════
+//  ER QUESTIONS (Daddy)
+//  Levels: 0-19 Intern, 20-39 Resident, 40-49 Attending, 50-59 Expert
+// ═══════════════════════════════════════════
+
+const ER_QUESTIONS = {
+  // Intern level (0-19): Core fundamentals
+  0: [
+    {q:'What is the first-line treatment for anaphylaxis?', a:'Epinephrine 0.3-0.5mg IM (1:1000) in the anterolateral thigh'},
+    {q:'What are the classic ECG findings in STEMI?', a:'ST elevation ≥1mm in 2+ contiguous leads (≥2mm in V1-V3)'},
+    {q:'What is the GCS score for a patient who opens eyes to pain, has incomprehensible speech, and withdraws from pain?', a:'E2 + V2 + M4 = 8'},
+    {q:'Name the 5 H\'s and 5 T\'s of cardiac arrest.', a:'H: Hypovolemia, Hypoxia, H+ (acidosis), Hypo/Hyperkalemia, Hypothermia. T: Tension pneumo, Tamponade, Toxins, Thrombosis (PE), Thrombosis (MI)'},
+    {q:'What is the Ottawa Ankle Rule?', a:'X-ray if: bone tenderness at posterior 6cm or tip of malleoli, OR inability to weight-bear 4 steps immediately and in ED'},
+    {q:'What is the CURB-65 score used for?', a:'Pneumonia severity. Confusion, Urea>7, RR≥30, BP<90/60, Age≥65. Score ≥2 consider admission.'},
+    {q:'What is the Wells score for PE?', a:'Clinical signs DVT (3), PE most likely dx (3), HR>100 (1.5), immobilization/surgery (1.5), prior DVT/PE (1.5), hemoptysis (1), malignancy (1)'},
+    {q:'What are the classic signs of cardiac tamponade?', a:'Beck\'s Triad: hypotension, muffled heart sounds, JVD'},
+    {q:'Normal adult vital signs ranges?', a:'HR 60-100, RR 12-20, BP 90-140/60-90, SpO2 ≥95%, Temp 36.5-37.5°C'},
+    {q:'What is the NEXUS criteria for C-spine imaging?', a:'No imaging if: no midline tenderness, no focal deficit, normal alertness, no intoxication, no distracting injury'},
+  ],
+  1: [
+    {q:'What is the dose of adenosine for SVT?', a:'6mg rapid IV push, then 12mg, then 12mg if needed. Follow with rapid 20mL NS flush.'},
+    {q:'What defines SIRS?', a:'≥2 of: Temp >38 or <36°C, HR >90, RR >20 or PaCO2 <32, WBC >12k or <4k or >10% bands'},
+    {q:'What is the Canadian C-Spine Rule?', a:'High risk (age≥65, dangerous mechanism, paresthesias)→image. Low risk (simple MVC, sitting in ED, ambulatory, delayed neck pain, no midline tenderness)→assess ROM. If can rotate 45° L&R→no imaging needed.'},
+    {q:'Treatment for tension pneumothorax?', a:'Needle decompression: 2nd ICS midclavicular line or 4th/5th ICS anterior axillary line, followed by chest tube'},
+    {q:'What is the Canadian CT Head Rule?', a:'CT if GCS<15 at 2h, suspected open/depressed skull fracture, ≥2 episodes vomiting, age≥65, amnesia before impact >30min, dangerous mechanism'},
+    {q:'What are the HEART score components?', a:'History (0-2), ECG (0-2), Age (0-2), Risk factors (0-2), Troponin (0-2). Low risk 0-3, moderate 4-6, high 7-10'},
+    {q:'Name the Centor criteria for strep pharyngitis.', a:'Tonsillar exudates, tender anterior cervical LAD, fever >38°C, absence of cough. Score ≥3 treat empirically or rapid strep test.'},
+    {q:'What is the PECARN rule for pediatric head trauma?', a:'Low risk if: normal mental status, no scalp hematoma (if <2yo), no LOC, no severe mechanism, no palpable skull fracture, acting normally per parents'},
+    {q:'Dose of tPA for acute ischemic stroke?', a:'0.9mg/kg (max 90mg). 10% as IV bolus over 1 min, remaining 90% infused over 60 min. Window: within 4.5 hours.'},
+    {q:'What electrolyte abnormality causes peaked T waves, widened QRS, and sine wave pattern?', a:'Hyperkalemia'},
+  ],
+  2: [
+    {q:'What is the treatment algorithm for hyperkalemia?', a:'1) Calcium gluconate (membrane stabilizer) 2) Insulin 10U + D50 (shift K intracellular) 3) Salbutamol nebs 4) Kayexalate/Patiromer (elimination) 5) Dialysis if refractory'},
+    {q:'What is the Sgarbossa criteria?', a:'Diagnose STEMI in presence of LBBB: concordant ST elevation ≥1mm (5pts), concordant ST depression ≥1mm in V1-V3 (3pts), discordant ST elevation ≥5mm (2pts). ≥3pts = STEMI'},
+    {q:'Canadian criteria for imaging in suspected subarachnoid hemorrhage?', a:'Ottawa SAH Rule: Age≥40, neck pain/stiffness, witnessed LOC, onset during exertion, thunderclap headache, limited neck flexion. Any positive → CT then LP if CT negative.'},
+    {q:'What is the BI-RADS classification for breast imaging?', a:'0-incomplete, 1-negative, 2-benign, 3-probably benign(<2% malignancy), 4-suspicious(2-95%), 5-highly suggestive(>95%), 6-known malignancy'},
+    {q:'Dose and route of naloxone for opioid overdose?', a:'0.04-0.4mg IV/IM/SC titrated to respiratory effort. Can give 2mg IN. Repeat q2-3min. Duration shorter than most opioids—observe for re-sedation.'},
+    {q:'What defines DKA?', a:'Blood glucose >14 mmol/L (>250 mg/dL), pH <7.3 or bicarb <18, ketonemia or ketonuria. Treatment: IV fluids, insulin infusion, potassium replacement.'},
+    {q:'What is the PERC rule for PE?', a:'If ALL negative, no further workup: age<50, HR<100, SpO2>94%, no prior DVT/PE, no recent surgery/trauma, no hemoptysis, no exogenous estrogen, no unilateral leg swelling'},
+    {q:'What are the indications for intubation?', a:'Failure to maintain/protect airway, failure of oxygenation/ventilation, anticipated clinical course (burns, angioedema, declining GCS)'},
+    {q:'What is the Parkland formula for burns?', a:'4mL × %TBSA × weight(kg) of crystalloid in first 24h. Half in first 8h, half in next 16h. Only count 2nd and 3rd degree burns.'},
+    {q:'What are the contraindications to tPA in stroke?', a:'BP>185/110, glucose<50, platelets<100k, INR>1.7, recent surgery/trauma (14d), GI/GU bleed (21d), prior ICH, current anticoagulation'},
+  ],
+  3: [
+    {q:'What is the management of status epilepticus?', a:'1st line: Benzo (lorazepam 4mg IV or midazolam 10mg IM). 2nd line: levetiracetam 60mg/kg, fosphenytoin 20mg PE/kg, or valproate 40mg/kg. 3rd line: propofol/midazolam/ketamine infusion + intubation.'},
+    {q:'What is the Wellens syndrome?', a:'Deep symmetric T-wave inversions or biphasic T waves in V2-V3, suggesting critical LAD stenosis. These patients need angiography, NOT stress testing.'},
+    {q:'What are the components of the ABCDE trauma assessment?', a:'A-Airway+C-spine, B-Breathing, C-Circulation+hemorrhage control, D-Disability(GCS, pupils), E-Exposure+environment(prevent hypothermia)'},
+    {q:'Criteria for massive transfusion protocol activation?', a:'Anticipated need for ≥10 units pRBC in 24h, or ≥4 units in 1h, or hemodynamic instability with active hemorrhage. Give 1:1:1 ratio (pRBC:FFP:platelets).'},
+    {q:'What is the treatment for symptomatic bradycardia?', a:'Atropine 1mg IV q3-5min (max 3mg). If refractory: transcutaneous pacing, dopamine 5-20mcg/kg/min, or epinephrine 2-10mcg/min.'},
+    {q:'What are the Jones criteria for rheumatic fever?', a:'Major: polyarthritis, carditis, chorea, erythema marginatum, subcutaneous nodules. Minor: fever, arthralgia, elevated ESR/CRP, prolonged PR. Need 2 major OR 1 major + 2 minor + evidence of prior strep.'},
+    {q:'Management of acute upper GI bleed?', a:'Resuscitate, PPI infusion (pantoprazole 80mg bolus + 8mg/h), transfuse if Hb<70(or<90 if cardiac), octreotide if variceal suspected, GI consult for endoscopy within 24h (12h if high risk).'},
+    {q:'What is the Brugada pattern on ECG?', a:'Type 1 (diagnostic): coved ST elevation ≥2mm in ≥1 of V1-V3 followed by negative T wave. Associated with sudden cardiac death. Definitive treatment is ICD.'},
+    {q:'What is the CANADIAN Syncope Risk Score?', a:'Predisposition to vasovagal (-1), heart disease (+1), any SBP<90 (+2), elevated troponin (+2), abnormal QRS axis (+1), QRS>130ms (+1), ED diagnosis of cardiac syncope (+2)'},
+    {q:'What is the treatment for acute angle-closure glaucoma?', a:'Topical timolol, brimonidine, pilocarpine. Systemic acetazolamide 500mg IV. Mannitol if IOP remains high. Definitive: laser peripheral iridotomy.'},
+  ],
+  4: [
+    {q:'What are the Berlin criteria for ARDS?', a:'Acute onset (within 1 week), bilateral opacities on CXR/CT not fully explained by effusions/atelectasis, not fully explained by cardiac failure/fluid overload, PaO2/FiO2 ≤300 (mild), ≤200 (moderate), ≤100 (severe)'},
+    {q:'What is the management of acute aortic dissection?', a:'Type A (ascending): emergent surgery. Type B (descending): medical management with HR<60 and SBP<120. IV esmolol or labetalol first (reduce shear force), then nitroprusside if needed. Surgery only if complicated (malperfusion, rupture).'},
+    {q:'What is the RUSH exam?', a:'Rapid Ultrasound in Shock. Pump (cardiac contractility, pericardial effusion), Tank (IVC, FAST, pleural), Pipes (aorta, DVT). Differentiates cardiogenic, obstructive, hypovolemic, distributive shock.'},
+    {q:'What is the reversal agent for dabigatran?', a:'Idarucizumab (Praxbind) 5g IV. For rivaroxaban/apixaban: andexanet alfa or 4-factor PCC 50U/kg if andexanet unavailable.'},
+    {q:'What is the Light\'s criteria for pleural effusion?', a:'Exudative if ANY: pleural protein/serum protein >0.5, pleural LDH/serum LDH >0.6, pleural LDH > 2/3 upper limit of normal serum LDH'},
+    {q:'Management of malignant hyperthermia?', a:'Stop triggering agent, dantrolene 2.5mg/kg IV (repeat up to 10mg/kg), active cooling, treat hyperkalemia, monitor for DIC/rhabdomyolysis/renal failure'},
+    {q:'What is the HINTS exam for acute vestibular syndrome?', a:'Head Impulse test (normal=central), Nystagmus (direction-changing=central), Test of Skew (positive=central). A "dangerous" HINTS is more sensitive than MRI for posterior stroke in first 48h.'},
+    {q:'What are the Ranson criteria for pancreatitis?', a:'At admission: Age>55, WBC>16k, glucose>11, LDH>350, AST>250. At 48h: Hct drop>10%, BUN rise>1.8, Ca<2, PaO2<60, base deficit>4, fluid sequestration>6L. ≥3 = severe.'},
+    {q:'What is the toxic dose of acetaminophen and treatment protocol?', a:'Toxic: >150mg/kg or >7.5g in adults. Rumack-Matthew nomogram at 4h post-ingestion. NAC protocol: 150mg/kg over 1h, then 50mg/kg over 4h, then 100mg/kg over 16h (21h total).'},
+    {q:'What are the Duke criteria for infective endocarditis?', a:'Major: positive blood cultures (typical organisms), endocardial involvement on echo. Minor: predisposition, fever, vascular phenomena, immunologic phenomena, suggestive micro. Definite: 2 major, 1 major+3 minor, or 5 minor.'},
+  ],
+  5: [
+    {q:'What is the ED management of thyroid storm?', a:'PTU 200mg PO/PR q4h (blocks synthesis + conversion), propranolol (blocks symptoms + T4→T3), hydrocortisone 100mg IV q8h (blocks conversion + treats adrenal insufficiency), iodine (AFTER PTU, blocks release). Thyroxicity index: Burch-Wartofsky >45 = storm.'},
+    {q:'Describe the EM approach to wide complex tachycardia.', a:'Assume VT until proven otherwise. Brugada criteria: absence of RS in all precordial leads, RS interval >100ms, AV dissociation, morphology criteria in V1/V6. Treatment: stable→amiodarone 150mg IV over 10min. Unstable→synchronized cardioversion.'},
+    {q:'What is the evidence for ketamine in RSI vs other agents?', a:'Ketamine 1-2mg/kg IV is hemodynamically stable, bronchodilatory. No longer believed to raise ICP in ventilated patients. Comparable to propofol/etomidate for most indications. Etomidate concern: transient adrenal suppression in sepsis.'},
+    {q:'What is the evidence for TXA in trauma?', a:'CRASH-2: 1g IV over 10min + 1g over 8h within 3h of injury reduces mortality. WOMAN trial: reduces death from PPH. MATTERs study: benefit in combat casualties. Should NOT be given >3h post-injury (may increase mortality).'},
+    {q:'What is the approach to the crashing asthmatic?', a:'Continuous salbutamol nebs, ipratropium q20min×3, methylprednisolone 125mg IV, MgSO4 2g IV over 20min, consider epinephrine 0.3mg IM/SC, BiPAP. If intubating: ketamine induction, low RR (8-10), long expiratory time, permissive hypercapnia, watch for auto-PEEP.'},
+    {q:'What is the Surviving Sepsis Campaign 1-hour bundle?', a:'Measure lactate, obtain blood cultures before antibiotics, administer broad-spectrum antibiotics, begin 30mL/kg crystalloid for hypotension or lactate≥4, vasopressors (norepinephrine first-line) if MAP<65 after fluids.'},
+    {q:'What are the ACEP clinical policy recommendations for t-PA in stroke?', a:'Level A: offer within 3h of onset. Level B: offer 3-4.5h. Consider: age, severity (NIHSS), glucose, BP management. NNT ~10 for good outcome at 3 months. Risk of sICH ~6%.'},
+    {q:'Describe the approach to pediatric septic shock.', a:'Aggressive fluid resuscitation 20mL/kg boluses (up to 60mL/kg in first hour). If fluid refractory: epinephrine for cold shock, norepinephrine for warm shock. Early antibiotics. Hydrocortisone if catecholamine-resistant. Monitor for adrenal insufficiency.'},
+    {q:'What is the current evidence on permissive hypotension in trauma?', a:'Target SBP 80-90 in penetrating trauma without TBI. MAP≥80 if TBI present. Concept: aggressive crystalloid → hemodilution, coagulopathy, hypothermia (lethal triad). Damage control resuscitation: minimal crystalloid, early blood products, permissive hypotension.'},
+    {q:'What is the YEARS algorithm for PE in pregnancy?', a:'YEARS items: clinical signs of DVT, hemoptysis, PE most likely diagnosis. If no YEARS items AND D-dimer <1000→PE excluded. If ≥1 YEARS item AND D-dimer <500→PE excluded. Otherwise→CTPA. Reduces CT use by ~30-40% in pregnancy.'},
+  ]
+};
+
+const ER_RESEARCH = {
+  0: [
+    {q:'What did the PARAMEDIC-2 trial show about epinephrine in cardiac arrest?', a:'Epinephrine improved 30-day survival (3.2% vs 2.4%) but survivors had worse neurological outcomes. More patients survived to hospital but in vegetative states. Published NEJM 2018.'},
+    {q:'What did the WOMAN trial demonstrate about TXA in postpartum hemorrhage?', a:'TXA 1g IV within 3h of birth reduced death due to bleeding by 19%. No increase in thromboembolic events. Published Lancet 2017. Now WHO-recommended.'},
+    {q:'What does the HEART Pathway study show for low-risk chest pain?', a:'HEART score 0-3 with negative serial troponins identifies patients safe for early discharge. 30-day MACE rate <1%. Reduces admissions by ~20%.'},
+    {q:'What did the TTM2 trial show about targeted temperature management after cardiac arrest?', a:'No benefit of hypothermia (33°C) over normothermia (≤37.5°C) in OHCA. Published NEJM 2021. Fever prevention is the key intervention, not active cooling to 33°C.'},
+    {q:'What is the current evidence on balanced crystalloids vs normal saline?', a:'SMART/SALT-ED trials (2018): balanced crystalloids (LR/Plasmalyte) reduced composite of death, new renal replacement therapy, and persistent renal dysfunction vs NS. Benefit most pronounced in sepsis. BaSICS (2021): no significant difference.'},
+    {q:'What did the PATCH trial show about prehospital TXA in trauma?', a:'Published Lancet 2023. Prehospital TXA in major trauma did NOT improve 6-month functional outcomes. However, some subgroups (coagulopathic patients) may still benefit. Does not contradict CRASH-2 which focused on mortality.'},
+    {q:'What does the ACORN trial demonstrate about antibiotics in appendicitis?', a:'Published NEJM 2024. Antibiotics-first approach non-inferior to surgery for uncomplicated appendicitis at 4 years. ~30% eventually needed appendectomy. Patient preference and shared decision-making are key.'},
+    {q:'What is the evidence from the STOP-IT trial on antibiotic duration for intra-abdominal infections?', a:'4 days of antibiotics post source control was non-inferior to a longer course guided by clinical resolution. Shorter is better once source is controlled.'},
+    {q:'What did the ATHOS-3 trial show about angiotensin II in vasodilatory shock?', a:'Angiotensin II (Giapreza) significantly improved MAP in catecholamine-resistant vasodilatory shock vs placebo. Now available as third-line vasopressor. May particularly benefit patients on RRT.'},
+    {q:'What does the iSPOT study show about ketamine for procedural sedation?', a:'Ketamine for procedural sedation in the ED is safe and effective. Lower rate of respiratory adverse events compared to propofol in children. Vomiting rate ~15%. Recovery time longer but safety profile favorable.'},
+  ],
+  1: [
+    {q:'What did the CITRIS-ALI trial show about vitamin C in sepsis?', a:'High-dose IV vitamin C did NOT significantly reduce organ failure scores or inflammatory markers in sepsis/ARDS. Published JAMA 2019. The vitamin C-thiamine-hydrocortisone cocktail (Marik protocol) is not recommended.'},
+    {q:'What is the current evidence on push-dose epinephrine in the ED?', a:'Push-dose epi (5-20mcg boluses of 10mcg/mL concentration) is increasingly used as bridge to vasopressor infusion. No large RCTs but observational data supports safety. Main risk: dosing errors from concentration confusion.'},
+    {q:'What did the BRUISE CONTROL-2 trial show?', a:'Continued anticoagulation during cardiac device procedures did NOT significantly reduce clinically significant hematoma vs interrupted anticoagulation with heparin bridging. Individual risk assessment recommended.'},
+    {q:'What is the evidence for point-of-care ultrasound (POCUS) in cardiac arrest?', a:'SHOC-ED (2020): routine early POCUS in non-traumatic cardiac arrest did not improve survival. However, focused protocols (organized cardiac activity assessment) may guide resuscitation decisions. PEA with cardiac standstill has very poor prognosis.'},
+    {q:'What did the CLOVERS trial show about restrictive vs liberal fluids in sepsis?', a:'Published NEJM 2023. Restrictive fluid strategy (vasopressors first) vs liberal (fluids first) showed no significant difference in 90-day mortality in sepsis-induced hypotension. Supports clinician judgment over a one-size-fits-all approach.'},
+    {q:'What is the evidence for low-dose ketamine as analgesic in the ED?', a:'Multiple RCTs show 0.1-0.3mg/kg IV ketamine is effective for acute pain, opioid-sparing. PRIME trial: subdissociative ketamine non-inferior to morphine. Side effects: dysphoria, dizziness, nausea. Best as adjunct, not replacement.'},
+    {q:'What did the CRASH-3 trial demonstrate about TXA in TBI?', a:'TXA within 3h of mild-to-moderate TBI (GCS 9-15) reduced head injury death. No benefit in severe TBI (GCS 3-8) or beyond 3h. Published Lancet 2019.'},
+    {q:'What is the current evidence on apneic oxygenation during RSI?', a:'FELLOW and PreVent trials showed no significant benefit of nasal cannula O2 during apneic period. However, physiologically sound and low risk. NODESAT trial showed benefit in obese patients. Recommend continuing practice despite mixed evidence.'},
+    {q:'What did the OPTIMISE-2 trial show about oxygen targets in sepsis?', a:'Conservative oxygen therapy (SpO2 88-92%) did NOT reduce organ dysfunction vs liberal (SpO2 ≥96%) in sepsis. Challenges prior LOCO2 findings. Target SpO2 92-96% remains reasonable.'},
+    {q:'What is the evidence on whole blood resuscitation in trauma?', a:'Observational data (military + civilian) suggests low-titer O whole blood may be superior to component therapy for massive transfusion. STORHM pilot trial (2023) showed feasibility and safety. Multiple large RCTs ongoing.'},
+  ],
+  2: [
+    {q:'What did the RECOVERY trial show about dexamethasone in COVID-19?', a:'Dexamethasone 6mg daily for 10 days reduced 28-day mortality in patients requiring oxygen (NNT=25 for supplemental O2, NNT=8 for mechanical ventilation). No benefit if not hypoxic. Published NEJM 2021.'},
+    {q:'What is the evidence for bougie-first intubation?', a:'BEAM trial (2018): bougie-first approach improved first-pass success in ED intubation (98% vs 87%) compared to stylet. Benefit most pronounced in difficult airway features. Increasingly adopted as default technique.'},
+    {q:'What did the ARISE, ProCESS, and ProMISe trials collectively show about EGDT?', a:'Protocolized early goal-directed therapy (Rivers protocol) was NOT superior to usual care for sepsis. CVP targets, ScvO2 monitoring, and routine central lines are not necessary. Good initial resuscitation with clinical assessment is sufficient.'},
+    {q:'What is the latest evidence on calcium in cardiac arrest?', a:'PARAMEDIC-3 trial (2023): routine calcium in cardiac arrest did not improve survival. May be harmful. Reserve for documented hypocalcemia, hyperkalemia, or calcium channel blocker toxicity.'},
+    {q:'What does current evidence say about door-to-antibiotic time in sepsis?', a:'Hour-1 bundle is recommended but evidence is mostly observational. Each hour delay in antibiotics associated with ~4% increase in mortality (Kumar 2006). However, overtriage and inappropriate antibiotics carry their own harms. Balance speed with accuracy.'},
+    {q:'What is the REBEL EM summary on troponin-only pathway for chest pain?', a:'0/1h and 0/2h high-sensitivity troponin algorithms can safely rule out MI with single or two draws. ESC 0/1h algorithm: hs-cTn at 0 and 1h. If both below threshold, NPV >99%. Reduces ED length of stay.'},
+    {q:'What did the ACCOAST trial show about pre-treatment with prasugrel?', a:'Pre-treatment with prasugrel in NSTEMI ACS increased bleeding without reducing ischemic events. Supports waiting for coronary anatomy before giving prasugrel. Differs from clopidogrel pre-treatment which has some benefit.'},
+    {q:'What is the evidence for esmolol in refractory cardiac arrest?', a:'Observational studies (Driver 2014, Lee 2016) suggest esmolol bolus 500mcg/kg during refractory VF may improve ROSC and survival. Proposed mechanism: reduced myocardial oxygen demand, sympatholytic. RCTs needed.'},
+    {q:'What did the EINSTEIN-Jr study show about rivaroxaban in pediatric VTE?', a:'Rivaroxaban body-weight-adjusted dosing was effective and safe in children with acute VTE. Published NEJM 2020. Expanding DOAC use from adult to pediatric populations.'},
+    {q:'What is the current Canadian perspective on ketamine for agitation?', a:'IM ketamine 4-5mg/kg is increasingly used for severe undifferentiated agitation. Faster onset than IM haloperidol or midazolam. Concern: intubation rates (0-40% in studies). ACEP policy supports use. Canadian position: available as option.'},
+  ],
+  3: [
+    {q:'What did the MOST trial show about post-cardiac arrest care?', a:'Published 2025. Targeted MAP ≥80 during post-cardiac arrest care did not significantly improve neurological outcomes vs MAP ≥65. Challenges the assumption that higher MAP targets improve cerebral perfusion.'},
+    {q:'What is the evidence for high-flow nasal cannula vs BiPAP in acute respiratory failure?', a:'FLORALI trial: HFNC reduced 90-day mortality vs NIV/standard O2 in acute hypoxemic respiratory failure. However, may delay intubation if not monitored. ROX index >4.88 at 12h predicts HFNC success.'},
+    {q:'What does current evidence say about ED-initiated buprenorphine?', a:'Multiple studies (Liebschutz JAMA IM 2014, D\'Onofrio JAMA 2015) show ED-initiated buprenorphine for OUD doubles engagement in addiction treatment at 30 days. Canadian Opioid Guidelines support ED initiation. Micro-dosing protocols allow initiation without full withdrawal.'},
+    {q:'What is the ENLS approach to neurocritical emergencies in the ED?', a:'Emergency Neurological Life Support protocols: time-sensitive interventions for status epilepticus, acute ischemic stroke, ICH, SAH, TBI, spinal cord injury, bacterial meningitis. Focus on rapid ABCs, glucose, preventing secondary brain injury.'},
+    {q:'What is the evidence on POCUS for aortic dissection?', a:'Bedside echo can detect proximal dissection findings: intimal flap, AI, pericardial effusion. Sensitivity ~80-90% for Type A. Cannot rule out dissection. D-dimer <500 has high NPV. CTA remains gold standard.'},
+    {q:'What are the highlights of the 2023 AHA cardiac arrest guidelines update?', a:'Double sequential defibrillation lacks evidence—not recommended. IV/IO epinephrine within first 5 min for non-shockable rhythms. Consider early cath lab for STEMI + arrest. Enhanced recovery: avoid hyperoxia, optimize temperature, prognosticate at ≥72h.'},
+    {q:'What did the REDUCE trial show about prophylactic IVC filters in trauma?', a:'Prophylactic IVC filters in high-risk trauma patients did NOT reduce PE or mortality compared to pharmacologic prophylaxis alone. Supports chemical prophylaxis as primary prevention.'},
+    {q:'What is the latest on point-of-care coagulation testing in trauma?', a:'Viscoelastic testing (TEG/ROTEM) enables goal-directed transfusion. Faster than standard coagulation panels. ITACTIC trial: VHA-guided resuscitation did not reduce mortality but reduced blood product waste. Increasingly standard in trauma centers.'},
+    {q:'What is the evidence for IV lidocaine as an ED analgesic?', a:'Multiple RCTs show 1.5mg/kg IV lidocaine is effective for renal colic and other acute pain. Non-inferior to morphine in some studies. Opioid-sparing. Contraindicated in heart block, liver disease. Duration ~45min. Growing adoption in Canadian EDs.'},
+    {q:'What did the PREPAREICU trial show about stress ulcer prophylaxis?', a:'Published Lancet 2024. Pantoprazole vs placebo in ICU patients: PPI reduced clinically important GI bleeding but no mortality benefit. Risk of C. difficile. Supports targeted prophylaxis in high-risk patients rather than universal use.'},
+  ],
+  4: [
+    {q:'What is the Canadian approach to safe opioid prescribing from the ED?', a:'CAEP 2022 guidelines: ≤3-day supply for acute pain, avoid ER formulations, co-prescribe naloxone if risk factors, check PMP, avoid prescribing for chronic pain from ED, counsel on storage/disposal.'},
+    {q:'What is the evidence for delayed sequence intubation (DSI)?', a:'Weingart 2015: ketamine 1-1.5mg/kg to achieve dissociation, then preoxygenate (HFNC/BVM/NRB/BiPAP) for 3min, then paralytic for intubation. Improves pre-oxygenation in agitated/delirious patients who won\'t tolerate preoxygenation.'},
+    {q:'What did the COACT trial show about immediate angiography post-cardiac arrest without STEMI?', a:'No benefit of immediate coronary angiography vs delayed in comatose OHCA survivors without STEMI on ECG. Published NEJM 2019. Reserve immediate cath lab for obvious STEMI or high suspicion.'},
+    {q:'What is the latest evidence on geriatric-specific resuscitation considerations?', a:'Higher complication rates with intubation. Consider NIV first. Age alone not prognostic in cardiac arrest. Polypharmacy review essential. Frailty assessment (CFS) more predictive than age. Rib fractures carry 5-10% mortality in elderly. Lower thresholds for CT.'},
+    {q:'What is the STONE study about in terms of kidney stone management?', a:'Medical expulsive therapy (tamsulosin) benefit is limited to stones 5-10mm distal ureteral. SUSPEND trial: no benefit overall. Small stones pass spontaneously. NSAIDs are first-line pain management. CT low-dose protocol reduces radiation.'},
+    {q:'What is the evidence for mechanical CPR devices?', a:'PARAMEDIC (LUCAS) and CIRC (AutoPulse) trials showed no survival benefit over manual CPR. May be useful for: prolonged CPR, transport, cath lab, limited personnel, hypothermic arrest. Not a replacement for quality manual CPR.'},
+    {q:'What is the latest on ECPR (extracorporeal CPR)?', a:'ARREST trial (2020): ECPR improved survival to discharge in refractory shockable OHCA (43% vs 7%). Prague OHCA: trend toward benefit. Requires specialized centers, rapid deployment. Patient selection critical: witnessed arrest, initial shockable rhythm, age, no-flow time.'},
+    {q:'What does the evidence say about DOAC reversal in ICH?', a:'Andexanet alfa for anti-Xa agents (rivaroxaban, apixaban) showed improved hemostasis in ANNEXA-4. 4-factor PCC 50U/kg is alternative. For dabigatran: idarucizumab 5g IV. Activated charcoal if within 2h of ingestion.'},
+    {q:'What is the evidence for phenylephrine vs norepinephrine in septic shock?', a:'Norepinephrine is first-line (alpha + beta). Phenylephrine (pure alpha) may worsen cardiac output. SOAP-II: dopamine increased arrhythmias vs norepi. Vasopressin (0.03U/min) as second line reduces catecholamine requirements.'},
+    {q:'What is the current approach to acute atrial fibrillation in the ED?', a:'Canadian CAEP: rate control first if >48h or unknown. Rhythm control (procainamide 15mg/kg IV over 30min, or cardioversion) if <48h. RAFF-2: procainamide + cardioversion = 96% conversion. Ottawa Aggressive Protocol is safe. DOAC for stroke prophylaxis per CHADS₂-VASc.'},
+  ],
+  5: [
+    {q:'What is the REBEL Cast summary on norepinephrine for sepsis in the ED?', a:'Peripheral norepinephrine is safe via proximal IV for short-duration use (<24h, dilute solution). Multiple studies show extravasation rates are low and complications rare. VITA trial supports early vasopressor initiation. Don\'t delay pressors for central access.'},
+    {q:'What is the current evidence on damage control resuscitation?', a:'Paradigm: permissive hypotension (SBP 80-90 unless TBI), minimize crystalloid, early balanced blood products (1:1:1), TXA within 3h, calcium supplementation (massive transfusion → citrate toxicity), point-of-care VHA-guided. PROPPR trial supports 1:1:1 ratio.'},
+    {q:'What is the evidence for the HEART score vs traditional workup for chest pain?', a:'HEART score 0-3 with 2 negative troponins has <1% 30-day MACE. HEART Pathway reduced length of stay by 12h and cardiac testing by 12%. Now widely validated. Outperforms TIMI and GRACE in ED population. Serial 0/3h hs-troponin further improves NPV.'},
+    {q:'What is the latest on awake intubation techniques in the ED?', a:'Video laryngoscopy with topicalized airway (atomized lidocaine 4%, nebulized lidocaine, oxymetazoline for nasal) is feasible in ED. Indications: predicted difficult airway, cervical immobility, airway edema. Ketamine sedation aids tolerance.'},
+    {q:'What does current evidence say about lactate clearance as resuscitation target?', a:'Lactate clearance ≥10-20% over 2-6h associated with improved outcomes in sepsis. ANDROMEDA-SHOCK: peripheral perfusion-guided (CRT) resuscitation was non-inferior to lactate-guided. Lactate is useful but not the sole target. Consider trends.'},
+    {q:'What is the evidence for IV subdissociative ketamine vs opioids in the ED?', a:'Multiple RCTs: ketamine 0.3mg/kg IV non-inferior to morphine 0.1mg/kg for acute pain. PRIME trial (AJEM 2019). Higher dysphoria rates but shorter duration. Intranasal ketamine 1mg/kg also effective. No respiratory depression. Ideal for opioid-sparing strategies.'},
+    {q:'What are the key findings from the HALT-IT trial?', a:'TXA did NOT reduce mortality in GI bleeding. Published Lancet 2020. Increased VTE events. TXA benefit appears limited to traumatic/surgical bleeding, NOT medical GI hemorrhage. Changed practice.'},
+    {q:'What is the latest on post-intubation hemodynamic collapse?', a:'Common causes: auto-PEEP (asthma/COPD), loss of sympathetic tone (sedation), tension pneumothorax, reduced preload (positive pressure in hypovolemic patient). Prevention: fluid bolus pre-intubation, avoid excessive PEEP, use push-dose vasopressors, ketamine-based induction.'},
+    {q:'What is the evidence on clinical decision support tools in the ED?', a:'ISARIC-4C, NEWS2, qSOFA all have limitations. AI/ML models show promise but validation gaps. PECARN, HEART, Canadian Head CT rules remain gold standard for their domains. Implementation science shows decision rules are underutilized. EHR integration improves compliance.'},
+    {q:'What is the current evidence for prehospital plasma in trauma?', a:'PAMPer trial (2018): prehospital thawed plasma reduced 30-day mortality in air-transported trauma (23.2% vs 33%). COMBAT trial: no benefit in ground transport. Suggests benefit when transport time is long enough for intervention to take effect.'},
+  ]
+};
+
+function genERQuestion(level) {
+  const tier = Math.min(5, Math.max(0, Math.floor(level / 10)));
+  const questions = ER_QUESTIONS[tier] || ER_QUESTIONS[0];
+  return pick(questions);
+}
+
+function genERResearch(level) {
+  const tier = Math.min(5, Math.max(0, Math.floor(level / 10)));
+  const questions = ER_RESEARCH[tier] || ER_RESEARCH[0];
+  return pick(questions);
+}
 
 function genNewWord(level) {
   const grade = Math.min(5, Math.max(0, Math.floor(level / 10)));
@@ -1523,12 +1709,40 @@ function renderChildTabs() {
   }
 }
 
+const DADDY_SUBJECTS = [
+  { id: 'erQuestions', name: 'ER Questions', icon: '🏥' },
+  { id: 'newResearch', name: 'New Research', icon: '🔬' }
+];
+
 function renderSubjectScreen() {
   const child = CHILDREN[state.activeChild];
   document.getElementById('subjectWho').textContent = `${child.emoji} ${child.name} — ${child.info}`;
   const grid = document.getElementById('subjectGrid');
   grid.innerHTML = '';
   const session = getSession(state.activeChild);
+
+  // Daddy gets ER-specific subjects only
+  if (state.activeChild === 'daddy') {
+    for (const subj of DADDY_SUBJECTS) {
+      const lvl = session.levels[subj.id] || 30;
+      const tier = lvl < 20 ? 'Intern' : lvl < 40 ? 'Resident' : lvl < 50 ? 'Attending' : 'Expert';
+      const btn = document.createElement('div');
+      btn.className = 'subject-btn';
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Level: ${tier} (${lvl})</div>
+      `;
+      btn.onclick = () => startQuiz(subj.id);
+      grid.appendChild(btn);
+    }
+    // Hide word entry button for daddy
+    document.querySelector('#subjectScreen .mt-20 .btn-primary').style.display = 'none';
+    return;
+  } else {
+    // Show word entry button for kids
+    document.querySelector('#subjectScreen .mt-20 .btn-primary').style.display = '';
+  }
 
   // No science for Cole or Mackenzie
   const noScience = (state.activeChild === 'cole' || state.activeChild === 'mackenzie');
@@ -1757,6 +1971,7 @@ function saveQuizState() {
 const CORE_SUBJECTS = ['math', 'english', 'science'];
 
 function getChildSubjects(childId) {
+  if (childId === 'daddy') return ['erQuestions', 'newResearch'];
   if (childId === 'cole' || childId === 'mackenzie') return ['math', 'english'];
   return CORE_SUBJECTS;
 }
@@ -1764,11 +1979,13 @@ function getChildSubjects(childId) {
 function startQuiz(subject) {
   const childId = state.activeChild;
   const session = getSession(childId);
-  // Ensure newWords level exists
-  if (!session.levels.newWords) session.levels.newWords = session.levels.english;
+  // Ensure newWords level exists (not for daddy)
+  if (childId !== 'daddy' && !session.levels.newWords) session.levels.newWords = session.levels.english;
   const isAll = subject === 'all';
   const isWordStudy = subject === 'wordStudy';
   const isNewWords = subject === 'newWords';
+  const isER = subject === 'erQuestions';
+  const isResearch = subject === 'newResearch';
   const childSubjects = getChildSubjects(childId);
 
   // For "all" mode, we track levels per subject individually
@@ -1777,11 +1994,15 @@ function startQuiz(subject) {
     for (const s of childSubjects) startLevels[s] = session.levels[s];
   } else if (isNewWords) {
     startLevels.newWords = session.levels.newWords;
+  } else if (isER || isResearch) {
+    startLevels[subject] = session.levels[subject] || 30;
   } else if (!isWordStudy) {
     startLevels[subject] = session.levels[subject];
   }
 
   const prevHistory = isAll ? [] : (session.history[subject] || []);
+
+  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : (isWordStudy ? 0 : session.levels[subject]))));
 
   quizState = {
     childId,
@@ -1789,10 +2010,12 @@ function startQuiz(subject) {
     isAll,
     isWordStudy,
     isNewWords,
+    isER,
+    isResearch,
     currentLevels: { ...startLevels },
-    currentLevel: isAll ? session.levels['math'] : (isNewWords ? session.levels.newWords : (isWordStudy ? 0 : session.levels[subject])),
+    currentLevel: isAll ? session.levels[childSubjects[0]] : startLevel,
     startLevels: { ...startLevels },
-    startLevel: isAll ? null : (isNewWords ? session.levels.newWords : (isWordStudy ? 0 : session.levels[subject])),
+    startLevel: startLevel,
     currentSubject: isAll ? childSubjects[0] : subject,
     childSubjects,
     subjectRotation: 0,
@@ -1854,6 +2077,10 @@ function nextQuestion() {
     }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
+  } else if (quizState.isER) {
+    question = genERQuestion(quizState.currentLevel);
+  } else if (quizState.isResearch) {
+    question = genERResearch(quizState.currentLevel);
   } else {
     question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
   }
@@ -1880,13 +2107,20 @@ function renderQuiz() {
   const child = CHILDREN[quizState.childId];
   const grade = Math.floor(quizState.currentLevel / 10);
   const decile = quizState.currentLevel % 10;
-  const currentSubjName = quizState.isAll
-    ? SUBJECTS.find(s => s.id === quizState.currentSubject).name
-    : SUBJECTS.find(s => s.id === quizState.subject).name;
+  let currentSubjName;
+  if (quizState.isER) currentSubjName = 'ER Questions';
+  else if (quizState.isResearch) currentSubjName = 'New Research';
+  else if (quizState.isAll) currentSubjName = SUBJECTS.find(s => s.id === quizState.currentSubject).name;
+  else currentSubjName = (SUBJECTS.find(s => s.id === quizState.subject) || {name: quizState.subject}).name;
   const distracted = state.distracted;
 
+  const isDaddy = quizState.childId === 'daddy';
+  const levelLabel = isDaddy
+    ? (() => { const l = quizState.currentLevel; return l < 20 ? 'Intern' : l < 40 ? 'Resident' : l < 50 ? 'Attending' : 'Expert'; })() + ` (${quizState.currentLevel})`
+    : `Grade ${grade}.${decile}`;
+
   document.getElementById('quizInfo').textContent =
-    `${child.emoji} ${child.name} | ${currentSubjName} | Grade ${grade}.${decile} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
+    `${child.emoji} ${child.name} | ${currentSubjName} | ${levelLabel} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
 
   // Word Study: show large display word for Cole/Mackenzie to read
   const questionTextEl = document.getElementById('questionText');
@@ -1974,6 +2208,10 @@ function skipQuestion() {
     if (!question) { alert('No words left in your list!'); showScreen('subject'); return; }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
+  } else if (quizState.isER) {
+    question = genERQuestion(quizState.currentLevel);
+  } else if (quizState.isResearch) {
+    question = genERResearch(quizState.currentLevel);
   } else {
     question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
   }
