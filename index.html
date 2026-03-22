@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.7</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.8</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -575,7 +575,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '2.7';
+const APP_VERSION = '2.8';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -1614,6 +1614,144 @@ const AUDIO_ENGLISH_5 = [
   {q:'What does the suffix "-ful" mean?', a:'Full of (hopeful = full of hope)'},
 ];
 
+// ── PROCEDURAL ENGLISH WORD BANKS (for infinite question generation) ──
+
+const PROC_SYNONYMS = {
+  0: [['big','large'],['small','little'],['happy','glad'],['sad','unhappy'],['fast','quick'],['nice','kind'],['pretty','beautiful'],['scary','frightening'],['funny','silly'],['mad','angry']],
+  1: [['big','large'],['small','tiny'],['happy','joyful'],['sad','gloomy'],['fast','speedy'],['nice','pleasant'],['smart','clever'],['scary','terrifying'],['funny','hilarious'],['mad','furious'],['begin','start'],['end','finish'],['shut','close'],['yell','shout'],['gift','present'],['stone','rock'],['grin','smile'],['leap','jump'],['road','path'],['ill','sick']],
+  2: [['beautiful','gorgeous'],['angry','furious'],['tired','exhausted'],['brave','courageous'],['quiet','silent'],['strange','unusual'],['simple','easy'],['skinny','thin'],['wealthy','rich'],['reply','answer'],['destroy','wreck'],['fix','repair'],['discover','find'],['create','make'],['enormous','huge'],['frighten','scare'],['wonderful','amazing'],['correct','right'],['difficult','hard'],['powerful','strong']],
+  3: [['enormous','immense'],['courage','bravery'],['peculiar','odd'],['generous','charitable'],['observe','watch'],['brilliant','dazzling'],['ancient','prehistoric'],['cautious','careful'],['fragile','delicate'],['triumph','victory'],['fierce','ferocious'],['miserable','wretched'],['scarce','rare'],['disguise','camouflage'],['eager','enthusiastic'],['vanish','disappear'],['preserve','protect'],['frequently','often'],['miniature','tiny'],['predict','forecast']],
+  4: [['persistent','determined'],['reluctant','hesitant'],['significant','important'],['elaborate','detailed'],['abundant','plentiful'],['demonstrate','exhibit'],['investigate','examine'],['navigate','steer'],['flexible','adaptable'],['temporary','brief'],['valuable','precious'],['absurd','ridiculous'],['consequence','result'],['distract','divert'],['imitate','mimic'],['cautious','wary'],['thrive','flourish'],['summit','peak'],['furious','enraged'],['occupy','inhabit']],
+  5: [['ambiguous','vague'],['inevitable','unavoidable'],['meticulous','thorough'],['plausible','believable'],['unanimous','agreed'],['subtle','understated'],['contemplate','ponder'],['diligent','industrious'],['futile','pointless'],['hinder','obstruct'],['versatile','adaptable'],['compromise','negotiate'],['gratitude','thankfulness'],['obstacle','barrier'],['exquisite','magnificent'],['conspicuous','obvious'],['precise','exact'],['navigate','maneuver'],['peculiar','eccentric'],['vivid','striking']]
+};
+
+const PROC_ANTONYMS = {
+  0: [['big','small'],['hot','cold'],['fast','slow'],['happy','sad'],['up','down'],['yes','no'],['day','night'],['new','old'],['good','bad'],['tall','short'],['wet','dry'],['open','close']],
+  1: [['hot','cold'],['big','small'],['fast','slow'],['happy','sad'],['up','down'],['day','night'],['open','close'],['new','old'],['full','empty'],['dark','light'],['clean','dirty'],['push','pull'],['hard','soft'],['loud','quiet'],['long','short'],['deep','shallow'],['awake','asleep'],['before','after'],['inside','outside'],['above','below']],
+  2: [['quiet','loud'],['difficult','easy'],['early','late'],['soft','hard'],['weak','strong'],['kind','cruel'],['rough','smooth'],['brave','scared'],['empty','full'],['straight','curved'],['narrow','wide'],['thick','thin'],['polite','rude'],['accept','refuse'],['remember','forget'],['borrow','lend'],['arrive','depart'],['attack','defend'],['generous','stingy'],['ancient','modern']],
+  3: [['enormous','tiny'],['ancient','modern'],['brave','cowardly'],['generous','selfish'],['gentle','rough'],['proud','humble'],['curious','indifferent'],['victory','defeat'],['create','destroy'],['increase','decrease'],['reward','punish'],['expand','shrink'],['appear','vanish'],['permanent','temporary'],['flexible','rigid'],['natural','artificial'],['simple','complex'],['public','private'],['common','rare'],['include','exclude']],
+  4: [['persistent','quitting'],['reluctant','eager'],['significant','trivial'],['abundant','scarce'],['temporary','permanent'],['valuable','worthless'],['flexible','rigid'],['create','destroy'],['increase','decrease'],['reward','punishment'],['expand','contract'],['visible','invisible'],['maximum','minimum'],['interior','exterior'],['voluntary','mandatory'],['majority','minority'],['success','failure'],['wisdom','foolishness'],['loyalty','betrayal'],['admire','despise']],
+  5: [['ambiguous','clear'],['inevitable','avoidable'],['subtle','obvious'],['temporary','permanent'],['complex','simple'],['confident','insecure'],['abundant','scarce'],['transparent','opaque'],['constructive','destructive'],['optimistic','pessimistic'],['concrete','abstract'],['genuine','fake'],['beneficial','harmful'],['significant','insignificant'],['voluntary','compulsory'],['superior','inferior'],['prosperity','poverty'],['innovation','tradition'],['tolerance','intolerance'],['courage','cowardice']]
+};
+
+const PROC_PAST_TENSE = {
+  1: [['run','ran'],['go','went'],['eat','ate'],['see','saw'],['come','came'],['give','gave'],['take','took'],['sit','sat'],['get','got'],['make','made'],['say','said'],['tell','told'],['find','found'],['know','knew'],['put','put'],['read','read'],['cut','cut'],['let','let'],['hit','hit'],['hold','held']],
+  2: [['run','ran'],['go','went'],['eat','ate'],['swim','swam'],['think','thought'],['catch','caught'],['buy','bought'],['write','wrote'],['break','broke'],['fly','flew'],['give','gave'],['hide','hid'],['grow','grew'],['know','knew'],['speak','spoke'],['choose','chose'],['draw','drew'],['drink','drank'],['fall','fell'],['feel','felt']],
+  3: [['run','ran'],['swim','swam'],['think','thought'],['catch','caught'],['buy','bought'],['write','wrote'],['break','broke'],['fly','flew'],['grow','grew'],['speak','spoke'],['choose','chose'],['teach','taught'],['bring','brought'],['seek','sought'],['freeze','froze'],['tear','tore'],['shake','shook'],['steal','stole'],['forgive','forgave'],['rise','rose'],['drive','drove'],['begin','began'],['sing','sang'],['wear','wore'],['throw','threw']]
+};
+
+const PROC_RHYME_SETS = [
+  ['cat','hat','bat','mat','sat','flat','rat'],
+  ['dog','log','fog','hog','jog','blog','frog'],
+  ['sun','fun','run','bun','done','won','gun'],
+  ['cake','make','lake','bake','take','shake','wake'],
+  ['night','light','right','fight','sight','bright','flight'],
+  ['ball','tall','call','wall','fall','small','hall'],
+  ['ring','sing','king','thing','bring','spring','wing'],
+  ['rock','sock','lock','clock','knock','block','dock'],
+  ['tree','free','bee','see','three','knee','key'],
+  ['boat','coat','goat','float','note','vote','wrote'],
+  ['train','rain','brain','main','plain','chain','drain'],
+  ['cold','gold','bold','told','hold','fold','old'],
+  ['dream','stream','team','cream','beam','steam','gleam'],
+  ['space','race','face','place','trace','grace','pace'],
+  ['door','floor','more','store','four','pour','score'],
+  ['round','sound','found','ground','pound','bound','mound'],
+  ['slide','ride','hide','side','wide','guide','pride'],
+  ['star','car','far','bar','jar','guitar','scar'],
+  ['bed','red','fed','led','said','head','bread'],
+  ['plate','gate','late','mate','state','great','wait']
+];
+
+const PROC_PLURALS = [
+  ['mouse','mice'],['tooth','teeth'],['foot','feet'],['child','children'],['goose','geese'],
+  ['wolf','wolves'],['knife','knives'],['leaf','leaves'],['life','lives'],['wife','wives'],
+  ['box','boxes'],['baby','babies'],['city','cities'],['story','stories'],['cherry','cherries'],
+  ['deer','deer'],['sheep','sheep'],['fish','fish'],['moose','moose'],['cactus','cacti'],
+  ['tomato','tomatoes'],['potato','potatoes'],['hero','heroes'],['shelf','shelves'],['half','halves'],
+  ['man','men'],['woman','women'],['person','people'],['ox','oxen'],['crisis','crises']
+];
+
+const PROC_HOMOPHONES = [
+  ['there','a place','their','belonging to them','they\'re','they are'],
+  ['to','direction/purpose','too','also or too much','two','the number 2'],
+  ['your','belonging to you','you\'re','you are'],
+  ['its','belonging to it','it\'s','it is'],
+  ['hear','to listen','here','this place'],
+  ['wear','put on clothes','where','asking about a place'],
+  ['write','to put words on paper','right','correct or opposite of left'],
+  ['know','to understand','no','the opposite of yes'],
+  ['ate','past tense of eat','eight','the number 8'],
+  ['flower','a plant bloom','flour','used for baking'],
+  ['peace','calm, no war','piece','a part of something'],
+  ['tail','animal body part','tale','a story'],
+  ['sea','the ocean','see','to look at'],
+  ['one','the number 1','won','past tense of win'],
+  ['sun','the star','son','a male child'],
+  ['knight','medieval warrior','night','when it is dark'],
+  ['bare','naked/uncovered','bear','a large animal'],
+  ['pair','two of something','pear','a fruit'],
+  ['brake','to slow down','break','to damage'],
+  ['steal','to take illegally','steel','a type of metal']
+];
+
+// Procedural question generators by type
+function genProceduralEnglish(grade, distracted) {
+  const g = Math.min(5, Math.max(0, grade));
+  const types = [];
+
+  // Available question types based on grade
+  if (PROC_SYNONYMS[g]) types.push('synonym');
+  if (PROC_ANTONYMS[g]) types.push('antonym','antonym'); // weight antonyms more
+  types.push('rhyme');
+  if (g >= 1) types.push('plural');
+  if (g >= 1 && PROC_PAST_TENSE[Math.min(g,3)]) types.push('pastTense');
+  if (g >= 2) types.push('homophone');
+
+  const type = types[randInt(0, types.length - 1)];
+
+  switch(type) {
+    case 'synonym': {
+      const pair = PROC_SYNONYMS[g][randInt(0, PROC_SYNONYMS[g].length - 1)];
+      if (Math.random() < 0.5) {
+        return {q:`What is a synonym for "${pair[0]}"?`, a:pair[1]};
+      } else {
+        return {q:`What is another word for "${pair[0]}"?`, a:pair[1]};
+      }
+    }
+    case 'antonym': {
+      const pair = PROC_ANTONYMS[g][randInt(0, PROC_ANTONYMS[g].length - 1)];
+      return {q:`What is the opposite of "${pair[0]}"?`, a:pair[1]};
+    }
+    case 'rhyme': {
+      const set = PROC_RHYME_SETS[randInt(0, PROC_RHYME_SETS.length - 1)];
+      const word = set[randInt(0, set.length - 1)];
+      const others = set.filter(w => w !== word).slice(0, 4).join(', ');
+      return {q:`Give me a word that rhymes with "${word}"`, a:others};
+    }
+    case 'plural': {
+      const pair = PROC_PLURALS[randInt(0, PROC_PLURALS.length - 1)];
+      return {q:`What is the plural of "${pair[0]}"?`, a:pair[1]};
+    }
+    case 'pastTense': {
+      const gKey = Math.min(g, 3);
+      const verbs = PROC_PAST_TENSE[gKey];
+      const pair = verbs[randInt(0, verbs.length - 1)];
+      return {q:`What is the past tense of "${pair[0]}"?`, a:pair[1]};
+    }
+    case 'homophone': {
+      const h = PROC_HOMOPHONES[randInt(0, PROC_HOMOPHONES.length - 1)];
+      if (h.length === 6) {
+        return {q:`What is the difference between "${h[0]}", "${h[2]}", and "${h[4]}"?`, a:`${h[0]} = ${h[1]}, ${h[2]} = ${h[3]}, ${h[4]} = ${h[5]}`};
+      } else {
+        return {q:`What is the difference between "${h[0]}" and "${h[2]}"?`, a:`${h[0]} = ${h[1]}, ${h[2]} = ${h[3]}`};
+      }
+    }
+    default:
+      return {q:`What is the opposite of "${PROC_ANTONYMS[g][0][0]}"?`, a:PROC_ANTONYMS[g][0][1]};
+  }
+}
+
 function genEnglish(level, distracted) {
   const grade = Math.floor(level / 10);
   const decile = level % 10;
@@ -1642,6 +1780,10 @@ function genEnglish(level, distracted) {
       const w = pick(wordPool);
       return { q: `Look at the screen — read this word: ${w.toUpperCase()}`, a: w };
     }
+    // 50% from fixed pool, 50% procedurally generated (ensures variety even after fixed pool exhausted)
+    if (Math.random() < 0.5) {
+      return genProceduralEnglish(grade, true);
+    }
     if (grade <= 0) return pick(AUDIO_ENGLISH_K);
     if (grade === 1) return pick(AUDIO_ENGLISH_1);
     if (grade === 2) return pick(AUDIO_ENGLISH_2);
@@ -1649,7 +1791,11 @@ function genEnglish(level, distracted) {
     return pick(AUDIO_ENGLISH_5);
   }
 
-  // FOCUSED MODE: full range including spelling, fix-the-sentence, etc.
+  // FOCUSED MODE: mix fixed and procedural (40% procedural for variety)
+  if (Math.random() < 0.4) {
+    return genProceduralEnglish(grade, false);
+  }
+
   if (grade <= 0) {
     return pick([
       (() => { const l = String.fromCharCode(65 + randInt(0,25)); return { q:`What letter comes after ${l}?`, a: l==='Z' ? 'A (back to start!)' : String.fromCharCode(l.charCodeAt(0)+1) }; })(),
