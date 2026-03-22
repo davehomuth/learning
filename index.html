@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.5</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.6</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -575,7 +575,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.6';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -704,7 +704,39 @@ function loadState() {
 // ═══════════════════════════════════════════
 
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+
+// Anti-repeat pick: tracks recently used indices per array to avoid repeats
+// Uses a WeakMap so each array object gets its own history
+const _pickHistory = new WeakMap();
+function pick(arr) {
+  if (arr.length === 0) return undefined;
+  if (arr.length === 1) return arr[0];
+
+  let history = _pickHistory.get(arr);
+  if (!history) { history = []; _pickHistory.set(arr, history); }
+
+  // Build pool of indices not recently used
+  // Block repeats until 75% of the array has been used
+  const blockCount = Math.min(history.length, Math.floor(arr.length * 0.75));
+  const blocked = new Set(history.slice(-blockCount));
+  const available = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (!blocked.has(i)) available.push(i);
+  }
+
+  // If somehow all blocked (shouldn't happen), reset and allow all
+  const pool = available.length > 0 ? available : Array.from({length: arr.length}, (_, i) => i);
+  const idx = pool[randInt(0, pool.length - 1)];
+  history.push(idx);
+
+  // Trim history to prevent memory growth
+  if (history.length > arr.length * 2) {
+    history.splice(0, history.length - arr.length);
+  }
+
+  return arr[idx];
+}
+
 function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 // ── MATH ──
@@ -2277,7 +2309,21 @@ function nextQuestion() {
   } else if (quizState.isResearch) {
     question = genERResearch(quizState.currentLevel);
   } else {
-    question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+    // Try up to 5 times to avoid repeating recent question text
+    let attempts = 0;
+    do {
+      question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+      attempts++;
+    } while (attempts < 5 && quizState.recentQuestionTexts && quizState.recentQuestionTexts.has(question.q));
+  }
+
+  // Track recent question texts to minimize repeats
+  if (!quizState.recentQuestionTexts) quizState.recentQuestionTexts = new Set();
+  quizState.recentQuestionTexts.add(question.q);
+  // Keep set manageable — clear when it gets large
+  if (quizState.recentQuestionTexts.size > 200) {
+    const arr = [...quizState.recentQuestionTexts];
+    quizState.recentQuestionTexts = new Set(arr.slice(-100));
   }
 
   quizState.currentQuestion = question;
