@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.8</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.9</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -484,8 +484,13 @@
   <div>
     <p class="section-sub" id="wordEntryWho"></p>
     <h2 class="section-title">Word Entry</h2>
-    <p class="section-sub">Add words for English practice. These will appear as spelling questions.</p>
+    <p class="section-sub">Add words for practice. Choose which list to add to:</p>
   </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn" id="wordCatStudy" onclick="setWordCategory('study')" style="flex:1;background:var(--highlight);font-weight:700;">✏️ Word Study</button>
+    <button class="btn" id="wordCatSpelling" onclick="setWordCategory('spelling')" style="flex:1;background:var(--accent);font-weight:700;">🔤 Spelling</button>
+  </div>
+  <p class="section-sub" id="wordCatDesc" style="font-size:0.8rem;margin-bottom:8px;">Word Study: meaning &amp; pronunciation practice</p>
   <div class="word-entry-form">
     <input type="text" id="wordInput" placeholder="Type a word and press Enter or Add" autocomplete="off">
     <button class="btn btn-primary" id="addWordBtn" onclick="addWord()">Add</button>
@@ -575,7 +580,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '2.8';
+const APP_VERSION = '2.9';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -616,6 +621,7 @@ const SUBJECTS = [
   { id: 'english', name: 'English', icon: '📖' },
   { id: 'science', name: 'Science', icon: '🔬' },
   { id: 'wordStudy', name: 'Word Study', icon: '✏️' },
+  { id: 'spelling',  name: 'Spelling',   icon: '🔤' },
   { id: 'newWords',  name: 'New Words',  icon: '📚' },
   { id: 'custom',    name: 'Custom Flashcards', icon: '🃏' }
 ];
@@ -1233,16 +1239,23 @@ function genNewWord(level) {
 }
 
 function genWordStudy(childId) {
-  const words = getCustomWords(childId);
+  const words = getStudyWords(childId);
   if (words.length === 0) return null;
   const w = pick(words);
   if (childId === 'cole' || childId === 'mackenzie') {
-    // Show the word, they have to pronounce it
+    // Cole/Mack: Show the word, they have to pronounce it
     return { q: `Read this word aloud:`, a: w, _displayWord: w.toUpperCase(), _customWord: w };
   } else {
-    // Logan: spell the word (read it to him, he spells it)
-    return { q: `Spell the word: "${w}"`, a: w.toUpperCase().split('').join(' - '), _customWord: w };
+    // Logan: what does this word mean?
+    return { q: `What does "${w}" mean?`, a: `(Check with Dad for the meaning of "${w}")`, _customWord: w };
   }
+}
+
+function genSpelling(childId) {
+  const words = getSpellingWords(childId);
+  if (words.length === 0) return null;
+  const w = pick(words);
+  return { q: `Spell the word: "${w}"`, a: w.toUpperCase().split('').join(' - '), _customWord: w, _isSpelling: true };
 }
 
 // Sentence starters for grammar
@@ -2239,9 +2252,9 @@ function renderSubjectScreen() {
         <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Rotates through all subjects</div>
       `;
     } else if (subj.id === 'wordStudy') {
-      const wordCount = getCustomWords(state.activeChild).length;
+      const wordCount = getStudyWords(state.activeChild).length;
       const modeDesc = (state.activeChild === 'cole' || state.activeChild === 'mackenzie')
-        ? 'Pronounce words from your list' : 'Spell words from your list';
+        ? 'Pronounce words from your list' : 'Meaning of words from your list';
       btn.innerHTML = `
         <span class="subj-icon">${subj.icon}</span>
         ${subj.name}
@@ -2250,7 +2263,21 @@ function renderSubjectScreen() {
       `;
       if (wordCount === 0) {
         btn.style.opacity = '0.5';
-        btn.onclick = () => { alert('Add words in Word Entry first!'); showScreen('wordEntry'); };
+        btn.onclick = () => { alert('Add words to Word Study list in Word Entry first!'); setWordCategory('study'); showScreen('wordEntry'); };
+        grid.appendChild(btn);
+        continue;
+      }
+    } else if (subj.id === 'spelling') {
+      const wordCount = getSpellingWords(state.activeChild).length;
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Spell words from your list</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">${wordCount} word${wordCount !== 1 ? 's' : ''} in list</div>
+      `;
+      if (wordCount === 0) {
+        btn.style.opacity = '0.5';
+        btn.onclick = () => { alert('Add words to Spelling list in Word Entry first!'); setWordCategory('spelling'); showScreen('wordEntry'); };
         grid.appendChild(btn);
         continue;
       }
@@ -2294,29 +2321,72 @@ function renderSubjectScreen() {
 }
 
 // ═══════════════════════════════════════════
-//  WORD ENTRY
+//  WORD ENTRY (two lists: study + spelling)
 // ═══════════════════════════════════════════
 
+let wordEntryCategory = 'study'; // 'study' or 'spelling'
+
 function getCustomWords(childId) {
+  // Legacy: returns study words (for backward compat)
+  return getStudyWords(childId);
+}
+
+function getStudyWords(childId) {
   try {
     const data = localStorage.getItem('homuth_words_' + childId);
     return data ? JSON.parse(data) : [];
   } catch(e) { return []; }
 }
 
-function saveCustomWords(childId, words) {
+function saveStudyWords(childId, words) {
   try { localStorage.setItem('homuth_words_' + childId, JSON.stringify(words)); } catch(e) {}
+}
+
+function getSpellingWords(childId) {
+  try {
+    const data = localStorage.getItem('homuth_spelling_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveSpellingWords(childId, words) {
+  try { localStorage.setItem('homuth_spelling_' + childId, JSON.stringify(words)); } catch(e) {}
+}
+
+function saveCustomWords(childId, words) {
+  // Legacy: saves to study list
+  saveStudyWords(childId, words);
+}
+
+function setWordCategory(cat) {
+  wordEntryCategory = cat;
+  renderWordEntry();
 }
 
 function renderWordEntry() {
   const child = CHILDREN[state.activeChild];
   document.getElementById('wordEntryWho').textContent = `${child.emoji} ${child.name} — ${child.info}`;
-  const words = getCustomWords(state.activeChild);
-  const container = document.getElementById('wordList');
-  if (words.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-dim);margin-top:12px;">No custom words yet. Add some above!</p>';
+
+  // Highlight active category button
+  const studyBtn = document.getElementById('wordCatStudy');
+  const spellBtn = document.getElementById('wordCatSpelling');
+  if (wordEntryCategory === 'study') {
+    studyBtn.style.background = 'var(--highlight)';
+    spellBtn.style.background = 'var(--accent)';
+    document.getElementById('wordCatDesc').textContent = 'Word Study: meaning & pronunciation practice';
   } else {
-    container.innerHTML = '<p style="color:var(--text-dim);margin-bottom:8px;">' + words.length + ' word' + (words.length !== 1 ? 's' : '') + ':</p>' +
+    studyBtn.style.background = 'var(--accent)';
+    spellBtn.style.background = 'var(--highlight)';
+    document.getElementById('wordCatDesc').textContent = 'Spelling: words to practice spelling';
+  }
+
+  const words = wordEntryCategory === 'study' ? getStudyWords(state.activeChild) : getSpellingWords(state.activeChild);
+  const container = document.getElementById('wordList');
+  const label = wordEntryCategory === 'study' ? 'Word Study' : 'Spelling';
+  if (words.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-top:12px;">No ' + label.toLowerCase() + ' words yet. Add some above!</p>';
+  } else {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-bottom:8px;">' + label + ' — ' + words.length + ' word' + (words.length !== 1 ? 's' : '') + ':</p>' +
       words.map((w, i) => `<span class="word-chip">${w} <span class="remove-word" onclick="removeWord(${i})">×</span></span>`).join('');
   }
   document.getElementById('wordInput').focus();
@@ -2326,10 +2396,12 @@ function addWord() {
   const input = document.getElementById('wordInput');
   const word = input.value.trim().toLowerCase();
   if (!word) return;
-  const words = getCustomWords(state.activeChild);
-  if (!words.includes(word)) {
-    words.push(word);
-    saveCustomWords(state.activeChild, words);
+  if (wordEntryCategory === 'study') {
+    const words = getStudyWords(state.activeChild);
+    if (!words.includes(word)) { words.push(word); saveStudyWords(state.activeChild, words); }
+  } else {
+    const words = getSpellingWords(state.activeChild);
+    if (!words.includes(word)) { words.push(word); saveSpellingWords(state.activeChild, words); }
   }
   input.value = '';
   input.focus();
@@ -2337,9 +2409,15 @@ function addWord() {
 }
 
 function removeWord(index) {
-  const words = getCustomWords(state.activeChild);
-  words.splice(index, 1);
-  saveCustomWords(state.activeChild, words);
+  if (wordEntryCategory === 'study') {
+    const words = getStudyWords(state.activeChild);
+    words.splice(index, 1);
+    saveStudyWords(state.activeChild, words);
+  } else {
+    const words = getSpellingWords(state.activeChild);
+    words.splice(index, 1);
+    saveSpellingWords(state.activeChild, words);
+  }
   renderWordEntry();
 }
 
@@ -2385,7 +2463,7 @@ function addNewWordToList(word) {
   // Visual feedback — briefly change button text
   event.target.textContent = '✓ Added!';
   event.target.disabled = true;
-  setTimeout(() => { if (event.target) { event.target.textContent = '📝 Add to Word List'; event.target.disabled = false; } }, 1500);
+  setTimeout(() => { if (event.target) { event.target.textContent = '📝 Add to Word Study'; event.target.disabled = false; } }, 1500);
 }
 
 function removeWordFromQuiz(word) {
@@ -2395,6 +2473,17 @@ function removeWordFromQuiz(word) {
   if (idx !== -1) {
     words.splice(idx, 1);
     saveCustomWords(childId, words);
+  }
+  nextQuestion();
+}
+
+function removeSpellingWord(word) {
+  const childId = quizState.childId;
+  const words = getSpellingWords(childId);
+  const idx = words.indexOf(word);
+  if (idx !== -1) {
+    words.splice(idx, 1);
+    saveSpellingWords(childId, words);
   }
   nextQuestion();
 }
@@ -2599,6 +2688,7 @@ function startQuiz(subject) {
   const isER = subject === 'erQuestions';
   const isResearch = subject === 'newResearch';
   const isCustom = subject === 'custom';
+  const isSpelling = subject === 'spelling';
   const childSubjects = getChildSubjects(childId);
 
   // For "all" mode, we track levels per subject individually
@@ -2609,13 +2699,13 @@ function startQuiz(subject) {
     startLevels.newWords = session.levels.newWords;
   } else if (isER || isResearch) {
     startLevels[subject] = session.levels[subject] || 30;
-  } else if (!isWordStudy && !isCustom) {
+  } else if (!isWordStudy && !isCustom && !isSpelling) {
     startLevels[subject] = session.levels[subject];
   }
 
   const prevHistory = isAll ? [] : (session.history[subject] || []);
 
-  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : ((isWordStudy || isCustom) ? 0 : session.levels[subject]))));
+  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : ((isWordStudy || isCustom || isSpelling) ? 0 : session.levels[subject]))));
 
   quizState = {
     childId,
@@ -2625,6 +2715,7 @@ function startQuiz(subject) {
     isNewWords,
     isER,
     isCustom,
+    isSpelling,
     isResearch,
     currentLevels: { ...startLevels },
     currentLevel: isAll ? session.levels[childSubjects[0]] : startLevel,
@@ -2685,8 +2776,17 @@ function nextQuestion() {
   } else if (quizState.isWordStudy) {
     question = genWordStudy(quizState.childId);
     if (!question) {
-      alert('No words in your list! Add words in Word Entry first.');
-      showScreen('subject');
+      alert('No words in your Word Study list! Add words in Word Entry first.');
+      setWordCategory('study');
+      showScreen('wordEntry');
+      return;
+    }
+  } else if (quizState.isSpelling) {
+    question = genSpelling(quizState.childId);
+    if (!question) {
+      alert('No words in your Spelling list! Add words in Word Entry first.');
+      setWordCategory('spelling');
+      showScreen('wordEntry');
       return;
     }
   } else if (quizState.isNewWords) {
@@ -2793,10 +2893,15 @@ function renderQuiz() {
       extraButtons += `<button class="btn" style="background:#7b1fa2;margin-top:8px;" onclick="removeWordFromQuiz('${safeWord}')">🗑 Remove from List</button>`;
       extraButtons += `<button class="btn" style="background:#2e7d32;margin-top:8px;" onclick="masterWord('${safeWord}')">⭐ Mastered</button>`;
     }
-    // New Words: add "Add to Word List" button
+    // Spelling: add Remove from List button
+    if (quizState.isSpelling && quizState.currentQuestion._customWord) {
+      const safeWord = quizState.currentQuestion._customWord.replace(/'/g, "\\'");
+      extraButtons += `<button class="btn" style="background:#7b1fa2;margin-top:8px;" onclick="removeSpellingWord('${safeWord}')">🗑 Remove from List</button>`;
+    }
+    // New Words: add "Add to Word List" button (goes to Word Study only)
     if (quizState.isNewWords && quizState.currentQuestion._newWord) {
       const safeNewWord = quizState.currentQuestion._newWord.replace(/'/g, "\\'");
-      extraButtons += `<button class="btn" style="background:#1565c0;margin-top:8px;" onclick="addNewWordToList('${safeNewWord}')">📝 Add to Word List</button>`;
+      extraButtons += `<button class="btn" style="background:#1565c0;margin-top:8px;" onclick="addNewWordToList('${safeNewWord}')">📝 Add to Word Study</button>`;
     }
 
     buttonsEl.innerHTML = `
@@ -2848,6 +2953,9 @@ function skipQuestion() {
   if (quizState.isWordStudy) {
     question = genWordStudy(quizState.childId);
     if (!question) { alert('No words left in your list!'); showScreen('subject'); return; }
+  } else if (quizState.isSpelling) {
+    question = genSpelling(quizState.childId);
+    if (!question) { alert('No spelling words left!'); showScreen('subject'); return; }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
   } else if (quizState.isCustom) {
