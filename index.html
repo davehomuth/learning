@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.2</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.3</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -580,7 +580,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.3';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -811,7 +811,9 @@ function genMath(level, distracted) {
   if (grade === 2) return genMath2(decile, distracted);
   if (grade === 3) return genMath3(decile, distracted);
   if (grade === 4) return genMath4(decile, distracted);
-  return genMath5(decile, distracted);
+  if (grade === 5) return genMath5(decile, distracted);
+  if (grade === 6) return genMath6(decile, distracted);
+  return genMath7(decile, distracted);
 }
 
 // Distracted math = mental math only: small numbers, single-step, no need for paper
@@ -951,6 +953,62 @@ function genMath5(d, dist) {
     (() => { const a=randInt(2,12); return { q:`What is ${a} squared?`, a:`${a*a}` }; })(),
     (() => { const n=randInt(25,99); return { q:`What is double ${n}?`, a:`${n*2}` }; })(),
     (() => { const a=randInt(100,200),b=randInt(25,75); return { q:`What is ${a} minus ${b}?`, a:`${a-b}` }; })()
+  ]);
+}
+
+function genMath6(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(10,20),b=randInt(10,20); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const a=randInt(2,12); return { q:`What is ${a} cubed?`, a:`${a*a*a}` }; })(),
+      (() => { const a=randInt(-10,-1),b=randInt(1,10); return { q:`What is ${a} + ${b}?`, a:`${a+b}` }; })(),
+      (() => { const a=randInt(-10,-1),b=randInt(-10,-1); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const p=pick([5,10,15,20,25,33,50]); const n=pick([60,90,120,150,200,300,450]); return { q:`What is ${p}% of ${n}?`, a:`${p*n/100}` }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(12,25),b=randInt(12,25); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const a=randInt(-15,-1),b=randInt(-15,-1); return { q:`What is ${a} minus ${b}?`, a:`${a-b}` }; })(),
+      (() => { const n=pick([36,49,64,81,100,121,144,169,196,225]); return { q:`What is the square root of ${n}?`, a:`${Math.sqrt(n)}` }; })(),
+      (() => { const a=randInt(2,9),b=randInt(2,5); return { q:`What is ${a} to the power of ${b}?`, a:`${Math.pow(a,b)}` }; })(),
+      (() => { const a=randInt(100,500),b=randInt(50,200); return { q:`What is ${a} + ${b}?`, a:`${a+b}` }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(15,30),b=randInt(15,30); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+    (() => { const a=randInt(-20,-1),b=randInt(-20,-1); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+    (() => { const n=pick([64,125,216,343,512,729,1000]); const r=Math.round(Math.pow(n,1/3)); return { q:`What is the cube root of ${n}?`, a:`${r}` }; })(),
+    (() => { const a=randInt(3,12),b=randInt(3,12); const p=a*b; const c=randInt(2,5); return { q:`${p} ÷ ${a} × ${c} = ?`, a:`${b*c}` }; })(),
+    (() => { const a=randInt(2,9); return { q:`What is ${a} squared plus ${a}?`, a:`${a*a+a}` }; })()
+  ]);
+}
+
+function genMath7(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(20,50),b=randInt(20,50); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
+      (() => { const a=randInt(-20,20),b=randInt(-20,20); return { q:`What is ${a} × ${b}?`, a:`${a*b}` }; })(),
+      (() => { const a=randInt(2,10); return { q:`What is ${a} to the power of 3?`, a:`${a*a*a}` }; })(),
+      (() => { const a=randInt(100,999),b=randInt(100,999); return { q:`Estimate: is ${a} + ${b} closer to ${Math.round((a+b)/100)*100-100} or ${Math.round((a+b)/100)*100+100}?`, a:`${Math.round((a+b)/100)*100}` }; })(),
+      (() => { const r=randInt(3,15); return { q:`What is the area of a circle with radius ${r}? (use π ≈ 3.14)`, a:`${(3.14*r*r).toFixed(2)}` }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(2,15),b=randInt(2,6); return { q:`What is ${a} to the power of ${b}?`, a:`${Math.pow(a,b)}` }; })(),
+      (() => { const a=randInt(-30,30),b=randInt(-30,30); const c=randInt(-20,20); return { q:`What is ${a} + ${b} + ${c}?`, a:`${a+b+c}` }; })(),
+      (() => { const a=randInt(2,12),b=randInt(2,12),c=randInt(2,12); return { q:`What is ${a} × ${b} + ${c}?`, a:`${a*b+c}` }; })(),
+      (() => { const n=pick([144,169,196,225,256,289,324,361,400,441,484,529,576,625]); return { q:`What is the square root of ${n}?`, a:`${Math.sqrt(n)}` }; })(),
+      (() => { const p=randInt(5,40); const n=randInt(50,500); return { q:`What is ${p}% of ${n}?`, a:`${(p*n/100)}` }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(3,15),b=randInt(3,4); return { q:`What is ${a} to the power of ${b}?`, a:`${Math.pow(a,b)}` }; })(),
+    (() => { const a=randInt(-50,50),b=randInt(-50,50); return { q:`What is ${a} × ${b}?`, a:`${a*b}` }; })(),
+    (() => { const a=randInt(10,30),b=randInt(10,30); return { q:`What is ${a}² - ${b}²?`, a:`${a*a-b*b}` }; })(),
+    (() => { const a=randInt(2,9),b=randInt(2,9); return { q:`Simplify: ${a}x + ${b}x`, a:`${a+b}x` }; })(),
+    (() => { const a=randInt(2,8),b=randInt(1,10); return { q:`Solve for x: ${a}x = ${a*b}`, a:`x = ${b}` }; })()
   ]);
 }
 
@@ -3015,7 +3073,7 @@ function showAnswer() {
 }
 
 function nudgeLevel(delta) {
-  const newLevel = Math.max(0, Math.min(59, quizState.currentLevel + delta));
+  const newLevel = Math.max(0, Math.min(79, quizState.currentLevel + delta));
   quizState.currentLevel = newLevel;
   if (quizState.isAll) {
     quizState.currentLevels[quizState.currentSubject] = newLevel;
@@ -3105,7 +3163,7 @@ function recordAnswer(result) {
       quizState.correctRun++;
       quizState.incorrectRun = 0;
       if (quizState.correctRun >= 3) {
-        quizState.currentLevel = Math.min(59, quizState.currentLevel + 1);
+        quizState.currentLevel = Math.min(79, quizState.currentLevel + 1);
         quizState.correctRun = 0;
       }
     } else if (result === 'difficulty') {
