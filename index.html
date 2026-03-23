@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.3</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.4</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -580,7 +580,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.3';
+const APP_VERSION = '3.4';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -657,11 +657,49 @@ function getActiveWordFlashcards(childId) {
   return COLE_WORD_FLASHCARDS.filter(w => !mastered.includes(w));
 }
 
+const WORD_FLASHCARD_SENTENCES = {
+  'air':'We need fresh air to breathe.','almost':'I almost caught the ball.','always':'She always eats breakfast.',
+  'animal':'My favorite animal is a dog.','around':'We walked around the park.','bear':'The bear caught a fish in the river.',
+  'began':'The movie began at seven.','being':'Being kind makes people happy.','bring':'Please bring your lunch to school.',
+  'called':'Mom called me for dinner.','chair':'Please sit in the chair.','chicken':'We had chicken for dinner.',
+  'children':'The children played in the yard.','circle':'Draw a circle on the paper.','clean':'Please clean your room.',
+  'close':'Close the door behind you.','dark':'It gets dark at night.','don\'t':'I don\'t want to be late.',
+  'drink':'I like to drink water.','during':'We read during class.','early':'We woke up early today.',
+  'easy':'The test was easy.','eye':'She has a blue eye.','family':'My family went camping.',
+  'farm':'The farm has cows and chickens.','farmer':'The farmer planted seeds.','feel':'I feel happy today.',
+  'few':'There are a few apples left.','field':'We played soccer in the field.','fire':'The fire kept us warm.',
+  'floor':'The ball rolled across the floor.','follow':'Follow the leader.','garden':'We grew tomatoes in the garden.',
+  'ground':'The leaves fell to the ground.','grow':'Plants grow in the sun.','hard':'The math test was hard.',
+  'high':'The bird flew high in the sky.','hurt':'I hurt my knee when I fell.','its':'The dog wagged its tail.',
+  'keep':'You can keep the book.','knew':'I knew the answer.','land':'The plane will land soon.',
+  'large':'That is a large pizza.','laugh':'The joke made me laugh.','learn':'I want to learn to swim.',
+  'left':'Turn left at the corner.','let\'s':'Let\'s go to the park.','letter':'I wrote a letter to Grandma.',
+  'light':'Turn on the light please.','line':'Stand in a straight line.','mean':'What does that word mean?',
+  'milk':'I drink milk every morning.','money':'He saved his money.','month':'January is the first month.',
+  'most':'Most kids like pizza.','move':'Please move your chair.','myself':'I did it all by myself.',
+  'nest':'The bird built a nest.','next':'You are next in line.','north':'Canada is north of the United States.',
+  'oil':'We cook with oil.','own':'I have my own room.','page':'Turn to page ten.',
+  'pick':'Pick a card from the deck.','picture':'She drew a pretty picture.','piece':'Can I have a piece of cake?',
+  'point':'Point to the answer.','rabbit':'The rabbit hopped away.','rain':'We played inside because of the rain.',
+  'robin':'A robin is a bird with a red chest.','rock':'He threw the rock into the lake.','sea':'The sea was calm and blue.',
+  'second':'Wait just one second.','seed':'We planted a seed in the garden.','shall':'Shall we go outside?',
+  'sheep':'The sheep are in the field.','shoe':'I lost my shoe at the park.','should':'You should brush your teeth.',
+  'sign':'Read the sign on the door.','size':'What size shoe do you wear?','snow':'The snow covered the ground.',
+  'sound':'What sound does a cat make?','stand':'Please stand up.','start':'Let\'s start the game.',
+  'stick':'He found a stick in the yard.','street':'Look both ways before crossing the street.','such':'It was such a nice day.',
+  'sure':'Are you sure about that?','table':'Put your plate on the table.','today':'Today is a great day.',
+  'true':'Is that story true?','until':'Wait until I get there.','warm':'The sun feels warm.',
+  'watch':'Watch me do a trick.','week':'There are seven days in a week.','wind':'The wind blew the leaves.',
+  'woman':'The woman waved hello.','women':'The women went for a walk.','wood':'The table is made of wood.',
+  'world':'The world is a big place.'
+};
+
 function genWordFlashcard(childId) {
   const active = getActiveWordFlashcards(childId);
   if (active.length === 0) return null;
   const w = pick(active);
-  return { q: `Read this word aloud:`, a: w, _displayWord: w.toUpperCase(), _wordFlashcard: w };
+  const sentence = WORD_FLASHCARD_SENTENCES[w] || `I can read the word "${w}".`;
+  return { q: w, a: w, _wordFlashcardBigWord: true, _wordFlashcardSentence: sentence, _wordFlashcard: w };
 }
 
 function masterWordFlashcard(word) {
@@ -2993,7 +3031,10 @@ function renderQuiz() {
 
   // Word Study: show large display word for Cole/Mackenzie to read
   const questionTextEl = document.getElementById('questionText');
-  if (quizState.isWordStudy && quizState.currentQuestion._displayWord && !quizState.showingAnswer) {
+  if (quizState.isWordFlashcards && quizState.currentQuestion._wordFlashcardBigWord) {
+    // Word Flashcards: show the word in big white letters
+    questionTextEl.innerHTML = '<div style="font-size:4rem;font-weight:800;letter-spacing:4px;color:white;">' + quizState.currentQuestion.q.toUpperCase() + '</div>';
+  } else if (quizState.isWordStudy && quizState.currentQuestion._displayWord && !quizState.showingAnswer) {
     questionTextEl.innerHTML = quizState.currentQuestion.q + '<div style="font-size:3rem;margin-top:20px;font-weight:800;letter-spacing:4px;">' + quizState.currentQuestion._displayWord + '</div>';
   } else {
     questionTextEl.textContent = quizState.currentQuestion.q;
@@ -3005,6 +3046,11 @@ function renderQuiz() {
   if (quizState.showingAnswer) {
     // Build answer display
     let answerHTML = quizState.currentQuestion.a;
+    // Word Flashcards: show word again in big letters + sentence underneath
+    if (quizState.isWordFlashcards && quizState.currentQuestion._wordFlashcardSentence) {
+      answerHTML = '<div style="font-size:3rem;font-weight:800;letter-spacing:3px;color:white;">' + quizState.currentQuestion.a.toUpperCase() + '</div>';
+      answerHTML += '<div style="font-size:1.1rem;color:var(--text-dim);margin-top:16px;font-style:italic;font-weight:400;line-height:1.6;">"' + quizState.currentQuestion._wordFlashcardSentence + '"</div>';
+    }
     // New Words: show example sentence
     if (quizState.isNewWords && quizState.currentQuestion._sentence) {
       answerHTML += `<div style="font-size:0.9rem;color:var(--text-dim);margin-top:10px;font-style:italic;font-weight:400;">Example: "${quizState.currentQuestion._sentence}"</div>`;
