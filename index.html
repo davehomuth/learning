@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v2.9</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.0</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -580,7 +580,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '2.9';
+const APP_VERSION = '3.0';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -623,8 +623,63 @@ const SUBJECTS = [
   { id: 'wordStudy', name: 'Word Study', icon: '✏️' },
   { id: 'spelling',  name: 'Spelling',   icon: '🔤' },
   { id: 'newWords',  name: 'New Words',  icon: '📚' },
+  { id: 'wordFlashcards', name: 'Word Flashcards', icon: '📇' },
   { id: 'custom',    name: 'Custom Flashcards', icon: '🃏' }
 ];
+
+// ── Cole's Word Flashcards (fixed list with mastery tracking) ──
+const COLE_WORD_FLASHCARDS = [
+  'air','almost','always','animal','around','bear','began','being','bring','called',
+  'chair','chicken','children','circle','clean','close','dark',"don't",'drink','during',
+  'early','easy','eye','family','farm','farmer','feel','few','field','fire',
+  'floor','follow','garden','ground','grow','hard','high','hurt','its','keep',
+  'knew','land','large','laugh','learn','left',"let's",'letter','light','line',
+  'mean','milk','money','month','most','move','myself','nest','next','north',
+  'oil','own','page','pick','picture','piece','point','rabbit','rain','robin',
+  'rock','sea','second','seed','shall','sheep','shoe','should','sign','size',
+  'snow','sound','stand','start','stick','street','such','sure','table','today',
+  'true','until','warm','watch','week','wind','woman','women','wood','world'
+];
+
+function getWordFlashcardsMastered(childId) {
+  try {
+    const data = localStorage.getItem('homuth_wf_mastered_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveWordFlashcardsMastered(childId, words) {
+  try { localStorage.setItem('homuth_wf_mastered_' + childId, JSON.stringify(words)); } catch(e) {}
+}
+
+function getActiveWordFlashcards(childId) {
+  const mastered = getWordFlashcardsMastered(childId);
+  return COLE_WORD_FLASHCARDS.filter(w => !mastered.includes(w));
+}
+
+function genWordFlashcard(childId) {
+  const active = getActiveWordFlashcards(childId);
+  if (active.length === 0) return null;
+  const w = pick(active);
+  return { q: `Read this word aloud:`, a: w, _displayWord: w.toUpperCase(), _wordFlashcard: w };
+}
+
+function masterWordFlashcard(word) {
+  const childId = quizState.childId;
+  const mastered = getWordFlashcardsMastered(childId);
+  if (!mastered.includes(word)) {
+    mastered.push(word);
+    saveWordFlashcardsMastered(childId, mastered);
+  }
+  // Check if any words remain
+  const remaining = getActiveWordFlashcards(childId);
+  if (remaining.length === 0) {
+    alert('Amazing! All words mastered! 🎉');
+    showScreen('subject');
+    return;
+  }
+  nextQuestion();
+}
 
 // Difficulty level: 0-59 where level = grade*10 + decile
 // Grade 0 = JK/SK, Grade 1-5
@@ -2281,6 +2336,24 @@ function renderSubjectScreen() {
         grid.appendChild(btn);
         continue;
       }
+    } else if (subj.id === 'wordFlashcards') {
+      // Only show for Cole
+      if (state.activeChild !== 'cole') { continue; }
+      const active = getActiveWordFlashcards(state.activeChild);
+      const mastered = getWordFlashcardsMastered(state.activeChild);
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Read words aloud</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">${active.length} remaining · ${mastered.length} mastered</div>
+      `;
+      if (active.length === 0) {
+        btn.style.opacity = '0.5';
+        btn.innerHTML += '<div style="font-size:0.75rem;color:var(--green);margin-top:4px;">🎉 All mastered!</div>';
+        btn.onclick = () => { alert('All words mastered! Amazing work! 🎉'); };
+        grid.appendChild(btn);
+        continue;
+      }
     } else if (subj.id === 'newWords') {
       const lvl = session.levels.newWords || session.levels.english;
       const grade = Math.floor(lvl / 10);
@@ -2689,6 +2762,7 @@ function startQuiz(subject) {
   const isResearch = subject === 'newResearch';
   const isCustom = subject === 'custom';
   const isSpelling = subject === 'spelling';
+  const isWordFlashcards = subject === 'wordFlashcards';
   const childSubjects = getChildSubjects(childId);
 
   // For "all" mode, we track levels per subject individually
@@ -2699,13 +2773,13 @@ function startQuiz(subject) {
     startLevels.newWords = session.levels.newWords;
   } else if (isER || isResearch) {
     startLevels[subject] = session.levels[subject] || 30;
-  } else if (!isWordStudy && !isCustom && !isSpelling) {
+  } else if (!isWordStudy && !isCustom && !isSpelling && !isWordFlashcards) {
     startLevels[subject] = session.levels[subject];
   }
 
   const prevHistory = isAll ? [] : (session.history[subject] || []);
 
-  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : ((isWordStudy || isCustom || isSpelling) ? 0 : session.levels[subject]))));
+  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : ((isWordStudy || isCustom || isSpelling || isWordFlashcards) ? 0 : session.levels[subject]))));
 
   quizState = {
     childId,
@@ -2716,6 +2790,7 @@ function startQuiz(subject) {
     isER,
     isCustom,
     isSpelling,
+    isWordFlashcards,
     isResearch,
     currentLevels: { ...startLevels },
     currentLevel: isAll ? session.levels[childSubjects[0]] : startLevel,
@@ -2787,6 +2862,13 @@ function nextQuestion() {
       alert('No words in your Spelling list! Add words in Word Entry first.');
       setWordCategory('spelling');
       showScreen('wordEntry');
+      return;
+    }
+  } else if (quizState.isWordFlashcards) {
+    question = genWordFlashcard(quizState.childId);
+    if (!question) {
+      alert('All words mastered! 🎉');
+      showScreen('subject');
       return;
     }
   } else if (quizState.isNewWords) {
@@ -2898,6 +2980,11 @@ function renderQuiz() {
       const safeWord = quizState.currentQuestion._customWord.replace(/'/g, "\\'");
       extraButtons += `<button class="btn" style="background:#7b1fa2;margin-top:8px;" onclick="removeSpellingWord('${safeWord}')">🗑 Remove from List</button>`;
     }
+    // Word Flashcards: add Mastered button
+    if (quizState.isWordFlashcards && quizState.currentQuestion._wordFlashcard) {
+      const safeWord = quizState.currentQuestion._wordFlashcard.replace(/'/g, "\\'");
+      extraButtons += `<button class="btn" style="background:#2e7d32;margin-top:8px;" onclick="masterWordFlashcard('${safeWord}')">⭐ Mastered</button>`;
+    }
     // New Words: add "Add to Word List" button (goes to Word Study only)
     if (quizState.isNewWords && quizState.currentQuestion._newWord) {
       const safeNewWord = quizState.currentQuestion._newWord.replace(/'/g, "\\'");
@@ -2956,6 +3043,9 @@ function skipQuestion() {
   } else if (quizState.isSpelling) {
     question = genSpelling(quizState.childId);
     if (!question) { alert('No spelling words left!'); showScreen('subject'); return; }
+  } else if (quizState.isWordFlashcards) {
+    question = genWordFlashcard(quizState.childId);
+    if (!question) { alert('All words mastered! 🎉'); showScreen('subject'); return; }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
   } else if (quizState.isCustom) {
