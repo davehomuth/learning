@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.0</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.1</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -580,7 +580,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.0';
+const APP_VERSION = '3.1';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -1297,13 +1297,8 @@ function genWordStudy(childId) {
   const words = getStudyWords(childId);
   if (words.length === 0) return null;
   const w = pick(words);
-  if (childId === 'cole' || childId === 'mackenzie') {
-    // Cole/Mack: Show the word, they have to pronounce it
-    return { q: `Read this word aloud:`, a: w, _displayWord: w.toUpperCase(), _customWord: w };
-  } else {
-    // Logan: what does this word mean?
-    return { q: `What does "${w}" mean?`, a: `(Check with Dad for the meaning of "${w}")`, _customWord: w };
-  }
+  // All kids: word study is about meaning
+  return { q: `What does "${w}" mean?`, a: `(Check with Dad for the meaning of "${w}")`, _customWord: w };
 }
 
 function genSpelling(childId) {
@@ -2308,8 +2303,7 @@ function renderSubjectScreen() {
       `;
     } else if (subj.id === 'wordStudy') {
       const wordCount = getStudyWords(state.activeChild).length;
-      const modeDesc = (state.activeChild === 'cole' || state.activeChild === 'mackenzie')
-        ? 'Pronounce words from your list' : 'Meaning of words from your list';
+      const modeDesc = 'Meaning of words from your list';
       btn.innerHTML = `
         <span class="subj-icon">${subj.icon}</span>
         ${subj.name}
