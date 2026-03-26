@@ -1,0 +1,3065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>Learning Hub</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #0f3460;
+    --highlight: #e94560;
+    --green: #4ecca3;
+    --yellow: #f0c040;
+    --text: #eee;
+    --text-dim: #aaa;
+    --child0: #4fc3f7;
+    --child1: #81c784;
+    --child2: #f48fb1;
+    --child3: #ffa726;
+    --child4: #ce93d8;
+    --child5: #4dd0e1;
+    --child6: #aed581;
+    --child7: #ff8a65;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Top Bar ── */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--card);
+    border-bottom: 2px solid var(--accent);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .top-bar h1 { font-size: 1.2rem; white-space: nowrap; }
+  .child-tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .child-tab {
+    padding: 8px 18px;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    background: var(--accent);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .child-tab:hover { opacity: 0.85; }
+  .child-tab.active { border-color: currentColor; background: rgba(255,255,255,0.1); }
+
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+  .mode-toggle label { cursor: pointer; }
+  .toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    background: var(--green);
+    border-radius: 28px;
+    cursor: pointer;
+    transition: 0.3s;
+    border: none;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle-switch.on {
+    background: var(--highlight);
+  }
+  .toggle-knob {
+    position: absolute;
+    width: 22px; height: 22px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  .toggle-switch.on .toggle-knob {
+    transform: translateX(24px);
+  }
+
+  /* ── Screens ── */
+  .screen { display: none; padding: 20px; max-width: 800px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ── Home Screen ── */
+  .home-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+  }
+  .home-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+    color: var(--text);
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    width: 100%;
+    position: relative;
+  }
+  .home-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .home-card .emoji { font-size: 3rem; margin-bottom: 10px; }
+  .home-card .name { font-size: 1.4rem; font-weight: 700; }
+  .home-card .info { color: var(--text-dim); margin-top: 6px; font-size: 0.9rem; }
+  .home-card .delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    line-height: 1;
+  }
+  .home-card .delete-btn:hover { opacity: 1; background: rgba(233,69,96,0.2); }
+  .home-card.add-card { border-style: dashed; border-color: var(--text-dim); opacity: 0.7; }
+  .home-card.add-card:hover { opacity: 1; border-color: var(--green); }
+
+  /* ── Add Child Form ── */
+  .add-child-form {
+    max-width: 400px;
+    margin: 40px auto;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 30px;
+  }
+  .add-child-form h2 { margin-bottom: 20px; text-align: center; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: var(--text-dim); }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--highlight);
+  }
+
+  /* ── Subject Selection ── */
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .subject-btn {
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .subject-btn:hover { border-color: var(--highlight); background: rgba(233,69,96,0.1); }
+  .subject-btn .subj-icon { font-size: 2.2rem; display: block; margin-bottom: 8px; }
+
+  /* ── Quiz Screen ── */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quiz-meta { font-size: 0.85rem; color: var(--text-dim); }
+  .question-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 40px 30px;
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .question-text {
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 20px;
+  }
+  .answer-text {
+    font-size: 1.4rem;
+    color: var(--green);
+    font-weight: 600;
+    margin: 16px 0;
+    padding: 12px 24px;
+    background: rgba(78,204,163,0.1);
+    border-radius: 10px;
+    border: 1px solid var(--green);
+  }
+  .quiz-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #fff;
+  }
+  .btn:hover { transform: scale(1.03); }
+  .btn:active { transform: scale(0.97); }
+  .btn-show { background: var(--accent); border: 2px solid var(--highlight); }
+  .btn-correct { background: #2e7d32; }
+  .btn-difficulty { background: #e65100; }
+  .btn-incorrect { background: #c62828; }
+  .btn-finish { background: var(--highlight); }
+  .btn-next { background: var(--accent); }
+  .btn-back { background: var(--accent); }
+  .btn-primary { background: var(--highlight); }
+
+  /* ── Report Screen ── */
+  .report {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 16px;
+  }
+  .report h2 { margin-bottom: 16px; color: var(--highlight); }
+  .report h3 { margin: 16px 0 8px; }
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 20px;
+  }
+  .report-table th, .report-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--accent);
+  }
+  .report-table th { color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; }
+  .stat-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+  }
+  .stat-box {
+    background: var(--accent);
+    border-radius: 10px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+  }
+  .stat-box .stat-val { font-size: 1.8rem; font-weight: 700; }
+  .stat-box .stat-label { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+  .grade-bar {
+    height: 20px;
+    background: var(--accent);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 4px 0;
+  }
+  .grade-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s;
+  }
+
+  /* ── Word Entry ── */
+  .word-entry-form {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .word-entry-form input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+  }
+  .word-entry-form input:focus {
+    outline: none;
+    border-color: var(--highlight);
+  }
+  .word-list {
+    margin-top: 16px;
+  }
+  .word-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    border-radius: 20px;
+    padding: 6px 14px;
+    margin: 4px;
+    font-size: 0.95rem;
+  }
+  .word-chip .remove-word {
+    cursor: pointer;
+    color: var(--highlight);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .word-chip .remove-word:hover { color: #ff6b6b; }
+
+  /* ── Feature Toggles Bar ── */
+  .feature-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 6px 20px;
+    background: rgba(15,52,96,0.5);
+    border-bottom: 1px solid var(--accent);
+    flex-wrap: wrap;
+  }
+  .feature-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .feature-toggle label { cursor: pointer; white-space: nowrap; }
+  .feat-btn {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid var(--text-dim);
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: 0.3s;
+  }
+  .feat-btn.on {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .feat-knob {
+    position: absolute;
+    width: 14px; height: 14px;
+    left: 2px; top: 2px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  .feat-btn.on .feat-knob {
+    transform: translateX(16px);
+  }
+
+  /* ── Streak ── */
+  .streak-display {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--yellow);
+    min-height: 24px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Timer ── */
+  .timer-display {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    min-height: 36px;
+  }
+  .timer-display.warning { color: var(--yellow); }
+  .timer-display.danger { color: var(--highlight); animation: pulse 0.5s infinite alternate; }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
+
+  /* ── Voice Recognition ── */
+  .voice-status {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    min-height: 20px;
+    margin-top: 8px;
+  }
+  .voice-status.listening { color: var(--highlight); }
+
+  /* ── Misc ── */
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .section-sub { color: var(--text-dim); font-size: 0.9rem; }
+  .mt-20 { margin-top: 20px; }
+
+  .footer-version {
+    text-align: center;
+    padding: 16px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 600px) {
+    .question-text { font-size: 1.3rem; }
+    .btn { padding: 12px 18px; font-size: 1rem; }
+    .top-bar h1 { font-size: 1rem; }
+    .feature-bar { gap: 8px; padding: 6px 10px; }
+    .feature-toggle { font-size: 0.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ── -->
+<div class="top-bar" id="topBar">
+  <h1>Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v1.0g</span></h1>
+  <div class="child-tabs" id="childTabs"></div>
+  <div class="mode-toggle">
+    <label>Focused</label>
+    <button type="button" class="toggle-switch" id="modeToggle" ontouchend="event.preventDefault(); toggleMode();" onclick="toggleMode();">
+      <div class="toggle-knob"></div>
+    </button>
+    <label>Distracted</label>
+  </div>
+</div>
+
+<!-- ── Feature Toggles ── -->
+<div class="feature-bar">
+  <div class="feature-toggle">
+    <label>TTS</label>
+    <button type="button" class="feat-btn" id="ttsToggle" ontouchend="event.preventDefault(); toggleFeature('tts');" onclick="toggleFeature('tts');">
+      <div class="feat-knob"></div>
+    </button>
+  </div>
+  <div class="feature-toggle">
+    <label>Voice</label>
+    <button type="button" class="feat-btn" id="voiceToggle" ontouchend="event.preventDefault(); toggleFeature('voice');" onclick="toggleFeature('voice');">
+      <div class="feat-knob"></div>
+    </button>
+  </div>
+  <div class="feature-toggle">
+    <label>Timer</label>
+    <button type="button" class="feat-btn" id="timerToggle" ontouchend="event.preventDefault(); toggleFeature('timer');" onclick="toggleFeature('timer');">
+      <div class="feat-knob"></div>
+    </button>
+  </div>
+</div>
+
+<!-- ── Home Screen ── -->
+<div class="screen active" id="homeScreen">
+  <div style="text-align:center; margin-top: 40px;">
+    <h2>Who's learning today?</h2>
+    <p class="section-sub">Pick a learner to get started</p>
+  </div>
+  <div class="home-cards" id="homeCards"></div>
+  <div style="text-align:center;margin-top:30px;">
+    <button onclick="exportProgress()" style="font-size:0.7rem;padding:6px 12px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;margin:4px;">Backup Progress</button>
+    <button onclick="document.getElementById('importFile').click()" style="font-size:0.7rem;padding:6px 12px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;margin:4px;">Restore Progress</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importProgress(event)">
+  </div>
+</div>
+
+<!-- ── Add Child Screen ── -->
+<div class="screen" id="addChildScreen">
+  <div class="add-child-form">
+    <h2>Add a Learner</h2>
+    <div class="form-group">
+      <label>Child's Name</label>
+      <input type="text" id="childNameInput" placeholder="Enter name" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Grade</label>
+      <select id="childGradeInput">
+        <option value="0">JK / SK</option>
+        <option value="1">Grade 1</option>
+        <option value="2">Grade 2</option>
+        <option value="3">Grade 3</option>
+        <option value="4" selected>Grade 4</option>
+        <option value="5">Grade 5</option>
+        <option value="6">Grade 6</option>
+        <option value="7">Grade 7</option>
+        <option value="8">Grade 8</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Starting Level</label>
+      <select id="childLevelInput">
+        <option value="beginning">Beginning (start of grade)</option>
+        <option value="average" selected>Average (mid-grade)</option>
+        <option value="advanced">Advanced (end of grade / start of next)</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="addChild()">Add Child</button>
+      <button class="btn btn-back" onclick="showScreen('home')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Subject Screen ── -->
+<div class="screen" id="subjectScreen">
+  <div>
+    <p class="section-sub" id="subjectWho"></p>
+    <h2 class="section-title">Choose a Subject</h2>
+  </div>
+  <div class="subject-grid" id="subjectGrid"></div>
+  <div class="mt-20" style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-back" onclick="showScreen('home')">Back</button>
+    <button class="btn btn-primary" onclick="showScreen('wordEntry')">Word Entry</button>
+    <button class="btn" style="background:#1565c0;" onclick="showScreen('flashcardEntry')">Flashcard Entry</button>
+  </div>
+</div>
+
+<!-- ── Word Entry Screen ── -->
+<div class="screen" id="wordEntryScreen">
+  <div>
+    <p class="section-sub" id="wordEntryWho"></p>
+    <h2 class="section-title">Word Entry</h2>
+    <p class="section-sub">Add words for practice. Choose which list to add to:</p>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn" id="wordCatStudy" onclick="setWordCategory('study')" style="flex:1;background:var(--highlight);font-weight:700;">Word Study</button>
+    <button class="btn" id="wordCatSpelling" onclick="setWordCategory('spelling')" style="flex:1;background:var(--accent);font-weight:700;">Spelling</button>
+  </div>
+  <p class="section-sub" id="wordCatDesc" style="font-size:0.8rem;margin-bottom:8px;">Word Study: meaning &amp; pronunciation practice</p>
+  <div class="word-entry-form">
+    <input type="text" id="wordInput" placeholder="Type a word and press Enter or Add" autocomplete="off">
+    <button class="btn btn-primary" id="addWordBtn" onclick="addWord()">Add</button>
+  </div>
+  <div class="word-list" id="wordList"></div>
+  <div class="mt-20" style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-back" onclick="showScreen('subject')">Back to Subjects</button>
+    <button class="btn" style="background:#2e7d32;" onclick="toggleArchiveView()">Mastered Words</button>
+  </div>
+  <div id="archiveSection" style="display:none;margin-top:20px;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--green);">
+    <h3 style="margin-bottom:10px;color:var(--green);">Mastered Words Archive</h3>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:10px;">Tap to move a word back to the active list.</p>
+    <div id="archiveList"></div>
+  </div>
+</div>
+
+<!-- ── Flashcard Entry Screen ── -->
+<div class="screen" id="flashcardEntryScreen">
+  <div>
+    <p class="section-sub" id="flashcardEntryWho"></p>
+    <h2 class="section-title">Custom Flashcards</h2>
+    <p class="section-sub">Add your own question &amp; answer flashcards.</p>
+  </div>
+
+  <!-- Single Entry -->
+  <div style="margin-top:16px;">
+    <h3 style="font-size:1rem;margin-bottom:8px;">Add One:</h3>
+    <div class="word-entry-form" style="flex-direction:column;">
+      <input type="text" id="flashcardQ" placeholder="Question" autocomplete="off" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--accent);background:var(--bg);color:var(--text);font-size:1rem;">
+      <input type="text" id="flashcardA" placeholder="Answer" autocomplete="off" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--accent);background:var(--bg);color:var(--text);font-size:1rem;margin-top:8px;">
+      <button class="btn btn-primary" style="margin-top:8px;" onclick="addFlashcard()">Add Flashcard</button>
+    </div>
+  </div>
+
+  <!-- Bulk Paste -->
+  <div style="margin-top:20px;">
+    <h3 style="font-size:1rem;margin-bottom:8px;">Bulk Paste:</h3>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px;">Format: Q: question on one line, A: answer on the next. Blank lines between pairs are OK.</p>
+    <textarea id="bulkFlashcards" placeholder="Q: What is 7 x 8?&#10;A: 56&#10;&#10;Q: What is the capital of Canada?&#10;A: Ottawa" style="width:100%;min-height:150px;padding:12px;border-radius:8px;border:1px solid var(--accent);background:var(--bg);color:var(--text);font-size:0.9rem;font-family:inherit;resize:vertical;"></textarea>
+    <button class="btn" style="background:#1565c0;margin-top:8px;" onclick="bulkAddFlashcards()">Import All</button>
+  </div>
+
+  <!-- Existing Flashcard List -->
+  <div style="margin-top:20px;">
+    <h3 style="font-size:1rem;margin-bottom:8px;" id="flashcardCountLabel">Your Flashcards:</h3>
+    <div id="flashcardList"></div>
+  </div>
+
+  <div class="mt-20" style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-back" onclick="showScreen('subject')">Back to Subjects</button>
+    <button class="btn" style="background:#c62828;" id="clearAllFlashcardsBtn" onclick="clearAllFlashcards()">Clear All</button>
+  </div>
+</div>
+
+<!-- ── Quiz Screen ── -->
+<div class="screen" id="quizScreen">
+  <div class="quiz-header">
+    <div>
+      <span class="quiz-meta" id="quizInfo"></span>
+    </div>
+    <div>
+      <button class="btn btn-finish" onclick="finishQuiz()">Finish Program</button>
+    </div>
+  </div>
+  <div class="streak-display" id="streakDisplay"></div>
+  <div class="timer-display" id="timerDisplay"></div>
+  <div class="question-card" id="questionCard">
+    <div class="question-text" id="questionText"></div>
+    <div class="answer-text" id="answerText" style="display:none"></div>
+    <div class="quiz-buttons" id="quizButtons"></div>
+    <div class="voice-status" id="voiceStatus"></div>
+  </div>
+</div>
+
+<!-- ── Report Screen ── -->
+<div class="screen" id="reportScreen">
+  <button class="btn btn-back" onclick="showScreen('subject')">Back to Subjects</button>
+  <div class="report" id="reportContent"></div>
+  <div class="mt-20">
+    <button class="btn btn-primary" onclick="showScreen('subject')">Continue Learning</button>
+    <button class="btn btn-back" onclick="showScreen('home')">Switch Learner</button>
+  </div>
+</div>
+
+<div class="footer-version">Learning Hub v1.0g</div>
+
+<script>
+// ===============================================
+//  AUTO-UPDATE CHECK
+// ===============================================
+
+const APP_VERSION = '1.0g';
+
+(function checkForUpdate() {
+  if (location.protocol === 'file:') return;
+  const params = new URLSearchParams(location.search);
+  if (params.get('updated') === '1') return;
+  const baseUrl = location.href.split('?')[0].split('#')[0];
+  const versionUrl = baseUrl.replace(/generic\.html$/, '').replace(/\/$/, '') + '/version-generic.txt';
+  fetch(versionUrl + '?_=' + Date.now(), { cache: 'no-store' })
+    .then(r => r.ok ? r.text() : null)
+    .then(remote => {
+      if (!remote) return;
+      const remoteVersion = remote.trim();
+      if (remoteVersion !== APP_VERSION) {
+        console.log('Update available: ' + APP_VERSION + ' -> ' + remoteVersion);
+        location.replace(location.pathname + '?v=' + remoteVersion + '&t=' + Date.now() + '&updated=1');
+      }
+    })
+    .catch(() => {});
+})();
+
+// ===============================================
+//  CHILD COLOR/EMOJI PRESETS
+// ===============================================
+
+const CHILD_COLORS = ['child0','child1','child2','child3','child4','child5','child6','child7'];
+const CHILD_COLOR_HEX = ['#4fc3f7','#81c784','#f48fb1','#ffa726','#ce93d8','#4dd0e1','#aed581','#ff8a65'];
+const CHILD_EMOJIS = ['🌟','🚀','🎨','🏆','🌈','🦊','🐬','🌻','🎯','🦁','🐢','🎪'];
+const GRADE_LABELS = ['JK/SK','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+
+// ===============================================
+//  DATA & STATE
+// ===============================================
+
+// CHILDREN is stored in localStorage, starts empty
+let CHILDREN = {};
+
+function loadChildren() {
+  try {
+    const data = localStorage.getItem('generic_children');
+    if (data) CHILDREN = JSON.parse(data);
+  } catch(e) { CHILDREN = {}; }
+}
+
+function saveChildren() {
+  try { localStorage.setItem('generic_children', JSON.stringify(CHILDREN)); } catch(e) {}
+}
+
+function generateChildId(name) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  let id = base || 'child';
+  let counter = 1;
+  while (CHILDREN[id]) {
+    id = base + counter;
+    counter++;
+  }
+  return id;
+}
+
+function addChild() {
+  const nameInput = document.getElementById('childNameInput');
+  const gradeInput = document.getElementById('childGradeInput');
+  const levelInput = document.getElementById('childLevelInput');
+
+  const name = nameInput.value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+
+  const grade = parseInt(gradeInput.value);
+  const levelChoice = levelInput.value;
+
+  let startDecileValue;
+  if (levelChoice === 'beginning') {
+    startDecileValue = grade * 10;
+  } else if (levelChoice === 'average') {
+    startDecileValue = grade * 10 + 5;
+  } else { // advanced
+    startDecileValue = grade < 8 ? (grade + 1) * 10 : grade * 10 + 9;
+  }
+
+  const childCount = Object.keys(CHILDREN).length;
+  const colorIdx = childCount % CHILD_COLORS.length;
+  const emojiIdx = childCount % CHILD_EMOJIS.length;
+
+  const id = generateChildId(name);
+  CHILDREN[id] = {
+    name: name,
+    grade: grade,
+    emoji: CHILD_EMOJIS[emojiIdx],
+    colorIndex: colorIdx,
+    info: GRADE_LABELS[grade],
+    startDecile: { math: startDecileValue, english: startDecileValue, science: startDecileValue }
+  };
+
+  saveChildren();
+  nameInput.value = '';
+
+  // Select the new child and go to subjects
+  selectChild(id);
+}
+
+function deleteChild(id) {
+  const child = CHILDREN[id];
+  if (!child) return;
+  if (!confirm('Delete ' + child.name + ' and all their data? This cannot be undone.')) return;
+
+  delete CHILDREN[id];
+  saveChildren();
+
+  // Clean up localStorage for this child
+  try {
+    localStorage.removeItem('generic_words_' + id);
+    localStorage.removeItem('generic_spelling_' + id);
+    localStorage.removeItem('generic_flashcards_' + id);
+    localStorage.removeItem('generic_archive_' + id);
+  } catch(e) {}
+
+  // Remove session data
+  if (state.sessions[id]) {
+    delete state.sessions[id];
+    saveState();
+  }
+
+  if (state.activeChild === id) {
+    state.activeChild = null;
+  }
+
+  renderHome();
+  renderChildTabs();
+  showScreen('home');
+}
+
+const SUBJECTS = [
+  { id: 'all',     name: 'All Subjects', icon: '🎯' },
+  { id: 'math',    name: 'Math',    icon: '🔢' },
+  { id: 'english', name: 'English', icon: '📖' },
+  { id: 'science', name: 'Science', icon: '🔬' },
+  { id: 'wordStudy', name: 'Word Study', icon: '✏️' },
+  { id: 'spelling',  name: 'Spelling',   icon: '🔤' },
+  { id: 'newWords',  name: 'New Words',  icon: '📚' },
+  { id: 'custom',    name: 'Custom Flashcards', icon: '🃏' }
+];
+
+// Difficulty level: 0-89 where level = grade*10 + decile
+// Grade 0 = JK/SK, Grade 1-8
+
+let state = {
+  activeChild: null,
+  distracted: false,
+  tts: false,
+  voice: false,
+  timer: false,
+  sessions: {}
+};
+
+let quizState = null;
+let streak = 0;
+let bestStreak = 0;
+let timerInterval = null;
+let timerSeconds = 0;
+const TIMER_DURATION = { focused: 30, distracted: 45 };
+
+function getSession(childId) {
+  if (!state.sessions[childId]) {
+    const child = CHILDREN[childId];
+    if (!child) return { levels: { math: 25, english: 25, science: 25 }, history: {} };
+    state.sessions[childId] = {
+      levels: {
+        math: child.startDecile.math,
+        english: child.startDecile.english,
+        science: child.startDecile.science,
+        newWords: child.startDecile.english,
+        math_focused: child.startDecile.math,
+        math_distracted: child.startDecile.math,
+        english_focused: child.startDecile.english,
+        english_distracted: child.startDecile.english,
+        science_focused: child.startDecile.science,
+        science_distracted: child.startDecile.science,
+        newWords_focused: child.startDecile.english,
+        newWords_distracted: child.startDecile.english
+      },
+      history: {}
+    };
+  }
+  // Ensure focused/distracted level keys exist (migrate old saves)
+  const lvls = state.sessions[childId].levels;
+  for (const subj of ['math','english','science','newWords']) {
+    if (lvls[subj] !== undefined) {
+      if (lvls[subj + '_focused'] === undefined) lvls[subj + '_focused'] = lvls[subj];
+      if (lvls[subj + '_distracted'] === undefined) lvls[subj + '_distracted'] = lvls[subj];
+    }
+  }
+  return state.sessions[childId];
+}
+
+function getLevelKey(subject, distracted) {
+  const mode = distracted ? '_distracted' : '_focused';
+  if (['math','english','science','newWords'].includes(subject)) {
+    return subject + mode;
+  }
+  return subject;
+}
+
+function saveState() {
+  try {
+    const data = JSON.stringify(state);
+    localStorage.setItem('generic_learning', data);
+    localStorage.setItem('generic_learning_backup', data);
+    localStorage.setItem('generic_learning_backup_time', new Date().toISOString());
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    let s = localStorage.getItem('generic_learning');
+    if (!s) s = localStorage.getItem('generic_learning_backup');
+    if (s) {
+      const parsed = JSON.parse(s);
+      state.sessions = parsed.sessions || {};
+      if (parsed.tts !== undefined) state.tts = parsed.tts;
+      if (parsed.voice !== undefined) state.voice = parsed.voice;
+      if (parsed.timer !== undefined) state.timer = parsed.timer;
+      if (parsed.distracted !== undefined) state.distracted = parsed.distracted;
+    }
+  } catch(e) {}
+}
+
+// ===============================================
+//  QUESTION GENERATORS
+// ===============================================
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+const _pickHistory = new WeakMap();
+function pick(arr) {
+  if (arr.length === 0) return undefined;
+  if (arr.length === 1) return arr[0];
+  let history = _pickHistory.get(arr);
+  if (!history) { history = []; _pickHistory.set(arr, history); }
+  const blockCount = Math.min(history.length, Math.floor(arr.length * 0.75));
+  const blocked = new Set(history.slice(-blockCount));
+  const available = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (!blocked.has(i)) available.push(i);
+  }
+  const pool = available.length > 0 ? available : Array.from({length: arr.length}, (_, i) => i);
+  const idx = pool[randInt(0, pool.length - 1)];
+  history.push(idx);
+  if (history.length > arr.length * 2) {
+    history.splice(0, history.length - arr.length);
+  }
+  return arr[idx];
+}
+
+function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// ── MATH ──
+
+function genMath(level, distracted) {
+  const grade = Math.floor(level / 10);
+  const decile = level % 10;
+  if (grade <= 0) return genMathK(decile, distracted);
+  if (grade === 1) return genMath1(decile, distracted);
+  if (grade === 2) return genMath2(decile, distracted);
+  if (grade === 3) return genMath3(decile, distracted);
+  if (grade === 4) return genMath4(decile, distracted);
+  if (grade === 5) return genMath5(decile, distracted);
+  if (grade === 6) return genMath6(decile, distracted);
+  if (grade === 7) return genMath7(decile, distracted);
+  return genMath8(decile, distracted);
+}
+
+function genMathK(d, dist) {
+  if (d < 3) {
+    const n = randInt(1, 5);
+    return { q: 'What comes after ' + n + '?', a: '' + (n + 1) };
+  }
+  if (d < 6) {
+    const a = randInt(1, 3), b = randInt(1, 3);
+    return { q: 'What is ' + a + ' plus ' + b + '?', a: '' + (a + b) };
+  }
+  const a = randInt(1, 5), b = randInt(1, 5);
+  return { q: 'What is ' + a + ' plus ' + b + '?', a: '' + (a + b) };
+}
+
+function genMath1(d, dist) {
+  if (d < 3) {
+    const a = randInt(1, 8), b = randInt(1, 8);
+    return { q: 'What is ' + a + ' plus ' + b + '?', a: '' + (a + b) };
+  }
+  if (d < 6) {
+    const a = randInt(5, 15), b = randInt(1, a);
+    return pick([
+      { q: 'What is ' + a + ' minus ' + b + '?', a: '' + (a - b) },
+      { q: 'What is ' + a + ' plus ' + b + '?', a: '' + (a + b) }
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(8,18),b=randInt(1,a); return { q:'What is '+a+' minus '+b+'?', a:''+( a-b) }; })(),
+    (() => { const x=randInt(2,9),y=randInt(2,9),z=randInt(1,5); return { q:'What is '+x+' plus '+y+' plus '+z+'?', a:''+(x+y+z) }; })(),
+    (() => { const n=randInt(2,10); return { q:'What is double '+n+'?', a:''+(n*2) }; })()
+  ]);
+}
+
+function genMath2(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(10,30),b=randInt(1,10); return { q:'What is '+a+' plus '+b+'?', a:''+(a+b) }; })(),
+      (() => { const a=randInt(10,25),b=randInt(1,a); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })(),
+      (() => { const n=randInt(5,15); return { q:'What is double '+n+'?', a:''+(n*2) }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(10,40),b=randInt(5,20); return { q:'What is '+a+' plus '+b+'?', a:''+(a+b) }; })(),
+      (() => { const a=randInt(15,40),b=randInt(1,15); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })(),
+      (() => { const a=randInt(2,5),b=randInt(2,5); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(20,50),b=randInt(10,30); return { q:'What is '+a+' plus '+b+'?', a:''+(a+b) }; })(),
+    (() => { const a=randInt(2,6),b=randInt(2,6); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+    (() => { const a=randInt(30,60),b=randInt(10,25); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })(),
+    (() => { const n=randInt(10,25); return { q:'What is double '+n+'?', a:''+(n*2) }; })()
+  ]);
+}
+
+function genMath3(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(2,9),b=randInt(2,9); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=randInt(10,50),b=randInt(10,30); return { q:'What is '+a+' plus '+b+'?', a:''+(a+b) }; })(),
+      (() => { const n=randInt(10,50); return { q:'What is double '+n+'?', a:''+(n*2) }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(3,9),b=randInt(2,9); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=randInt(2,9),b=randInt(2,9); const p=a*b; return { q:'What is '+p+' divided by '+a+'?', a:''+b }; })(),
+      (() => { const a=randInt(20,60),b=randInt(10,30); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })(),
+      (() => { const n=pick([10,20,30,40,50,100]); return { q:'What is half of '+n+'?', a:''+(n/2) }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(6,12),b=randInt(4,12); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+    (() => { const a=randInt(2,12),b=randInt(2,12); const p=a*b; return { q:'What is '+p+' divided by '+a+'?', a:''+b }; })(),
+    (() => { const n=randInt(2,8),d2=pick([2,4,8]); return { q:'What fraction is '+n+' out of '+(n*d2)+'?', a:'1/'+d2 }; })(),
+    (() => { const n=pick([12,18,24,36,50,100]); return { q:'What is half of '+n+'?', a:''+(n/2) }; })()
+  ]);
+}
+
+function genMath4(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(3,12),b=randInt(3,12); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=randInt(25,75),b=randInt(10,25); return { q:'What is '+a+' plus '+b+'?', a:''+(a+b) }; })(),
+      (() => { const a=randInt(50,100),b=randInt(10,40); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(6,12),b=randInt(6,12); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=pick([2,3,4,5,6,8,10,12]),b=randInt(2,10); const p=a*b; return { q:'What is '+p+' divided by '+a+'?', a:''+b }; })(),
+      (() => { const p=pick([10,25,50]); const n=pick([20,40,60,80,100,200]); return { q:'What is '+p+' percent of '+n+'?', a:''+(p*n/100) }; })(),
+      (() => { const n=pick([12,15,18,24,36,48,50]); return { q:'What is half of '+n+'?', a:''+(n/2) }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(7,12),b=randInt(7,12); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+    (() => { const p=pick([10,25,50]); const n=pick([40,60,80,100,200,400]); return { q:'What is '+p+' percent of '+n+'?', a:''+(p*n/100) }; })(),
+    (() => { const a=pick([3,4,5,6,8,10,12]),b=randInt(3,12); const p=a*b; return { q:'What is '+p+' divided by '+a+'?', a:''+b }; })(),
+    (() => { const n=pick([15,24,36,48,64,90,100,150]); return { q:'What is half of '+n+'?', a:''+(n/2) }; })(),
+    (() => { const a=randInt(50,100),b=randInt(20,50); return { q:'What is '+a+' plus '+b+'?', a:''+(a+b) }; })(),
+    (() => { const a=randInt(50,150),b=randInt(10,50); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })(),
+    (() => { const a=randInt(2,9); return { q:'What is '+a+' squared?', a:''+(a*a) }; })()
+  ]);
+}
+
+function genMath5(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(6,12),b=randInt(6,12); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const p=pick([10,25,50]); const n=pick([40,60,80,100,200]); return { q:'What is '+p+' percent of '+n+'?', a:''+(p*n/100) }; })(),
+      (() => { const n=randInt(15,50); return { q:'What is double '+n+'?', a:''+(n*2) }; })(),
+      (() => { const a=randInt(2,9); return { q:'What is '+a+' squared?', a:''+(a*a) }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(6,12),b=randInt(6,15); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const p=pick([10,20,25,50,75]); const n=pick([40,60,80,100,200,400]); return { q:'What is '+p+' percent of '+n+'?', a:''+(p*n/100) }; })(),
+      (() => { const a=pick([3,4,5,6,7,8,9,12]),b=randInt(3,12); const p=a*b; return { q:'What is '+p+' divided by '+a+'?', a:''+b }; })(),
+      (() => { const n=pick([24,36,48,64,90,100,150,200]); return { q:'What is half of '+n+'?', a:''+(n/2) }; })(),
+      (() => { const a=randInt(50,200),b=randInt(25,100); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(8,15),b=randInt(8,15); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+    (() => { const p=pick([5,10,15,20,25,30,50,75]); const n=pick([40,60,80,100,200,300,400]); return { q:'What is '+p+' percent of '+n+'?', a:''+(p*n/100) }; })(),
+    (() => { const a=pick([3,4,5,6,7,8,9,11,12]),b=randInt(3,12); const p=a*b; return { q:'What is '+p+' divided by '+a+'?', a:''+b }; })(),
+    (() => { const a=randInt(2,12); return { q:'What is '+a+' squared?', a:''+(a*a) }; })(),
+    (() => { const n=randInt(25,99); return { q:'What is double '+n+'?', a:''+(n*2) }; })(),
+    (() => { const a=randInt(100,200),b=randInt(25,75); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })()
+  ]);
+}
+
+function genMath6(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(10,20),b=randInt(10,20); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=randInt(2,12); return { q:'What is '+a+' cubed?', a:''+(a*a*a) }; })(),
+      (() => { const a=randInt(-10,-1),b=randInt(1,10); return { q:'What is '+a+' + '+b+'?', a:''+(a+b) }; })(),
+      (() => { const a=randInt(-10,-1),b=randInt(-10,-1); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const p=pick([5,10,15,20,25,33,50]); const n=pick([60,90,120,150,200,300,450]); return { q:'What is '+p+'% of '+n+'?', a:''+(p*n/100) }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(12,25),b=randInt(12,25); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=randInt(-15,-1),b=randInt(-15,-1); return { q:'What is '+a+' minus '+b+'?', a:''+(a-b) }; })(),
+      (() => { const n=pick([36,49,64,81,100,121,144,169,196,225]); return { q:'What is the square root of '+n+'?', a:''+Math.sqrt(n) }; })(),
+      (() => { const a=randInt(2,9),b=randInt(2,5); return { q:'What is '+a+' to the power of '+b+'?', a:''+Math.pow(a,b) }; })(),
+      (() => { const a=randInt(100,500),b=randInt(50,200); return { q:'What is '+a+' + '+b+'?', a:''+(a+b) }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(15,30),b=randInt(15,30); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+    (() => { const a=randInt(-20,-1),b=randInt(-20,-1); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+    (() => { const n=pick([64,125,216,343,512,729,1000]); const r=Math.round(Math.pow(n,1/3)); return { q:'What is the cube root of '+n+'?', a:''+r }; })(),
+    (() => { const a=randInt(3,12),b=randInt(3,12); const p=a*b; const c=randInt(2,5); return { q:p+' / '+a+' x '+c+' = ?', a:''+(b*c) }; })(),
+    (() => { const a=randInt(2,9); return { q:'What is '+a+' squared plus '+a+'?', a:''+(a*a+a) }; })()
+  ]);
+}
+
+function genMath7(d, dist) {
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(20,50),b=randInt(20,50); return { q:'What is '+a+' times '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=randInt(-20,20),b=randInt(-20,20); return { q:'What is '+a+' x '+b+'?', a:''+(a*b) }; })(),
+      (() => { const a=randInt(2,10); return { q:'What is '+a+' to the power of 3?', a:''+(a*a*a) }; })(),
+      (() => { const r=randInt(3,15); return { q:'What is the area of a circle with radius '+r+'? (use pi = 3.14)', a:''+(3.14*r*r).toFixed(2) }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(2,15),b=randInt(2,6); return { q:'What is '+a+' to the power of '+b+'?', a:''+Math.pow(a,b) }; })(),
+      (() => { const a=randInt(-30,30),b=randInt(-30,30); const c=randInt(-20,20); return { q:'What is '+a+' + '+b+' + '+c+'?', a:''+(a+b+c) }; })(),
+      (() => { const a=randInt(2,12),b=randInt(2,12),c=randInt(2,12); return { q:'What is '+a+' x '+b+' + '+c+'?', a:''+(a*b+c) }; })(),
+      (() => { const n=pick([144,169,196,225,256,289,324,361,400,441,484,529,576,625]); return { q:'What is the square root of '+n+'?', a:''+Math.sqrt(n) }; })(),
+      (() => { const p=randInt(5,40); const n=randInt(50,500); return { q:'What is '+p+'% of '+n+'?', a:''+(p*n/100) }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(3,15),b=randInt(3,4); return { q:'What is '+a+' to the power of '+b+'?', a:''+Math.pow(a,b) }; })(),
+    (() => { const a=randInt(-50,50),b=randInt(-50,50); return { q:'What is '+a+' x '+b+'?', a:''+(a*b) }; })(),
+    (() => { const a=randInt(10,30),b=randInt(10,30); return { q:'What is '+a+'squared - '+b+'squared?', a:''+(a*a-b*b) }; })(),
+    (() => { const a=randInt(2,9),b=randInt(2,9); return { q:'Simplify: '+a+'x + '+b+'x', a:''+(a+b)+'x' }; })(),
+    (() => { const a=randInt(2,8),b=randInt(1,10); return { q:'Solve for x: '+a+'x = '+(a*b), a:'x = '+b }; })()
+  ]);
+}
+
+function genMath8(d, dist) {
+  // Grade 8 math - extends grade 7 with more algebra
+  if (d < 3) {
+    return pick([
+      (() => { const a=randInt(2,8),b=randInt(1,10); return { q:'Solve for x: '+a+'x = '+(a*b), a:'x = '+b }; })(),
+      (() => { const a=randInt(2,10),b=randInt(2,10); return { q:'What is '+a+' to the power of '+b+'?', a:''+Math.pow(a,b) }; })(),
+      (() => { const a=randInt(10,30),b=randInt(10,30); return { q:'What is '+a+'squared - '+b+'squared?', a:''+(a*a-b*b) }; })(),
+      (() => { const a=randInt(2,9),b=randInt(2,9); return { q:'Simplify: '+a+'x + '+b+'x', a:''+(a+b)+'x' }; })()
+    ]);
+  }
+  if (d < 6) {
+    return pick([
+      (() => { const a=randInt(2,6),b=randInt(1,10),c=randInt(1,20); return { q:'Solve: '+a+'x + '+b+' = '+c, a:'x = '+((c-b)/a).toFixed(2).replace(/\.?0+$/,'') }; })(),
+      (() => { const n=pick([144,169,196,225,256,289,324,361,400,625,900]); return { q:'What is the square root of '+n+'?', a:''+Math.sqrt(n) }; })(),
+      (() => { const a=randInt(3,12),b=randInt(3,12); return { q:'What is '+a+' x '+b+' x 2?', a:''+(a*b*2) }; })(),
+      (() => { const r=randInt(3,15); return { q:'What is the circumference of a circle with radius '+r+'? (use pi = 3.14)', a:''+(2*3.14*r).toFixed(2) }; })()
+    ]);
+  }
+  return pick([
+    (() => { const a=randInt(2,5),b=randInt(1,8),c=randInt(10,30); return { q:'Solve: '+a+'x + '+b+' = '+c, a:'x = '+((c-b)/a).toFixed(2).replace(/\.?0+$/,'') }; })(),
+    (() => { const a=randInt(2,12); return { q:'What is '+a+' cubed?', a:''+(a*a*a) }; })(),
+    (() => { const a=randInt(-30,30),b=randInt(-30,30); return { q:'What is '+a+' x '+b+'?', a:''+(a*b) }; })(),
+    (() => { const a=randInt(2,9),b=randInt(2,9); const c=randInt(2,5); return { q:'Simplify: '+a+'x + '+b+'x - '+c+'x', a:''+(a+b-c)+'x' }; })(),
+    (() => { const l=randInt(5,20),w=randInt(3,15),h=randInt(2,10); return { q:'Volume of a box: '+l+' x '+w+' x '+h+' = ?', a:''+(l*w*h) }; })()
+  ]);
+}
+
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function lcm(a, b) { return (a * b) / gcd(a, b); }
+
+// ── ENGLISH ──
+
+const SIGHT_WORDS_K = ['the','and','a','to','in','is','it','my','we','he','she','go','no','so','do','up','am','at','on','an','if','or','be','me','us'];
+const SIGHT_WORDS_1 = ['was','are','his','her','has','had','but','not','you','all','can','will','one','two','said','what','when','them','from','just','been','your','each','make','like','long','look','many','some','time','very','after','could','other','into','more','than','come','they','were','with','have','this','that','word','their','there'];
+const SPELLING_2 = ['because','friend','school','people','great','thought','through','before','enough','together','different','important','between','another','something','everyone','animal','beautiful','children','family'];
+const SPELLING_3 = ['separate','necessary','probably','beginning','business','calendar','describe','favorite','library','sentence','surprise','tomorrow','weather','February','Wednesday','interesting','experiment','paragraph','knowledge','especially'];
+const SPELLING_4 = ['accommodate','occasionally','immediately','unfortunately','independent','environment','temperature','government','particular','restaurant','embarrass','disappoint','exaggerate','guarantee','privilege','conscience','discipline','maintenance','occurrence','professional'];
+const SPELLING_5 = ['abbreviation','acknowledgement','circumstances','correspondence','encyclopedia','extraordinary','miscellaneous','simultaneously','sophisticated','controversial','discrimination','characteristic','approximately','communication','investigation','philosophical','pronunciation','representative','transformation','vulnerability'];
+
+const VOCAB_3 = [
+  {w:'enormous',d:'very large',s:'The enormous elephant blocked the path.'},
+  {w:'courage',d:'bravery',s:'It took courage to speak up.'},
+  {w:'ancient',d:'very old',s:'The ancient ruins were fascinating.'},
+  {w:'peculiar',d:'strange or odd',s:'There was a peculiar smell in the air.'},
+  {w:'brief',d:'short in time',s:'He gave a brief speech.'},
+  {w:'generous',d:'willing to give',s:'She was generous with her time.'},
+  {w:'observe',d:'to watch carefully',s:'We observe the birds every morning.'},
+  {w:'gradually',d:'slowly over time',s:'The sky gradually turned orange.'},
+  {w:'curious',d:'wanting to know things',s:'The curious boy asked many questions.'},
+  {w:'fierce',d:'wild and aggressive',s:'The fierce lion roared loudly.'},
+  {w:'miserable',d:'very unhappy',s:'She felt miserable in the cold rain.'},
+  {w:'delicate',d:'easily broken or damaged',s:'Be careful with the delicate glass vase.'},
+  {w:'triumph',d:'a great victory',s:'Winning the game was a real triumph.'},
+  {w:'disguise',d:'to change appearance to hide identity',s:'The spy wore a clever disguise.'},
+  {w:'legend',d:'an old well-known story',s:'The legend of King Arthur is famous.'},
+  {w:'scarce',d:'hard to find, not enough',s:'Water was scarce in the desert.'},
+];
+const VOCAB_4 = [
+  {w:'persistent',d:'not giving up',s:'Her persistent effort paid off.'},
+  {w:'consequence',d:'result of an action',s:'The consequence of not studying was a low grade.'},
+  {w:'elaborate',d:'detailed and complex',s:'He gave an elaborate explanation.'},
+  {w:'reluctant',d:'unwilling or hesitant',s:'She was reluctant to try the new food.'},
+  {w:'significant',d:'important or meaningful',s:'It was a significant discovery.'},
+  {w:'absurd',d:'ridiculous',s:'The idea was completely absurd.'},
+  {w:'flexible',d:'able to bend or adapt',s:'A flexible schedule is helpful.'},
+  {w:'abundant',d:'more than enough',s:'There was an abundant supply of water.'},
+  {w:'cautious',d:'being very careful',s:'The cautious driver slowed down at the intersection.'},
+  {w:'demonstrate',d:'to show how something works',s:'The teacher will demonstrate the experiment.'},
+  {w:'distract',d:'to take attention away',s:'The noise outside will distract the students.'},
+  {w:'imitate',d:'to copy or mimic',s:'The parrot could imitate human speech.'},
+  {w:'investigate',d:'to look into carefully',s:'The detective will investigate the mystery.'},
+  {w:'navigate',d:'to find your way',s:'We used a compass to navigate through the forest.'},
+  {w:'temporary',d:'lasting only a short time',s:'The road closure is only temporary.'},
+  {w:'valuable',d:'worth a lot',s:'The valuable painting was kept in a safe.'},
+];
+const VOCAB_5 = [
+  {w:'ambiguous',d:'having more than one meaning',s:'The instructions were ambiguous.'},
+  {w:'inevitable',d:'certain to happen',s:'Change is inevitable.'},
+  {w:'meticulous',d:'very careful and precise',s:'She was meticulous in her work.'},
+  {w:'plausible',d:'seeming reasonable',s:'His excuse was barely plausible.'},
+  {w:'tentative',d:'not certain or fixed',s:'We made tentative plans for Saturday.'},
+  {w:'unanimous',d:'fully in agreement',s:'The vote was unanimous.'},
+  {w:'vivid',d:'very clear and bright',s:'She had vivid memories of the trip.'},
+  {w:'subtle',d:'not obvious',s:'There was a subtle difference in color.'},
+  {w:'contemplate',d:'to think deeply about',s:'She sat by the lake to contemplate her decision.'},
+  {w:'diligent',d:'hardworking and careful',s:'The diligent student finished all her homework early.'},
+  {w:'futile',d:'pointless, having no chance of success',s:'It was futile to argue with someone so stubborn.'},
+  {w:'hinder',d:'to get in the way of',s:'The heavy rain will hinder our progress.'},
+  {w:'versatile',d:'able to do many different things',s:'A Swiss army knife is a versatile tool.'},
+  {w:'compromise',d:'an agreement where both sides give something up',s:'They reached a compromise about bedtime.'},
+  {w:'gratitude',d:'the feeling of being thankful',s:'She expressed her gratitude with a thank-you card.'},
+  {w:'obstacle',d:'something in the way that must be overcome',s:'The fallen tree was an obstacle on the trail.'},
+];
+
+// ── NEW WORDS BANK ──
+const NEW_WORDS = {
+  0: [
+    {w:'happy',d:'feeling good or glad',s:'The happy puppy wagged its tail.'},
+    {w:'big',d:'large in size',s:'The big truck drove down the road.'},
+    {w:'fast',d:'moving quickly',s:'The fast bunny hopped away.'},
+    {w:'cold',d:'not warm, low temperature',s:'The ice cream is very cold.'},
+    {w:'soft',d:'not hard, gentle to touch',s:'The soft blanket kept me warm.'},
+    {w:'loud',d:'making a lot of noise',s:'The loud thunder scared the cat.'},
+    {w:'kind',d:'nice and caring',s:'The kind girl shared her snack.'},
+    {w:'brave',d:'not afraid, courageous',s:'The brave firefighter went into the building.'},
+    {w:'tiny',d:'very very small',s:'The tiny ant carried a crumb.'},
+    {w:'shiny',d:'bright and reflecting light',s:'The shiny star twinkled at night.'},
+  ],
+  1: [
+    {w:'curious',d:'wanting to know or learn',s:'The curious kitten explored the garden.'},
+    {w:'gentle',d:'soft and careful',s:'Be gentle with the baby bird.'},
+    {w:'proud',d:'feeling good about something you did',s:'She was proud of her drawing.'},
+    {w:'calm',d:'quiet and peaceful',s:'The calm lake had no waves.'},
+    {w:'tricky',d:'hard to do or understand',s:'The tricky puzzle took a long time.'},
+    {w:'enormous',d:'very very big',s:'The enormous whale swam in the ocean.'},
+    {w:'excited',d:'very happy about something coming',s:'He was excited about his birthday.'},
+    {w:'clever',d:'smart and quick-thinking',s:'The clever fox found the food.'},
+    {w:'grumpy',d:'feeling cranky or annoyed',s:'The grumpy troll guarded the bridge.'},
+    {w:'fragile',d:'easy to break',s:'The fragile egg cracked when it fell.'},
+    {w:'fierce',d:'strong and powerful',s:'The fierce lion roared loudly.'},
+    {w:'cozy',d:'warm and comfortable',s:'The cozy bed made her sleepy.'},
+  ],
+  2: [
+    {w:'patient',d:'able to wait without getting upset',s:'She was patient while waiting in line.'},
+    {w:'confident',d:'believing in yourself',s:'The confident speaker stood up tall.'},
+    {w:'gorgeous',d:'very beautiful',s:'The gorgeous sunset turned the sky orange.'},
+    {w:'ancient',d:'very very old',s:'The ancient castle was hundreds of years old.'},
+    {w:'dangerous',d:'could hurt you, not safe',s:'Swimming in the deep river is dangerous.'},
+    {w:'brilliant',d:'very smart or very bright',s:'She had a brilliant idea to solve the problem.'},
+    {w:'mysterious',d:'hard to explain or understand',s:'The mysterious noise came from the attic.'},
+    {w:'delicious',d:'tasting really good',s:'The delicious cake disappeared quickly.'},
+    {w:'exhausted',d:'very very tired',s:'After running all day, he was exhausted.'},
+    {w:'incredible',d:'hard to believe, amazing',s:'The magician did an incredible trick.'},
+    {w:'determined',d:'not giving up no matter what',s:'The determined climber reached the top.'},
+    {w:'ordinary',d:'normal, not special',s:'It was just an ordinary Tuesday.'},
+  ],
+  3: [
+    {w:'anxious',d:'feeling worried or nervous',s:'She felt anxious before the big test.'},
+    {w:'magnificent',d:'extremely beautiful or impressive',s:'The magnificent palace had golden walls.'},
+    {w:'ridiculous',d:'very silly or unreasonable',s:'Wearing a swimsuit in winter is ridiculous.'},
+    {w:'investigate',d:'to look into something carefully',s:'The detective will investigate the crime.'},
+    {w:'essential',d:'absolutely necessary',s:'Water is essential for life.'},
+    {w:'hesitant',d:'unsure, pausing before doing something',s:'He was hesitant to jump into the cold pool.'},
+    {w:'precise',d:'exact and accurate',s:'The scientist made precise measurements.'},
+    {w:'tremendous',d:'extremely large or great',s:'There was a tremendous explosion of fireworks.'},
+    {w:'commotion',d:'a lot of noise and confusion',s:'The dog caused a commotion in the park.'},
+    {w:'gloomy',d:'dark and sad-looking',s:'The gloomy weather made everyone stay inside.'},
+    {w:'accomplish',d:'to complete or achieve something',s:'She worked hard to accomplish her goal.'},
+    {w:'peculiar',d:'strange or unusual',s:'There was a peculiar smell coming from the kitchen.'},
+    {w:'catastrophe',d:'a terrible disaster',s:'The flood was a catastrophe for the town.'},
+    {w:'obvious',d:'easy to see or understand',s:'It was obvious that the dog ate the cookies.'},
+  ],
+  4: [
+    {w:'consequence',d:'what happens as a result of something',s:'The consequence of not studying was a poor grade.'},
+    {w:'persistent',d:'keeping going and not giving up',s:'Her persistent practice made her a great pianist.'},
+    {w:'elaborate',d:'very detailed and complex',s:'He gave an elaborate explanation of his invention.'},
+    {w:'reluctant',d:'not wanting to do something',s:'She was reluctant to try the strange food.'},
+    {w:'significant',d:'important or meaningful',s:'The discovery was significant for science.'},
+    {w:'absurd',d:'completely ridiculous or unreasonable',s:'The idea of a flying car seemed absurd.'},
+    {w:'inevitable',d:'certain to happen, unavoidable',s:'Winter snow in Canada is inevitable.'},
+    {w:'bewildered',d:'completely confused and puzzled',s:'The bewildered tourist was lost in the city.'},
+    {w:'compromise',d:'both sides giving up something to agree',s:'They reached a compromise about bedtime.'},
+    {w:'exaggerate',d:'to make something sound bigger than it is',s:'He tends to exaggerate how far he can throw.'},
+    {w:'skeptical',d:'not easily convinced, doubtful',s:'She was skeptical about the magic trick.'},
+    {w:'versatile',d:'able to do many different things',s:'A versatile player can play any position.'},
+    {w:'legitimate',d:'real, genuine, allowed by rules',s:'He had a legitimate reason for being late.'},
+    {w:'dilemma',d:'a difficult choice between two options',s:'She faced a dilemma: study or help her friend.'},
+    {w:'contemplate',d:'to think deeply about something',s:'He sat quietly to contemplate the problem.'},
+    {w:'distinguish',d:'to tell the difference between things',s:'Can you distinguish between the two sounds?'},
+  ],
+  5: [
+    {w:'ambiguous',d:'having more than one possible meaning',s:'The ambiguous instructions confused everyone.'},
+    {w:'meticulous',d:'extremely careful about details',s:'The meticulous artist painted every tiny leaf.'},
+    {w:'plausible',d:'seeming reasonable or likely true',s:'His excuse was barely plausible.'},
+    {w:'tentative',d:'not certain or definite',s:'We made tentative plans for the weekend.'},
+    {w:'unanimous',d:'everyone fully agrees',s:'The vote to cancel homework was unanimous.'},
+    {w:'subtle',d:'not obvious, hard to notice',s:'There was a subtle change in her expression.'},
+    {w:'contradict',d:'to say the opposite of what someone said',s:'The evidence seemed to contradict his story.'},
+    {w:'scrutinize',d:'to examine very closely and carefully',s:'The teacher will scrutinize every answer.'},
+    {w:'procrastinate',d:'to keep putting off what you should do',s:'He tends to procrastinate on his homework.'},
+    {w:'articulate',d:'able to express ideas clearly',s:'The articulate speaker captivated the audience.'},
+    {w:'perseverance',d:'continuing despite difficulty',s:'Her perseverance through injuries was inspiring.'},
+    {w:'hypothesis',d:'an educated guess that can be tested',s:'The scientist formed a hypothesis about plant growth.'},
+    {w:'comprehensive',d:'including everything, thorough',s:'The book provides a comprehensive guide to birds.'},
+    {w:'undermine',d:'to weaken or damage gradually',s:'Lies can undermine trust between friends.'},
+    {w:'innovative',d:'introducing new ideas or methods',s:'The innovative design won the science fair.'},
+    {w:'resilient',d:'able to recover quickly from difficulty',s:'The resilient team bounced back after the loss.'},
+  ]
+};
+
+function genNewWord(level) {
+  const grade = Math.min(5, Math.max(0, Math.floor(level / 10)));
+  const words = NEW_WORDS[grade] || NEW_WORDS[0];
+  const w = pick(words);
+  return { q: 'What does "' + w.w + '" mean?', a: w.d, _sentence: w.s, _word: w.w, _newWord: w.w };
+}
+
+function genWordStudy(childId) {
+  const words = getStudyWords(childId);
+  if (words.length === 0) return null;
+  const w = pick(words);
+  const child = CHILDREN[childId];
+  const grade = child ? child.grade : 2;
+  if (grade <= 1) {
+    // For grade 0-1: show word in big letters (pronunciation)
+    return { q: w, a: w, _displayWord: w.toUpperCase(), _wordStudyBigWord: true, _customWord: w };
+  }
+  // Grade 2+: word study is about meaning
+  return { q: 'What does "' + w + '" mean?', a: '(Check the meaning of "' + w + '")', _customWord: w };
+}
+
+function genSpelling(childId) {
+  const words = getSpellingWords(childId);
+  if (words.length === 0) return null;
+  const w = pick(words);
+  return { q: 'Spell the word: "' + w + '"', a: w.toUpperCase().split('').join(' - '), _customWord: w, _isSpelling: true };
+}
+
+// Sentence starters for grammar
+const GRAMMAR_FIX = {
+  1: [
+    {q:'Fix: "i like dogs"', a:'I like dogs.'},
+    {q:'Fix: "she run fast"', a:'She runs fast.'},
+    {q:'Fix: "the cat is big it is black"', a:'The cat is big. It is black.'},
+    {q:'What punctuation ends a question?', a:'A question mark (?)'},
+    {q:'Fix: "him went to school"', a:'He went to school.'},
+    {q:'Fix: "we has two cats"', a:'We have two cats.'},
+    {q:'Fix: "her is my friend"', a:'She is my friend.'},
+    {q:'Fix: "the dog runned away"', a:'The dog ran away.'},
+    {q:'Fix: "i goed to the store"', a:'I went to the store.'},
+    {q:'Fix: "them are playing"', a:'They are playing.'},
+    {q:'Fix: "he dont like it"', a:'He doesn\'t like it.'},
+    {q:'What punctuation ends a sentence?', a:'A period (.)'},
+  ],
+  2: [
+    {q:'Fix: "their going to the park"', a:'They\'re going to the park.'},
+    {q:'Fix: "me and him went outside"', a:'He and I went outside.'},
+    {q:'What is a noun?', a:'A person, place, or thing'},
+    {q:'What is a verb?', a:'An action word (something you do)'},
+    {q:'Fix: "the dogs bone was big"', a:'The dog\'s bone was big.'},
+    {q:'Fix: "yesterday i go to school"', a:'Yesterday I went to school.'},
+    {q:'Fix: "she dont want none"', a:'She doesn\'t want any.'},
+    {q:'Fix: "him and her is friends"', a:'He and she are friends.'},
+    {q:'Fix: "i seen a bird"', a:'I saw a bird.'},
+    {q:'Fix: "we was playing outside"', a:'We were playing outside.'},
+    {q:'Fix: "the cat it is sleeping"', a:'The cat is sleeping.'},
+    {q:'What does a comma do?', a:'It separates parts of a sentence or items in a list'},
+  ],
+  3: [
+    {q:'Fix: "their are too many people hear"', a:'There are too many people here.'},
+    {q:'What is an adjective?', a:'A word that describes a noun'},
+    {q:'Fix: "the boys hat is red"', a:'The boy\'s hat is red.'},
+    {q:'Name the two parts of a sentence', a:'Subject and predicate'},
+    {q:'Fix: "him and me went to the store its far away"', a:'He and I went to the store. It\'s far away.'},
+    {q:'What is the past tense of "run"?', a:'Ran'},
+    {q:'Fix: "we dont got no homework"', a:'We don\'t have any homework.'},
+    {q:'Fix: "the mouses ran away quick"', a:'The mice ran away quickly.'},
+    {q:'Fix: "i could of went to the park"', a:'I could have gone to the park.'},
+    {q:'Fix: "she readed the book last night"', a:'She read the book last night.'},
+    {q:'What are quotation marks used for?', a:'To show someone is speaking or to highlight a word'},
+    {q:'Fix: "there dog is more bigger then ours"', a:'Their dog is bigger than ours.'},
+  ],
+  4: [
+    {q:'Fix: "the childrens toys was everywhere"', a:'The children\'s toys were everywhere.'},
+    {q:'What is an adverb?', a:'A word that describes a verb, adjective, or other adverb'},
+    {q:'Fix: "accept for me everyone went"', a:'Except for me, everyone went.'},
+    {q:'What is a compound sentence?', a:'Two independent clauses joined by a conjunction'},
+    {q:'Fix: "its to late too go their"', a:'It\'s too late to go there.'},
+    {q:'What is the difference between "affect" and "effect"?', a:'Affect is a verb (to influence), effect is a noun (a result)'},
+    {q:'Fix: "the team played good yesterday"', a:'The team played well yesterday.'},
+    {q:'Fix: "each of the students need to bring there books"', a:'Each of the students needs to bring their books.'},
+    {q:'Fix: "me and my friends builded a fort"', a:'My friends and I built a fort.'},
+    {q:'Fix: "he runs more faster then her"', a:'He runs faster than her.'},
+    {q:'What is a possessive noun?', a:'A noun that shows ownership, using an apostrophe (e.g. dog\'s bone)'},
+    {q:'Fix: "alot of peoples was they\'re"', a:'A lot of people were there.'},
+  ],
+  5: [
+    {q:'Fix: "neither the boys or the girl were ready"', a:'Neither the boys nor the girl was ready.'},
+    {q:'What is a metaphor?', a:'A comparison without using "like" or "as"'},
+    {q:'What is a simile?', a:'A comparison using "like" or "as"'},
+    {q:'Fix: "who\'s book is this that your reading"', a:'Whose book is this that you\'re reading?'},
+    {q:'What is the difference between "than" and "then"?', a:'Than is for comparison, then is for time/sequence'},
+    {q:'What is an independent clause?', a:'A group of words with a subject and verb that can stand alone as a sentence'},
+    {q:'Fix: "the data shows that less people attended then expected"', a:'The data show that fewer people attended than expected.'},
+    {q:'Fix: "laying on the couch she readed her book"', a:'Lying on the couch, she read her book.'},
+    {q:'What is a dependent clause?', a:'A clause that cannot stand alone and needs an independent clause'},
+    {q:'Fix: "between you and I this is a real good idea"', a:'Between you and me, this is a really good idea.'},
+    {q:'What is a run-on sentence?', a:'Two or more sentences joined without proper punctuation or conjunction'},
+    {q:'Fix: "the principle of the school complemented the students on they\'re behavior"', a:'The principal of the school complimented the students on their behavior.'},
+  ]
+};
+
+// Audio-friendly English questions for distracted mode
+const AUDIO_ENGLISH_K = [
+  {q:'What letter comes after B?', a:'C'},
+  {q:'What letter comes after F?', a:'G'},
+  {q:'What letter comes after M?', a:'N'},
+  {q:'What letter comes after R?', a:'S'},
+  {q:'What letter comes after T?', a:'U'},
+  {q:'What letter comes after H?', a:'I'},
+  {q:'What letter comes after W?', a:'X'},
+  {q:'What letter comes before D?', a:'C'},
+  {q:'What letter comes before G?', a:'F'},
+  {q:'What letter comes before P?', a:'O'},
+  {q:'What letter comes before J?', a:'I'},
+  {q:'What sound does "cat" start with?', a:'The "C" sound'},
+  {q:'What sound does "dog" start with?', a:'The "D" sound'},
+  {q:'What sound does "fish" start with?', a:'The "F" sound'},
+  {q:'What sound does "sun" start with?', a:'The "S" sound'},
+  {q:'What sound does "moon" start with?', a:'The "M" sound'},
+  {q:'What rhymes with "cat"?', a:'Hat, bat, mat, sat'},
+  {q:'What rhymes with "dog"?', a:'Log, fog, hog'},
+  {q:'What rhymes with "sun"?', a:'Fun, run, bun'},
+  {q:'What is the opposite of "up"?', a:'Down'},
+  {q:'What is the opposite of "yes"?', a:'No'},
+  {q:'What is the opposite of "big"?', a:'Small'},
+  {q:'Spell the word "go"', a:'G - O'},
+  {q:'Spell the word "me"', a:'M - E'},
+  {q:'Spell the word "no"', a:'N - O'},
+  {q:'What is the first letter of the alphabet?', a:'A'},
+  {q:'What is the last letter of the alphabet?', a:'Z'},
+  {q:'How many letters are in the alphabet?', a:'26'},
+];
+const AUDIO_ENGLISH_1 = [
+  {q:'Spell the word "was"', a:'W - A - S'},
+  {q:'Spell the word "said"', a:'S - A - I - D'},
+  {q:'Spell the word "come"', a:'C - O - M - E'},
+  {q:'Spell the word "have"', a:'H - A - V - E'},
+  {q:'Spell the word "they"', a:'T - H - E - Y'},
+  {q:'Spell the word "like"', a:'L - I - K - E'},
+  {q:'Spell the word "from"', a:'F - R - O - M'},
+  {q:'Spell the word "that"', a:'T - H - A - T'},
+  {q:'Spell the word "with"', a:'W - I - T - H'},
+  {q:'Spell the word "what"', a:'W - H - A - T'},
+  {q:'What rhymes with "cake"?', a:'Make, lake, bake, take'},
+  {q:'What rhymes with "night"?', a:'Light, right, fight, sight'},
+  {q:'What is the opposite of "hot"?', a:'Cold'},
+  {q:'What is the opposite of "big"?', a:'Small'},
+  {q:'What is the opposite of "fast"?', a:'Slow'},
+  {q:'What is the opposite of "happy"?', a:'Sad'},
+  {q:'What is the opposite of "day"?', a:'Night'},
+  {q:'If I have one mouse, two are called what?', a:'Mice'},
+  {q:'If I have one tooth, many are called what?', a:'Teeth'},
+  {q:'If I have one foot, two are called what?', a:'Feet'},
+];
+const AUDIO_ENGLISH_2 = [
+  {q:'Spell the word "friend"', a:'F - R - I - E - N - D'},
+  {q:'Spell the word "school"', a:'S - C - H - O - O - L'},
+  {q:'Spell the word "people"', a:'P - E - O - P - L - E'},
+  {q:'Spell the word "because"', a:'B - E - C - A - U - S - E'},
+  {q:'Spell the word "thought"', a:'T - H - O - U - G - H - T'},
+  {q:'Spell the word "enough"', a:'E - N - O - U - G - H'},
+  {q:'Spell the word "family"', a:'F - A - M - I - L - Y'},
+  {q:'What is the opposite of "quiet"?', a:'Loud'},
+  {q:'What is the opposite of "difficult"?', a:'Easy'},
+  {q:'What is the opposite of "early"?', a:'Late'},
+  {q:'What is a noun?', a:'A person, place, or thing'},
+  {q:'What is a verb?', a:'An action word'},
+  {q:'Give me a word that means the same as "happy"', a:'Glad, joyful, cheerful'},
+  {q:'Give me a word that means the same as "big"', a:'Large, huge, enormous'},
+  {q:'Is "run" a noun or a verb?', a:'A verb (an action word)'},
+  {q:'What is the plural of "box"?', a:'Boxes'},
+  {q:'What is the plural of "baby"?', a:'Babies'},
+  {q:'What is the plural of "leaf"?', a:'Leaves'},
+];
+const AUDIO_ENGLISH_34 = [
+  {q:'What does "enormous" mean?', a:'Very large'},
+  {q:'What does "courage" mean?', a:'Bravery'},
+  {q:'What does "ancient" mean?', a:'Very old'},
+  {q:'What does "peculiar" mean?', a:'Strange or odd'},
+  {q:'What does "generous" mean?', a:'Willing to give'},
+  {q:'What does "persistent" mean?', a:'Not giving up'},
+  {q:'What does "consequence" mean?', a:'The result of an action'},
+  {q:'What does "reluctant" mean?', a:'Unwilling or hesitant'},
+  {q:'What does "cautious" mean?', a:'Being very careful'},
+  {q:'What does "fragile" mean?', a:'Easy to break'},
+  {q:'What is the past tense of "run"?', a:'Ran'},
+  {q:'What is the past tense of "go"?', a:'Went'},
+  {q:'What is the past tense of "eat"?', a:'Ate'},
+  {q:'What is the past tense of "swim"?', a:'Swam'},
+  {q:'What is the past tense of "think"?', a:'Thought'},
+  {q:'What is an adjective?', a:'A word that describes a noun'},
+  {q:'What is a pronoun?', a:'A word that takes the place of a noun'},
+  {q:'What is a synonym for "quick"?', a:'Fast, rapid, speedy'},
+  {q:'What is the opposite of "brave"?', a:'Cowardly'},
+  {q:'What is the opposite of "generous"?', a:'Selfish or greedy'},
+  {q:'What is the plural of "wolf"?', a:'Wolves'},
+  {q:'What is the plural of "goose"?', a:'Geese'},
+  {q:'What is the plural of "deer"?', a:'Deer (it stays the same!)'},
+];
+const AUDIO_ENGLISH_5 = [
+  {q:'What does "ambiguous" mean?', a:'Having more than one meaning'},
+  {q:'What does "inevitable" mean?', a:'Certain to happen'},
+  {q:'What does "meticulous" mean?', a:'Very careful and precise'},
+  {q:'What does "plausible" mean?', a:'Seeming reasonable'},
+  {q:'What does "unanimous" mean?', a:'Fully in agreement'},
+  {q:'What does "subtle" mean?', a:'Not obvious'},
+  {q:'What does "contemplate" mean?', a:'To think deeply about something'},
+  {q:'What does "diligent" mean?', a:'Hardworking and careful'},
+  {q:'What is a metaphor?', a:'A comparison without using like or as'},
+  {q:'What is a simile?', a:'A comparison using like or as'},
+  {q:'What is alliteration?', a:'When words close together start with the same sound'},
+  {q:'What is personification?', a:'Giving human qualities to non-human things'},
+  {q:'What is the difference between "than" and "then"?', a:'Than is for comparison, then is for time or sequence'},
+  {q:'What is the difference between "affect" and "effect"?', a:'Affect is usually a verb, effect is usually a noun'},
+  {q:'What is the past tense of "teach"?', a:'Taught'},
+  {q:'What is the past tense of "bring"?', a:'Brought'},
+  {q:'What is the past tense of "freeze"?', a:'Froze'},
+  {q:'What does the prefix "un-" mean?', a:'Not (undo = not done, unhappy = not happy)'},
+  {q:'What does the prefix "re-" mean?', a:'Again (redo = do again, rewrite = write again)'},
+  {q:'What does the suffix "-less" mean?', a:'Without (hopeless = without hope)'},
+];
+
+// ── PROCEDURAL ENGLISH ──
+const PROC_SYNONYMS = {
+  0: [['big','large'],['small','little'],['happy','glad'],['sad','unhappy'],['fast','quick'],['nice','kind'],['pretty','beautiful'],['scary','frightening'],['funny','silly'],['mad','angry']],
+  1: [['big','large'],['small','tiny'],['happy','joyful'],['sad','gloomy'],['fast','speedy'],['nice','pleasant'],['smart','clever'],['scary','terrifying'],['funny','hilarious'],['mad','furious'],['begin','start'],['end','finish'],['shut','close'],['yell','shout'],['gift','present'],['stone','rock'],['grin','smile'],['leap','jump'],['road','path'],['ill','sick']],
+  2: [['beautiful','gorgeous'],['angry','furious'],['tired','exhausted'],['brave','courageous'],['quiet','silent'],['strange','unusual'],['simple','easy'],['skinny','thin'],['wealthy','rich'],['reply','answer'],['destroy','wreck'],['fix','repair'],['discover','find'],['create','make'],['enormous','huge'],['frighten','scare'],['wonderful','amazing'],['correct','right'],['difficult','hard'],['powerful','strong']],
+  3: [['enormous','immense'],['courage','bravery'],['peculiar','odd'],['generous','charitable'],['observe','watch'],['brilliant','dazzling'],['ancient','prehistoric'],['cautious','careful'],['fragile','delicate'],['triumph','victory'],['fierce','ferocious'],['miserable','wretched'],['scarce','rare'],['disguise','camouflage'],['eager','enthusiastic'],['vanish','disappear'],['preserve','protect'],['frequently','often'],['miniature','tiny'],['predict','forecast']],
+  4: [['persistent','determined'],['reluctant','hesitant'],['significant','important'],['elaborate','detailed'],['abundant','plentiful'],['demonstrate','exhibit'],['investigate','examine'],['navigate','steer'],['flexible','adaptable'],['temporary','brief'],['valuable','precious'],['absurd','ridiculous'],['consequence','result'],['distract','divert'],['imitate','mimic'],['cautious','wary'],['thrive','flourish'],['summit','peak'],['furious','enraged'],['occupy','inhabit']],
+  5: [['ambiguous','vague'],['inevitable','unavoidable'],['meticulous','thorough'],['plausible','believable'],['unanimous','agreed'],['subtle','understated'],['contemplate','ponder'],['diligent','industrious'],['futile','pointless'],['hinder','obstruct'],['versatile','adaptable'],['compromise','negotiate'],['gratitude','thankfulness'],['obstacle','barrier'],['exquisite','magnificent'],['conspicuous','obvious'],['precise','exact'],['navigate','maneuver'],['peculiar','eccentric'],['vivid','striking']]
+};
+const PROC_ANTONYMS = {
+  0: [['big','small'],['hot','cold'],['fast','slow'],['happy','sad'],['up','down'],['yes','no'],['day','night'],['new','old'],['good','bad'],['tall','short'],['wet','dry'],['open','close']],
+  1: [['hot','cold'],['big','small'],['fast','slow'],['happy','sad'],['up','down'],['day','night'],['open','close'],['new','old'],['full','empty'],['dark','light'],['clean','dirty'],['push','pull'],['hard','soft'],['loud','quiet'],['long','short'],['deep','shallow'],['awake','asleep'],['before','after'],['inside','outside'],['above','below']],
+  2: [['quiet','loud'],['difficult','easy'],['early','late'],['soft','hard'],['weak','strong'],['kind','cruel'],['rough','smooth'],['brave','scared'],['empty','full'],['straight','curved'],['narrow','wide'],['thick','thin'],['polite','rude'],['accept','refuse'],['remember','forget'],['borrow','lend'],['arrive','depart'],['attack','defend'],['generous','stingy'],['ancient','modern']],
+  3: [['enormous','tiny'],['ancient','modern'],['brave','cowardly'],['generous','selfish'],['gentle','rough'],['proud','humble'],['curious','indifferent'],['victory','defeat'],['create','destroy'],['increase','decrease'],['reward','punish'],['expand','shrink'],['appear','vanish'],['permanent','temporary'],['flexible','rigid'],['natural','artificial'],['simple','complex'],['public','private'],['common','rare'],['include','exclude']],
+  4: [['persistent','quitting'],['reluctant','eager'],['significant','trivial'],['abundant','scarce'],['temporary','permanent'],['valuable','worthless'],['flexible','rigid'],['create','destroy'],['increase','decrease'],['reward','punishment'],['expand','contract'],['visible','invisible'],['maximum','minimum'],['interior','exterior'],['voluntary','mandatory'],['majority','minority'],['success','failure'],['wisdom','foolishness'],['loyalty','betrayal'],['admire','despise']],
+  5: [['ambiguous','clear'],['inevitable','avoidable'],['subtle','obvious'],['temporary','permanent'],['complex','simple'],['confident','insecure'],['abundant','scarce'],['transparent','opaque'],['constructive','destructive'],['optimistic','pessimistic'],['concrete','abstract'],['genuine','fake'],['beneficial','harmful'],['significant','insignificant'],['voluntary','compulsory'],['superior','inferior'],['prosperity','poverty'],['innovation','tradition'],['tolerance','intolerance'],['courage','cowardice']]
+};
+const PROC_PAST_TENSE = {
+  1: [['run','ran'],['go','went'],['eat','ate'],['see','saw'],['come','came'],['give','gave'],['take','took'],['sit','sat'],['get','got'],['make','made'],['say','said'],['tell','told'],['find','found'],['know','knew'],['put','put'],['read','read'],['cut','cut'],['let','let'],['hit','hit'],['hold','held']],
+  2: [['run','ran'],['go','went'],['eat','ate'],['swim','swam'],['think','thought'],['catch','caught'],['buy','bought'],['write','wrote'],['break','broke'],['fly','flew'],['give','gave'],['hide','hid'],['grow','grew'],['know','knew'],['speak','spoke'],['choose','chose'],['draw','drew'],['drink','drank'],['fall','fell'],['feel','felt']],
+  3: [['run','ran'],['swim','swam'],['think','thought'],['catch','caught'],['buy','bought'],['write','wrote'],['break','broke'],['fly','flew'],['grow','grew'],['speak','spoke'],['choose','chose'],['teach','taught'],['bring','brought'],['seek','sought'],['freeze','froze'],['tear','tore'],['shake','shook'],['steal','stole'],['forgive','forgave'],['rise','rose'],['drive','drove'],['begin','began'],['sing','sang'],['wear','wore'],['throw','threw']]
+};
+const PROC_RHYME_SETS = [
+  ['cat','hat','bat','mat','sat','flat','rat'],
+  ['dog','log','fog','hog','jog','blog','frog'],
+  ['sun','fun','run','bun','done','won','gun'],
+  ['cake','make','lake','bake','take','shake','wake'],
+  ['night','light','right','fight','sight','bright','flight'],
+  ['ball','tall','call','wall','fall','small','hall'],
+  ['ring','sing','king','thing','bring','spring','wing'],
+  ['rock','sock','lock','clock','knock','block','dock'],
+  ['tree','free','bee','see','three','knee','key'],
+  ['boat','coat','goat','float','note','vote','wrote'],
+  ['train','rain','brain','main','plain','chain','drain'],
+  ['cold','gold','bold','told','hold','fold','old'],
+  ['dream','stream','team','cream','beam','steam','gleam'],
+  ['space','race','face','place','trace','grace','pace'],
+  ['door','floor','more','store','four','pour','score'],
+  ['round','sound','found','ground','pound','bound','mound'],
+  ['slide','ride','hide','side','wide','guide','pride'],
+  ['star','car','far','bar','jar','guitar','scar'],
+  ['bed','red','fed','led','said','head','bread'],
+  ['plate','gate','late','mate','state','great','wait']
+];
+const PROC_PLURALS = [
+  ['mouse','mice'],['tooth','teeth'],['foot','feet'],['child','children'],['goose','geese'],
+  ['wolf','wolves'],['knife','knives'],['leaf','leaves'],['life','lives'],['wife','wives'],
+  ['box','boxes'],['baby','babies'],['city','cities'],['story','stories'],['cherry','cherries'],
+  ['deer','deer'],['sheep','sheep'],['fish','fish'],['moose','moose'],['cactus','cacti'],
+  ['tomato','tomatoes'],['potato','potatoes'],['hero','heroes'],['shelf','shelves'],['half','halves'],
+  ['man','men'],['woman','women'],['person','people'],['ox','oxen'],['crisis','crises']
+];
+const PROC_HOMOPHONES = [
+  ['there','a place','their','belonging to them','they\'re','they are'],
+  ['to','direction/purpose','too','also or too much','two','the number 2'],
+  ['your','belonging to you','you\'re','you are'],
+  ['its','belonging to it','it\'s','it is'],
+  ['hear','to listen','here','this place'],
+  ['wear','put on clothes','where','asking about a place'],
+  ['write','to put words on paper','right','correct or opposite of left'],
+  ['know','to understand','no','the opposite of yes'],
+  ['ate','past tense of eat','eight','the number 8'],
+  ['flower','a plant bloom','flour','used for baking'],
+  ['peace','calm, no war','piece','a part of something'],
+  ['tail','animal body part','tale','a story'],
+  ['sea','the ocean','see','to look at'],
+  ['one','the number 1','won','past tense of win'],
+  ['sun','the star','son','a male child'],
+  ['knight','medieval warrior','night','when it is dark'],
+  ['bare','naked/uncovered','bear','a large animal'],
+  ['pair','two of something','pear','a fruit'],
+  ['brake','to slow down','break','to damage'],
+  ['steal','to take illegally','steel','a type of metal']
+];
+
+function genProceduralEnglish(grade, distracted) {
+  const g = Math.min(5, Math.max(0, grade));
+  const types = [];
+  if (PROC_SYNONYMS[g]) types.push('synonym');
+  if (PROC_ANTONYMS[g]) types.push('antonym','antonym');
+  types.push('rhyme');
+  if (g >= 1) types.push('plural');
+  if (g >= 1 && PROC_PAST_TENSE[Math.min(g,3)]) types.push('pastTense');
+  if (g >= 2) types.push('homophone');
+
+  const type = types[randInt(0, types.length - 1)];
+
+  switch(type) {
+    case 'synonym': {
+      const pair = PROC_SYNONYMS[g][randInt(0, PROC_SYNONYMS[g].length - 1)];
+      if (Math.random() < 0.5) {
+        return {q:'What is a synonym for "'+pair[0]+'"?', a:pair[1]};
+      } else {
+        return {q:'What is another word for "'+pair[0]+'"?', a:pair[1]};
+      }
+    }
+    case 'antonym': {
+      const pair = PROC_ANTONYMS[g][randInt(0, PROC_ANTONYMS[g].length - 1)];
+      return {q:'What is the opposite of "'+pair[0]+'"?', a:pair[1]};
+    }
+    case 'rhyme': {
+      const set = PROC_RHYME_SETS[randInt(0, PROC_RHYME_SETS.length - 1)];
+      const word = set[randInt(0, set.length - 1)];
+      const others = set.filter(w => w !== word).slice(0, 4).join(', ');
+      return {q:'Give me a word that rhymes with "'+word+'"', a:others};
+    }
+    case 'plural': {
+      const pair = PROC_PLURALS[randInt(0, PROC_PLURALS.length - 1)];
+      return {q:'What is the plural of "'+pair[0]+'"?', a:pair[1]};
+    }
+    case 'pastTense': {
+      const gKey = Math.min(g, 3);
+      const verbs = PROC_PAST_TENSE[gKey];
+      const pair = verbs[randInt(0, verbs.length - 1)];
+      return {q:'What is the past tense of "'+pair[0]+'"?', a:pair[1]};
+    }
+    case 'homophone': {
+      const h = PROC_HOMOPHONES[randInt(0, PROC_HOMOPHONES.length - 1)];
+      if (h.length === 6) {
+        return {q:'What is the difference between "'+h[0]+'", "'+h[2]+'", and "'+h[4]+'"?', a:h[0]+' = '+h[1]+', '+h[2]+' = '+h[3]+', '+h[4]+' = '+h[5]};
+      } else {
+        return {q:'What is the difference between "'+h[0]+'" and "'+h[2]+'"?', a:h[0]+' = '+h[1]+', '+h[2]+' = '+h[3]};
+      }
+    }
+    default:
+      return {q:'What is the opposite of "'+PROC_ANTONYMS[g][0][0]+'"?', a:PROC_ANTONYMS[g][0][1]};
+  }
+}
+
+function genEnglish(level, distracted) {
+  const grade = Math.floor(level / 10);
+  const decile = level % 10;
+  const customWords = state.activeChild ? getCustomWords(state.activeChild) : [];
+  if (customWords.length > 0 && Math.random() < 0.3) {
+    const w = pick(customWords);
+    return { q: 'Spell the word: "'+w+'"', a: w.toUpperCase() };
+  }
+  if (distracted) {
+    if (Math.random() < 0.2) {
+      let wordPool;
+      if (grade <= 0) wordPool = SIGHT_WORDS_K;
+      else if (grade === 1) wordPool = SIGHT_WORDS_1;
+      else if (grade === 2) wordPool = SPELLING_2;
+      else if (grade <= 4) wordPool = SPELLING_3;
+      else wordPool = SPELLING_4;
+      const w = pick(wordPool);
+      return { q: 'Look at the screen - read this word: ' + w.toUpperCase(), a: w };
+    }
+    if (Math.random() < 0.5) return genProceduralEnglish(grade, true);
+    if (grade <= 0) return pick(AUDIO_ENGLISH_K);
+    if (grade === 1) return pick(AUDIO_ENGLISH_1);
+    if (grade === 2) return pick(AUDIO_ENGLISH_2);
+    if (grade <= 4) return pick(AUDIO_ENGLISH_34);
+    return pick(AUDIO_ENGLISH_5);
+  }
+  if (Math.random() < 0.4) return genProceduralEnglish(grade, false);
+  if (grade <= 0) {
+    return pick([
+      (() => { const l = String.fromCharCode(65 + randInt(0,25)); return { q:'What letter comes after '+l+'?', a: l==='Z' ? 'A (back to start!)' : String.fromCharCode(l.charCodeAt(0)+1) }; })(),
+      (() => { const w = pick(SIGHT_WORDS_K); return { q:'Spell the word: "'+w+'"', a: w.split('').join(' - ').toUpperCase() }; })(),
+      (() => { const w = pick(SIGHT_WORDS_K); return { q:'What sound does "'+w+'" start with?', a: 'The "'+w[0].toUpperCase()+'" sound' }; })()
+    ]);
+  }
+  let pool = [];
+  if (grade === 1) {
+    const w = pick(SIGHT_WORDS_1);
+    pool.push({ q:'Spell the word: "'+w+'"', a: w.toUpperCase() });
+    pool.push(...GRAMMAR_FIX[1]);
+  } else if (grade === 2) {
+    const w = pick(decile < 5 ? SIGHT_WORDS_1 : SPELLING_2);
+    pool.push({ q:'Spell the word: "'+w+'"', a: w.toUpperCase() });
+    pool.push(...(GRAMMAR_FIX[2] || GRAMMAR_FIX[1]));
+  } else if (grade === 3) {
+    const w = pick(decile < 5 ? SPELLING_2 : SPELLING_3);
+    pool.push({ q:'Spell the word: "'+w+'"', a: w.toUpperCase() });
+    const v = pick(VOCAB_3);
+    pool.push({ q:'What does "'+v.w+'" mean?', a: v.d });
+    pool.push({ q:'Use "'+v.w+'" in a sentence', a: v.s });
+    pool.push(...GRAMMAR_FIX[3]);
+  } else if (grade === 4) {
+    const w = pick(decile < 5 ? SPELLING_3 : SPELLING_4);
+    pool.push({ q:'Spell the word: "'+w+'"', a: w.toUpperCase() });
+    const v = pick(VOCAB_4);
+    pool.push({ q:'What does "'+v.w+'" mean?', a: v.d });
+    pool.push({ q:'Use "'+v.w+'" in a sentence', a: v.s });
+    pool.push(...GRAMMAR_FIX[4]);
+  } else {
+    const w = pick(decile < 5 ? SPELLING_4 : SPELLING_5);
+    pool.push({ q:'Spell the word: "'+w+'"', a: w.toUpperCase() });
+    const v = pick(VOCAB_5);
+    pool.push({ q:'What does "'+v.w+'" mean?', a: v.d });
+    pool.push({ q:'Use "'+v.w+'" in a sentence', a: v.s });
+    pool.push(...(GRAMMAR_FIX[5] || GRAMMAR_FIX[4]));
+  }
+  return pool.length > 0 ? pick(pool) : { q: 'Spell "cat"', a: 'C-A-T' };
+}
+
+// ── SCIENCE ──
+
+const SCIENCE_Q = {
+  0: [
+    {q:'What do plants need to grow?', a:'Water, sunlight, and soil'},
+    {q:'How many legs does a spider have?', a:'8'},
+    {q:'What season comes after winter?', a:'Spring'},
+    {q:'Is the sun a star or a planet?', a:'A star'},
+    {q:'What do you use your nose for?', a:'Smelling'},
+    {q:'Name an animal that lives in water', a:'Fish (or whale, dolphin, etc.)'},
+    {q:'What color is the sky on a clear day?', a:'Blue'},
+    {q:'Does ice feel hot or cold?', a:'Cold'},
+  ],
+  1: [
+    {q:'What are the 3 states of matter?', a:'Solid, liquid, and gas'},
+    {q:'What planet do we live on?', a:'Earth'},
+    {q:'What do magnets do?', a:'Attract or repel certain metals'},
+    {q:'What does a thermometer measure?', a:'Temperature'},
+    {q:'Where does rain come from?', a:'Clouds'},
+    {q:'What happens to water when it freezes?', a:'It turns into ice (solid)'},
+    {q:'What do lungs do?', a:'Help you breathe'},
+    {q:'Name the closest star to Earth', a:'The Sun'},
+    {q:'What kind of animal is a frog?', a:'An amphibian'},
+    {q:'What season do leaves fall?', a:'Autumn/Fall'},
+  ],
+  2: [
+    {q:'What is the water cycle?', a:'Evaporation, condensation, precipitation'},
+    {q:'What is Earth\'s natural satellite?', a:'The Moon'},
+    {q:'What do herbivores eat?', a:'Plants'},
+    {q:'What do carnivores eat?', a:'Meat/other animals'},
+    {q:'What force pulls things toward Earth?', a:'Gravity'},
+    {q:'How many planets are in our solar system?', a:'8'},
+    {q:'What is the largest planet?', a:'Jupiter'},
+    {q:'What part of the plant makes food?', a:'Leaves (photosynthesis)'},
+    {q:'What do we call an animal that eats both plants and animals?', a:'Omnivore'},
+    {q:'Is sound faster in air or water?', a:'Water'},
+  ],
+  3: [
+    {q:'What are the inner planets?', a:'Mercury, Venus, Earth, Mars'},
+    {q:'What is photosynthesis?', a:'How plants use sunlight to make food from CO2 and water'},
+    {q:'What is the food chain?', a:'The path of energy from one organism to another'},
+    {q:'What are the 3 types of rock?', a:'Igneous, sedimentary, metamorphic'},
+    {q:'What causes day and night?', a:'Earth rotating on its axis'},
+    {q:'What is an ecosystem?', a:'A community of living things and their environment'},
+    {q:'What type of energy does the sun give us?', a:'Light and heat energy'},
+    {q:'What is friction?', a:'A force that slows things down when surfaces rub together'},
+    {q:'Name the 4 oceans', a:'Pacific, Atlantic, Indian, Arctic (+ Southern)'},
+    {q:'What is condensation?', a:'When gas turns into liquid'},
+  ],
+  4: [
+    {q:'What is energy?', a:'The ability to do work or cause change'},
+    {q:'Name the two main categories of energy', a:'Kinetic (moving) and potential (stored)'},
+    {q:'What is the law of conservation of energy?', a:'Energy cannot be created or destroyed, only changed form'},
+    {q:'What is a wave?', a:'A disturbance that transfers energy'},
+    {q:'What is frequency?', a:'How many waves pass a point per second, measured in Hertz'},
+    {q:'Does sound need a medium to travel?', a:'Yes, it cannot travel through a vacuum'},
+    {q:'What determines the pitch of a sound?', a:'Frequency - higher frequency means higher pitch'},
+    {q:'What is reflection?', a:'When light bounces off a surface'},
+    {q:'What is refraction?', a:'When light bends passing from one material to another'},
+    {q:'What causes earthquakes?', a:'Movement of tectonic plates'},
+    {q:'What are the main layers of the Earth?', a:'Crust, mantle, outer core, inner core'},
+    {q:'What are the 3 types of rocks?', a:'Igneous, sedimentary, and metamorphic'},
+    {q:'What is a habitat?', a:'The place where an organism lives that provides what it needs'},
+    {q:'What is a pulley?', a:'A wheel with a rope used to lift or move loads'},
+    {q:'What is a gear?', a:'A wheel with teeth that transfers motion'},
+  ],
+  5: [
+    {q:'What is matter?', a:'Anything that has mass and takes up space'},
+    {q:'What is density?', a:'Mass divided by volume'},
+    {q:'What is a mixture?', a:'Two or more substances combined but not chemically joined'},
+    {q:'What is a chemical change?', a:'A change that produces new substances with different properties'},
+    {q:'What is a physical change?', a:'A change in form but no new substance is made'},
+    {q:'What is a star?', a:'A massive ball of hot gas producing light through nuclear fusion'},
+    {q:'What causes the phases of the Moon?', a:'As the Moon orbits Earth, we see different amounts of its sunlit side'},
+    {q:'What is gravity?', a:'A force that pulls objects toward each other'},
+    {q:'Name the 8 planets in order', a:'Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune'},
+    {q:'What is a food web?', a:'Many connected food chains in an ecosystem'},
+    {q:'What is a decomposer?', a:'An organism that breaks down dead material'},
+    {q:'What is the greenhouse effect?', a:'Gases in the atmosphere trap heat from the Sun'},
+    {q:'What is an organ system?', a:'A group of organs that work together'},
+    {q:'What does the circulatory system do?', a:'Carries blood, oxygen, and nutrients throughout the body'},
+    {q:'What are fossil fuels?', a:'Coal, oil, natural gas - formed from ancient organisms'},
+  ]
+};
+
+function genScience(level, distracted) {
+  const grade = Math.min(5, Math.max(0, Math.floor(level / 10)));
+  const questions = SCIENCE_Q[grade] || SCIENCE_Q[0];
+  let q = pick(questions);
+  if (distracted && q.a.length > 60) {
+    const shorter = questions.filter(x => x.a.length < 40);
+    if (shorter.length > 0) q = pick(shorter);
+  }
+  return q;
+}
+
+// ── MASTER GENERATOR ──
+
+function generateQuestion(subject, level, distracted) {
+  switch (subject) {
+    case 'math': return genMath(level, distracted);
+    case 'english': return genEnglish(level, distracted);
+    case 'science': return genScience(level, distracted);
+    default: return genMath(level, distracted);
+  }
+}
+
+// ===============================================
+//  UI LOGIC
+// ===============================================
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  switch(name) {
+    case 'home':
+      document.getElementById('homeScreen').classList.add('active');
+      renderHome();
+      break;
+    case 'addChild':
+      document.getElementById('addChildScreen').classList.add('active');
+      document.getElementById('childNameInput').focus();
+      break;
+    case 'subject':
+      document.getElementById('subjectScreen').classList.add('active');
+      renderSubjectScreen();
+      break;
+    case 'quiz':
+      document.getElementById('quizScreen').classList.add('active');
+      break;
+    case 'report':
+      document.getElementById('reportScreen').classList.add('active');
+      break;
+    case 'wordEntry':
+      document.getElementById('wordEntryScreen').classList.add('active');
+      renderWordEntry();
+      break;
+    case 'flashcardEntry':
+      document.getElementById('flashcardEntryScreen').classList.add('active');
+      renderFlashcardEntry();
+      break;
+  }
+}
+
+function selectChild(id) {
+  try {
+    state.activeChild = id;
+    saveState();
+    renderChildTabs();
+    showScreen('subject');
+  } catch(e) {
+    console.error('selectChild error:', e);
+    alert('Error: ' + e.message);
+  }
+}
+
+function renderHome() {
+  const container = document.getElementById('homeCards');
+  container.innerHTML = '';
+  const childIds = Object.keys(CHILDREN);
+
+  if (childIds.length === 0) {
+    // No children yet, show the add child form directly
+    showScreen('addChild');
+    return;
+  }
+
+  for (const id of childIds) {
+    const child = CHILDREN[id];
+    const colorVar = 'var(--' + CHILD_COLORS[child.colorIndex || 0] + ')';
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'home-card';
+    card.style.borderColor = colorVar;
+    card.innerHTML =
+      '<button class="delete-btn" onclick="event.stopPropagation(); deleteChild(\'' + id + '\');">🗑️</button>' +
+      '<div class="emoji">' + child.emoji + '</div>' +
+      '<div class="name">' + escapeHTML(child.name) + '</div>' +
+      '<div class="info">' + escapeHTML(child.info) + '</div>';
+    card.addEventListener('click', () => selectChild(id));
+    container.appendChild(card);
+  }
+
+  // Add "Add Child" card
+  const addCard = document.createElement('button');
+  addCard.type = 'button';
+  addCard.className = 'home-card add-card';
+  addCard.innerHTML =
+    '<div class="emoji">➕</div>' +
+    '<div class="name">Add Child</div>' +
+    '<div class="info">Add a new learner</div>';
+  addCard.addEventListener('click', () => showScreen('addChild'));
+  container.appendChild(addCard);
+}
+
+function renderChildTabs() {
+  const container = document.getElementById('childTabs');
+  container.innerHTML = '';
+  for (const [id, child] of Object.entries(CHILDREN)) {
+    const colorVar = CHILD_COLOR_HEX[child.colorIndex || 0];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'child-tab' + (state.activeChild === id ? ' active' : '');
+    if (state.activeChild === id) {
+      btn.style.borderColor = colorVar;
+      btn.style.background = colorVar + '33';
+    }
+    btn.textContent = child.name;
+    btn.addEventListener('click', () => {
+      if (quizState) saveQuizState();
+      selectChild(id);
+    });
+    container.appendChild(btn);
+  }
+}
+
+function renderSubjectScreen() {
+  const child = CHILDREN[state.activeChild];
+  if (!child) { showScreen('home'); return; }
+  document.getElementById('subjectWho').textContent = child.emoji + ' ' + child.name + ' -- ' + child.info;
+  const grid = document.getElementById('subjectGrid');
+  grid.innerHTML = '';
+  const session = getSession(state.activeChild);
+
+  // No science for grade 0-1
+  const noScience = child.grade <= 1;
+  const availableSubjects = noScience ? SUBJECTS.filter(s => s.id !== 'science') : SUBJECTS;
+
+  for (const subj of availableSubjects) {
+    const btn = document.createElement('div');
+    btn.className = 'subject-btn';
+    if (subj.id === 'all') {
+      btn.innerHTML =
+        '<span class="subj-icon">' + subj.icon + '</span>' +
+        subj.name +
+        '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Rotates through all subjects</div>';
+    } else if (subj.id === 'wordStudy') {
+      const wordCount = getStudyWords(state.activeChild).length;
+      const modeDesc = child.grade <= 1 ? 'Read words aloud (pronunciation)' : 'Meaning of words from your list';
+      btn.innerHTML =
+        '<span class="subj-icon">' + subj.icon + '</span>' +
+        subj.name +
+        '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">' + modeDesc + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--text-dim);">' + wordCount + ' word' + (wordCount !== 1 ? 's' : '') + ' in list</div>';
+      if (wordCount === 0) {
+        btn.style.opacity = '0.5';
+        btn.onclick = () => { alert('Add words to Word Study list in Word Entry first!'); setWordCategory('study'); showScreen('wordEntry'); };
+        grid.appendChild(btn);
+        continue;
+      }
+    } else if (subj.id === 'spelling') {
+      const wordCount = getSpellingWords(state.activeChild).length;
+      btn.innerHTML =
+        '<span class="subj-icon">' + subj.icon + '</span>' +
+        subj.name +
+        '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Spell words from your list</div>' +
+        '<div style="font-size:0.7rem;color:var(--text-dim);">' + wordCount + ' word' + (wordCount !== 1 ? 's' : '') + ' in list</div>';
+      if (wordCount === 0) {
+        btn.style.opacity = '0.5';
+        btn.onclick = () => { alert('Add words to Spelling list in Word Entry first!'); setWordCategory('spelling'); showScreen('wordEntry'); };
+        grid.appendChild(btn);
+        continue;
+      }
+    } else if (subj.id === 'newWords') {
+      const fLvl = session.levels.newWords_focused || session.levels.newWords || session.levels.english;
+      const dLvl = session.levels.newWords_distracted || session.levels.newWords || session.levels.english;
+      const fG = Math.floor(fLvl / 10); const fD = fLvl % 10;
+      const dG = Math.floor(dLvl / 10); const dD = dLvl % 10;
+      btn.innerHTML =
+        '<span class="subj-icon">' + subj.icon + '</span>' +
+        subj.name +
+        '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Learn new vocabulary</div>' +
+        '<div style="font-size:0.7rem;color:var(--text-dim);">Focused: Grade ' + fG + '.' + fD + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--text-dim);">Distracted: Grade ' + dG + '.' + dD + '</div>';
+    } else if (subj.id === 'custom') {
+      const cardCount = getCustomFlashcards(state.activeChild).length;
+      btn.innerHTML =
+        '<span class="subj-icon">' + subj.icon + '</span>' +
+        subj.name +
+        '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Your own Q&A cards</div>' +
+        '<div style="font-size:0.7rem;color:var(--text-dim);">' + cardCount + ' card' + (cardCount !== 1 ? 's' : '') + '</div>';
+      if (cardCount === 0) {
+        btn.style.opacity = '0.5';
+        btn.onclick = () => { alert('Add flashcards first!'); showScreen('flashcardEntry'); };
+        grid.appendChild(btn);
+        continue;
+      }
+    } else {
+      const fKey = subj.id + '_focused';
+      const dKey = subj.id + '_distracted';
+      const fLvl = session.levels[fKey] !== undefined ? session.levels[fKey] : session.levels[subj.id];
+      const dLvl = session.levels[dKey] !== undefined ? session.levels[dKey] : session.levels[subj.id];
+      const fG = Math.floor(fLvl / 10); const fD = fLvl % 10;
+      const dG = Math.floor(dLvl / 10); const dD = dLvl % 10;
+      btn.innerHTML =
+        '<span class="subj-icon">' + subj.icon + '</span>' +
+        subj.name +
+        '<div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px;">Focused: Grade ' + fG + '.' + fD + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--text-dim);">Distracted: Grade ' + dG + '.' + dD + '</div>';
+    }
+    btn.onclick = () => startQuiz(subj.id);
+    grid.appendChild(btn);
+  }
+}
+
+// ===============================================
+//  WORD ENTRY (two lists: study + spelling)
+// ===============================================
+
+let wordEntryCategory = 'study';
+
+function getCustomWords(childId) { return getStudyWords(childId); }
+
+function getStudyWords(childId) {
+  try {
+    const data = localStorage.getItem('generic_words_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveStudyWords(childId, words) {
+  try { localStorage.setItem('generic_words_' + childId, JSON.stringify(words)); } catch(e) {}
+}
+
+function getSpellingWords(childId) {
+  try {
+    const data = localStorage.getItem('generic_spelling_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveSpellingWords(childId, words) {
+  try { localStorage.setItem('generic_spelling_' + childId, JSON.stringify(words)); } catch(e) {}
+}
+
+function saveCustomWords(childId, words) { saveStudyWords(childId, words); }
+
+function setWordCategory(cat) {
+  wordEntryCategory = cat;
+  renderWordEntry();
+}
+
+function renderWordEntry() {
+  const child = CHILDREN[state.activeChild];
+  if (!child) return;
+  document.getElementById('wordEntryWho').textContent = child.emoji + ' ' + child.name + ' -- ' + child.info;
+  const studyBtn = document.getElementById('wordCatStudy');
+  const spellBtn = document.getElementById('wordCatSpelling');
+  if (wordEntryCategory === 'study') {
+    studyBtn.style.background = 'var(--highlight)';
+    spellBtn.style.background = 'var(--accent)';
+    document.getElementById('wordCatDesc').textContent = 'Word Study: meaning & pronunciation practice';
+  } else {
+    studyBtn.style.background = 'var(--accent)';
+    spellBtn.style.background = 'var(--highlight)';
+    document.getElementById('wordCatDesc').textContent = 'Spelling: words to practice spelling';
+  }
+  const words = wordEntryCategory === 'study' ? getStudyWords(state.activeChild) : getSpellingWords(state.activeChild);
+  const container = document.getElementById('wordList');
+  const label = wordEntryCategory === 'study' ? 'Word Study' : 'Spelling';
+  if (words.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-top:12px;">No ' + label.toLowerCase() + ' words yet. Add some above!</p>';
+  } else {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-bottom:8px;">' + label + ' -- ' + words.length + ' word' + (words.length !== 1 ? 's' : '') + ':</p>' +
+      words.map((w, i) => '<span class="word-chip">' + escapeHTML(w) + ' <span class="remove-word" onclick="removeWord(' + i + ')">x</span></span>').join('');
+  }
+  document.getElementById('wordInput').focus();
+}
+
+function addWord() {
+  const input = document.getElementById('wordInput');
+  const word = input.value.trim().toLowerCase();
+  if (!word) return;
+  if (wordEntryCategory === 'study') {
+    const words = getStudyWords(state.activeChild);
+    if (!words.includes(word)) { words.push(word); saveStudyWords(state.activeChild, words); }
+  } else {
+    const words = getSpellingWords(state.activeChild);
+    if (!words.includes(word)) { words.push(word); saveSpellingWords(state.activeChild, words); }
+  }
+  input.value = '';
+  input.focus();
+  renderWordEntry();
+}
+
+function removeWord(index) {
+  if (wordEntryCategory === 'study') {
+    const words = getStudyWords(state.activeChild);
+    words.splice(index, 1);
+    saveStudyWords(state.activeChild, words);
+  } else {
+    const words = getSpellingWords(state.activeChild);
+    words.splice(index, 1);
+    saveSpellingWords(state.activeChild, words);
+  }
+  renderWordEntry();
+}
+
+// ── Archive (Mastered Words) ──
+
+function getArchivedWords(childId) {
+  try {
+    const data = localStorage.getItem('generic_archive_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveArchivedWords(childId, words) {
+  try { localStorage.setItem('generic_archive_' + childId, JSON.stringify(words)); } catch(e) {}
+}
+
+function masterWord(word) {
+  const childId = quizState.childId;
+  const words = getCustomWords(childId);
+  const idx = words.indexOf(word);
+  if (idx !== -1) { words.splice(idx, 1); saveCustomWords(childId, words); }
+  const archive = getArchivedWords(childId);
+  if (!archive.includes(word)) { archive.push(word); saveArchivedWords(childId, archive); }
+  nextQuestion();
+}
+
+function addNewWordToList(word) {
+  const childId = quizState ? quizState.childId : state.activeChild;
+  const words = getCustomWords(childId);
+  if (!words.includes(word)) { words.push(word); saveCustomWords(childId, words); }
+  event.target.textContent = 'Added!';
+  event.target.disabled = true;
+  setTimeout(() => { if (event.target) { event.target.textContent = 'Add to Word Study'; event.target.disabled = false; } }, 1500);
+}
+
+function removeWordFromQuiz(word) {
+  const childId = quizState.childId;
+  const words = getCustomWords(childId);
+  const idx = words.indexOf(word);
+  if (idx !== -1) { words.splice(idx, 1); saveCustomWords(childId, words); }
+  nextQuestion();
+}
+
+function removeSpellingWord(word) {
+  const childId = quizState.childId;
+  const words = getSpellingWords(childId);
+  const idx = words.indexOf(word);
+  if (idx !== -1) { words.splice(idx, 1); saveSpellingWords(childId, words); }
+  nextQuestion();
+}
+
+function toggleArchiveView() {
+  const archiveDiv = document.getElementById('archiveSection');
+  if (archiveDiv.style.display === 'none') {
+    archiveDiv.style.display = 'block';
+    renderArchive();
+  } else {
+    archiveDiv.style.display = 'none';
+  }
+}
+
+function renderArchive() {
+  const archive = getArchivedWords(state.activeChild);
+  const container = document.getElementById('archiveList');
+  if (archive.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-top:8px;">No mastered words yet.</p>';
+  } else {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-bottom:8px;">' + archive.length + ' mastered word' + (archive.length !== 1 ? 's' : '') + ':</p>' +
+      archive.map((w, i) => '<span class="word-chip" style="border-color:var(--green);background:rgba(78,204,163,0.1);">' + escapeHTML(w) + ' <span class="remove-word" onclick="unarchiveWord(' + i + ')" title="Move back to active list">&#8617;</span></span>').join('');
+  }
+}
+
+function unarchiveWord(index) {
+  const archive = getArchivedWords(state.activeChild);
+  const word = archive[index];
+  archive.splice(index, 1);
+  saveArchivedWords(state.activeChild, archive);
+  const words = getCustomWords(state.activeChild);
+  if (!words.includes(word)) { words.push(word); saveCustomWords(state.activeChild, words); }
+  renderArchive();
+  renderWordEntry();
+}
+
+document.getElementById('wordInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addWord(); }
+});
+
+// ===============================================
+//  CUSTOM FLASHCARDS
+// ===============================================
+
+function getCustomFlashcards(childId) {
+  try {
+    const data = localStorage.getItem('generic_flashcards_' + childId);
+    return data ? JSON.parse(data) : [];
+  } catch(e) { return []; }
+}
+
+function saveCustomFlashcards(childId, cards) {
+  try { localStorage.setItem('generic_flashcards_' + childId, JSON.stringify(cards)); } catch(e) {}
+}
+
+function addFlashcard() {
+  const qInput = document.getElementById('flashcardQ');
+  const aInput = document.getElementById('flashcardA');
+  const q = qInput.value.trim();
+  const a = aInput.value.trim();
+  if (!q || !a) { alert('Please enter both a question and an answer.'); return; }
+  const cards = getCustomFlashcards(state.activeChild);
+  cards.push({ q: q, a: a });
+  saveCustomFlashcards(state.activeChild, cards);
+  qInput.value = '';
+  aInput.value = '';
+  qInput.focus();
+  renderFlashcardEntry();
+}
+
+function bulkAddFlashcards() {
+  const textarea = document.getElementById('bulkFlashcards');
+  const text = textarea.value.trim();
+  if (!text) { alert('Paste some Q&A pairs first.'); return; }
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  const cards = getCustomFlashcards(state.activeChild);
+  let added = 0;
+  let currentQ = null;
+  for (const line of lines) {
+    if (line.match(/^Q:\s*/i)) {
+      currentQ = line.replace(/^Q:\s*/i, '').trim();
+    } else if (line.match(/^A:\s*/i) && currentQ) {
+      const a = line.replace(/^A:\s*/i, '').trim();
+      if (currentQ && a) { cards.push({ q: currentQ, a: a }); added++; }
+      currentQ = null;
+    }
+  }
+  if (added === 0) { alert('No valid Q&A pairs found. Use format:\nQ: question\nA: answer'); return; }
+  saveCustomFlashcards(state.activeChild, cards);
+  textarea.value = '';
+  alert(added + ' flashcard' + (added !== 1 ? 's' : '') + ' added!');
+  renderFlashcardEntry();
+}
+
+function removeFlashcard(index) {
+  const cards = getCustomFlashcards(state.activeChild);
+  cards.splice(index, 1);
+  saveCustomFlashcards(state.activeChild, cards);
+  renderFlashcardEntry();
+}
+
+function clearAllFlashcards() {
+  if (!confirm('Delete ALL custom flashcards for ' + CHILDREN[state.activeChild].name + '?')) return;
+  saveCustomFlashcards(state.activeChild, []);
+  renderFlashcardEntry();
+}
+
+function renderFlashcardEntry() {
+  const child = CHILDREN[state.activeChild];
+  if (!child) return;
+  document.getElementById('flashcardEntryWho').textContent = child.emoji + ' ' + child.name + ' -- ' + child.info;
+  const cards = getCustomFlashcards(state.activeChild);
+  document.getElementById('flashcardCountLabel').textContent = 'Your Flashcards (' + cards.length + '):';
+  const container = document.getElementById('flashcardList');
+  if (cards.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);margin-top:8px;">No custom flashcards yet. Add some above!</p>';
+  } else {
+    container.innerHTML = cards.map((c, i) =>
+      '<div style="background:var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:0.85rem;font-weight:600;color:var(--text);">Q: ' + escapeHTML(c.q) + '</div>' +
+          '<div style="font-size:0.8rem;color:var(--green);margin-top:2px;">A: ' + escapeHTML(c.a) + '</div>' +
+        '</div>' +
+        '<button onclick="removeFlashcard(' + i + ')" style="background:none;border:none;color:var(--highlight);font-size:1.2rem;cursor:pointer;padding:0 4px;flex-shrink:0;">x</button>' +
+      '</div>'
+    ).join('');
+  }
+  document.getElementById('clearAllFlashcardsBtn').style.display = cards.length > 0 ? '' : 'none';
+}
+
+function escapeHTML(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function genCustomFlashcard(childId) {
+  const cards = getCustomFlashcards(childId);
+  if (cards.length === 0) return null;
+  const c = pick(cards);
+  return { q: c.q, a: c.a, _isCustomFlashcard: true };
+}
+
+document.getElementById('flashcardQ').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('flashcardA').focus(); }
+});
+document.getElementById('flashcardA').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addFlashcard(); }
+});
+
+// ===============================================
+//  QUIZ ENGINE
+// ===============================================
+
+function saveQuizState() {
+  if (!quizState) return;
+  const session = getSession(quizState.childId);
+  const dist = quizState.quizDistracted;
+  if (quizState.isAll) {
+    for (const s of quizState.childSubjects) {
+      const key = getLevelKey(s, dist);
+      session.levels[key] = quizState.currentLevels[s];
+      session.levels[s] = quizState.currentLevels[s];
+    }
+  } else if (quizState.isNewWords) {
+    const key = getLevelKey('newWords', dist);
+    session.levels[key] = quizState.currentLevel;
+    session.levels.newWords = quizState.currentLevel;
+  } else if (!quizState.isWordStudy && !quizState.isSpelling && !quizState.isCustom) {
+    const key = getLevelKey(quizState.subject, dist);
+    session.levels[key] = quizState.currentLevel;
+    session.levels[quizState.subject] = quizState.currentLevel;
+    if (!session.history[quizState.subject]) session.history[quizState.subject] = [];
+    session.history[quizState.subject] = quizState.results;
+  }
+  saveState();
+}
+
+const CORE_SUBJECTS = ['math', 'english', 'science'];
+
+function getChildSubjects(childId) {
+  const child = CHILDREN[childId];
+  if (!child) return CORE_SUBJECTS;
+  if (child.grade <= 1) return ['math', 'english'];
+  return CORE_SUBJECTS;
+}
+
+function startQuiz(subject) {
+  const childId = state.activeChild;
+  const session = getSession(childId);
+  if (!session.levels.newWords) session.levels.newWords = session.levels.english;
+  const isAll = subject === 'all';
+  const isWordStudy = subject === 'wordStudy';
+  const isNewWords = subject === 'newWords';
+  const isCustom = subject === 'custom';
+  const isSpelling = subject === 'spelling';
+  const childSubjects = getChildSubjects(childId);
+
+  const distracted = state.distracted;
+  const startLevels = {};
+  if (isAll) {
+    for (const s of childSubjects) {
+      const key = getLevelKey(s, distracted);
+      startLevels[s] = session.levels[key] !== undefined ? session.levels[key] : session.levels[s];
+    }
+  } else if (isNewWords) {
+    const key = getLevelKey('newWords', distracted);
+    startLevels.newWords = session.levels[key] !== undefined ? session.levels[key] : session.levels.newWords;
+  } else if (!isWordStudy && !isCustom && !isSpelling) {
+    const key = getLevelKey(subject, distracted);
+    startLevels[subject] = session.levels[key] !== undefined ? session.levels[key] : session.levels[subject];
+  }
+
+  const prevHistory = isAll ? [] : (session.history[subject] || []);
+
+  const getStartLevel = () => {
+    if (isAll) return null;
+    if (isNewWords) {
+      const key = getLevelKey('newWords', distracted);
+      return session.levels[key] !== undefined ? session.levels[key] : session.levels.newWords;
+    }
+    if (isWordStudy || isCustom || isSpelling) return 0;
+    const key = getLevelKey(subject, distracted);
+    return session.levels[key] !== undefined ? session.levels[key] : session.levels[subject];
+  };
+  const startLevel = getStartLevel();
+
+  quizState = {
+    childId,
+    subject,
+    isAll,
+    isWordStudy,
+    isNewWords,
+    isER: false,
+    isCustom,
+    isSpelling,
+    isWordFlashcards: false,
+    isResearch: false,
+    quizDistracted: distracted,
+    currentLevels: { ...startLevels },
+    currentLevel: isAll ? (session.levels[getLevelKey(childSubjects[0], distracted)] || session.levels[childSubjects[0]]) : startLevel,
+    startLevels: { ...startLevels },
+    startLevel: startLevel,
+    currentSubject: isAll ? childSubjects[0] : subject,
+    childSubjects,
+    subjectRotation: 0,
+    questionNum: 0,
+    results: [...prevHistory],
+    sessionResults: [],
+    repeatQueue: [],
+    showingAnswer: false,
+    currentQuestion: null,
+    correctRun: 0,
+    incorrectRun: 0
+  };
+
+  streak = 0;
+  bestStreak = 0;
+  showScreen('quiz');
+  nextQuestion();
+}
+
+function nextQuestion() {
+  quizState.questionNum++;
+  const distracted = state.distracted;
+
+  if (quizState.isAll) {
+    const child = CHILDREN[quizState.childId];
+    if (child && child.grade >= 2 && quizState.childSubjects.includes('science')) {
+      const r = Math.random();
+      if (r < 0.15) quizState.currentSubject = 'science';
+      else if (r < 0.575) quizState.currentSubject = 'math';
+      else quizState.currentSubject = 'english';
+    } else {
+      quizState.currentSubject = quizState.childSubjects[quizState.subjectRotation % quizState.childSubjects.length];
+      quizState.subjectRotation++;
+    }
+    quizState.currentLevel = quizState.currentLevels[quizState.currentSubject];
+  }
+
+  let fromRepeat = false;
+  const repeatIdx = quizState.repeatQueue.findIndex(r => r.repeatAtNum <= quizState.questionNum);
+  let question;
+
+  if (repeatIdx >= 0) {
+    question = quizState.repeatQueue[repeatIdx].question;
+    quizState.repeatQueue.splice(repeatIdx, 1);
+    fromRepeat = true;
+  } else if (quizState.isWordStudy) {
+    question = genWordStudy(quizState.childId);
+    if (!question) { alert('No words in your Word Study list! Add words in Word Entry first.'); setWordCategory('study'); showScreen('wordEntry'); return; }
+  } else if (quizState.isSpelling) {
+    question = genSpelling(quizState.childId);
+    if (!question) { alert('No words in your Spelling list! Add words in Word Entry first.'); setWordCategory('spelling'); showScreen('wordEntry'); return; }
+  } else if (quizState.isNewWords) {
+    question = genNewWord(quizState.currentLevel);
+  } else if (quizState.isCustom) {
+    question = genCustomFlashcard(quizState.childId);
+    if (!question) { alert('No flashcards! Add some in Flashcard Entry first.'); showScreen('subject'); return; }
+  } else {
+    let attempts = 0;
+    do {
+      question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+      attempts++;
+    } while (attempts < 5 && quizState.recentQuestionTexts && quizState.recentQuestionTexts.has(question.q));
+  }
+
+  if (!quizState.recentQuestionTexts) quizState.recentQuestionTexts = new Set();
+  quizState.recentQuestionTexts.add(question.q);
+  if (quizState.recentQuestionTexts.size > 200) {
+    const arr = [...quizState.recentQuestionTexts];
+    quizState.recentQuestionTexts = new Set(arr.slice(-100));
+  }
+
+  quizState.currentQuestion = question;
+  quizState.currentQuestion._fromRepeat = fromRepeat;
+  quizState.currentQuestion._subject = quizState.currentSubject;
+  quizState.showingAnswer = false;
+
+  renderQuiz();
+  updateStreakDisplay();
+  speak(question.q);
+  if (state.timer) startTimer();
+  if (state.voice) startVoiceRecognition();
+}
+
+function renderQuiz() {
+  const child = CHILDREN[quizState.childId];
+  if (!child) return;
+  const grade = Math.floor(quizState.currentLevel / 10);
+  const decile = quizState.currentLevel % 10;
+  let currentSubjName;
+  if (quizState.isAll) currentSubjName = (SUBJECTS.find(s => s.id === quizState.currentSubject) || {name: quizState.currentSubject}).name;
+  else currentSubjName = (SUBJECTS.find(s => s.id === quizState.subject) || {name: quizState.subject}).name;
+  const distracted = state.distracted;
+
+  const levelLabel = 'Grade ' + grade + '.' + decile;
+
+  document.getElementById('quizInfo').textContent =
+    child.emoji + ' ' + child.name + ' | ' + currentSubjName + ' | ' + levelLabel + ' | Q#' + quizState.questionNum + ' | ' + (distracted ? 'Distracted' : 'Focused') + ' | Repeat queue: ' + quizState.repeatQueue.length;
+
+  const questionTextEl = document.getElementById('questionText');
+  if (quizState.currentQuestion._wordStudyBigWord) {
+    questionTextEl.innerHTML = '<div style="font-size:4rem;font-weight:800;letter-spacing:4px;color:white;">' + escapeHTML(quizState.currentQuestion.q).toUpperCase() + '</div>';
+  } else if (quizState.isWordStudy && quizState.currentQuestion._displayWord && !quizState.showingAnswer) {
+    questionTextEl.innerHTML = escapeHTML(quizState.currentQuestion.q) + '<div style="font-size:3rem;margin-top:20px;font-weight:800;letter-spacing:4px;">' + escapeHTML(quizState.currentQuestion._displayWord) + '</div>';
+  } else {
+    questionTextEl.textContent = quizState.currentQuestion.q;
+  }
+
+  const answerEl = document.getElementById('answerText');
+  const buttonsEl = document.getElementById('quizButtons');
+
+  if (quizState.showingAnswer) {
+    let answerHTML = escapeHTML(quizState.currentQuestion.a);
+    if (quizState.isNewWords && quizState.currentQuestion._sentence) {
+      answerHTML += '<div style="font-size:0.9rem;color:var(--text-dim);margin-top:10px;font-style:italic;font-weight:400;">Example: "' + escapeHTML(quizState.currentQuestion._sentence) + '"</div>';
+    }
+    answerEl.innerHTML = answerHTML;
+    answerEl.style.display = 'block';
+
+    let extraButtons = '';
+    if (quizState.isWordStudy && quizState.currentQuestion._customWord) {
+      const safeWord = quizState.currentQuestion._customWord.replace(/'/g, "\\'");
+      extraButtons += '<button class="btn" style="background:#7b1fa2;margin-top:8px;" onclick="removeWordFromQuiz(\'' + safeWord + '\')">Remove from List</button>';
+      extraButtons += '<button class="btn" style="background:#2e7d32;margin-top:8px;" onclick="masterWord(\'' + safeWord + '\')">Mastered</button>';
+    }
+    if (quizState.isSpelling && quizState.currentQuestion._customWord) {
+      const safeWord = quizState.currentQuestion._customWord.replace(/'/g, "\\'");
+      extraButtons += '<button class="btn" style="background:#7b1fa2;margin-top:8px;" onclick="removeSpellingWord(\'' + safeWord + '\')">Remove from List</button>';
+    }
+    if (quizState.isNewWords && quizState.currentQuestion._newWord) {
+      const safeNewWord = quizState.currentQuestion._newWord.replace(/'/g, "\\'");
+      extraButtons += '<button class="btn" style="background:#1565c0;margin-top:8px;" onclick="addNewWordToList(\'' + safeNewWord + '\')">Add to Word Study</button>';
+    }
+
+    buttonsEl.innerHTML =
+      '<button class="btn btn-correct" onclick="recordAnswer(\'correct\')">Correct</button>' +
+      '<button class="btn btn-difficulty" onclick="recordAnswer(\'difficulty\')">With Difficulty</button>' +
+      '<button class="btn btn-incorrect" onclick="recordAnswer(\'incorrect\')">Incorrect</button>' +
+      '<button class="btn" style="background:var(--accent);margin-top:8px;" onclick="skipQuestion()">Skip Question</button>' +
+      extraButtons +
+      '<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:12px;">' +
+        '<button onclick="nudgeLevel(-1)" style="font-size:0.65rem;padding:4px 8px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;">Down decile</button>' +
+        '<button onclick="nudgeLevel(1)" style="font-size:0.65rem;padding:4px 8px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;">Up decile</button>' +
+      '</div>';
+  } else {
+    answerEl.style.display = 'none';
+    buttonsEl.innerHTML =
+      '<button class="btn btn-show" onclick="showAnswer()">Show Answer</button>' +
+      '<button class="btn" style="background:var(--accent);margin-top:8px;" onclick="skipQuestion()">Skip Question</button>';
+  }
+}
+
+function showAnswer() {
+  quizState.showingAnswer = true;
+  stopTimer();
+  stopVoiceRecognition();
+  renderQuiz();
+  speak('The answer is: ' + quizState.currentQuestion.a);
+}
+
+function nudgeLevel(delta) {
+  const newLevel = Math.max(0, Math.min(89, quizState.currentLevel + delta));
+  quizState.currentLevel = newLevel;
+  if (quizState.isAll) quizState.currentLevels[quizState.currentSubject] = newLevel;
+  renderQuiz();
+}
+
+function skipQuestion() {
+  stopTimer();
+  stopVoiceRecognition();
+  window.speechSynthesis.cancel();
+  const distracted = state.distracted;
+  let question;
+  if (quizState.isWordStudy) {
+    question = genWordStudy(quizState.childId);
+    if (!question) { alert('No words left!'); showScreen('subject'); return; }
+  } else if (quizState.isSpelling) {
+    question = genSpelling(quizState.childId);
+    if (!question) { alert('No spelling words left!'); showScreen('subject'); return; }
+  } else if (quizState.isNewWords) {
+    question = genNewWord(quizState.currentLevel);
+  } else if (quizState.isCustom) {
+    question = genCustomFlashcard(quizState.childId);
+    if (!question) { alert('No flashcards left!'); showScreen('subject'); return; }
+  } else {
+    question = generateQuestion(quizState.currentSubject, quizState.currentLevel, distracted);
+  }
+  question._subject = quizState.currentSubject;
+  quizState.currentQuestion = question;
+  quizState.showingAnswer = false;
+  quizState.questionNum++;
+  renderQuiz();
+  updateStreakDisplay();
+  speak(question.q);
+  if (state.timer) startTimer();
+  if (state.voice) startVoiceRecognition();
+}
+
+function recordAnswer(result) {
+  const q = quizState.currentQuestion;
+
+  if (result === 'correct') {
+    streak++;
+    if (streak > bestStreak) bestStreak = streak;
+    if (streak >= 5 && streak % 5 === 0) { playSound('streak'); speak('Amazing! ' + streak + ' in a row!'); }
+    else { playSound('correct'); }
+  } else if (result === 'incorrect') {
+    if (streak >= 3) speak('Streak ended at ' + streak);
+    streak = 0;
+    playSound('incorrect');
+  } else {
+    playSound('correct');
+  }
+  updateStreakDisplay();
+
+  const record = {
+    question: q.q,
+    answer: q.a,
+    result,
+    level: quizState.currentLevel,
+    subject: quizState.currentSubject,
+    timestamp: Date.now()
+  };
+  quizState.results.push(record);
+  quizState.sessionResults.push(record);
+
+  if (!q._fromRepeat) {
+    if (result === 'correct') {
+      quizState.correctRun++;
+      quizState.incorrectRun = 0;
+      if (quizState.correctRun >= 3) {
+        quizState.currentLevel = Math.min(89, quizState.currentLevel + 1);
+        quizState.correctRun = 0;
+      }
+    } else if (result === 'difficulty') {
+      quizState.incorrectRun = 0;
+    } else {
+      quizState.incorrectRun++;
+      quizState.correctRun = 0;
+      if (quizState.incorrectRun >= 3) {
+        quizState.currentLevel = Math.max(0, quizState.currentLevel - 1);
+        quizState.incorrectRun = 0;
+      }
+    }
+    if (quizState.isAll) quizState.currentLevels[quizState.currentSubject] = quizState.currentLevel;
+  }
+
+  if (result === 'incorrect') {
+    quizState.repeatQueue.push({ question: { q: q.q, a: q.a }, repeatAtNum: quizState.questionNum + 10 });
+    quizState.repeatQueue.push({ question: { q: q.q, a: q.a }, repeatAtNum: quizState.questionNum + 20 });
+  } else if (result === 'difficulty') {
+    quizState.repeatQueue.push({ question: { q: q.q, a: q.a }, repeatAtNum: quizState.questionNum + 15 });
+  }
+
+  saveQuizState();
+  nextQuestion();
+}
+
+function finishQuiz() {
+  saveQuizState();
+  stopTimer();
+  stopVoiceRecognition();
+  window.speechSynthesis.cancel();
+
+  const results = quizState.sessionResults;
+  const child = CHILDREN[quizState.childId];
+  const childName = child ? child.name : 'Learner';
+  const isAll = quizState.isAll;
+
+  const total = results.length;
+  const correct = results.filter(r => r.result === 'correct').length;
+  const difficulty = results.filter(r => r.result === 'difficulty').length;
+  const incorrect = results.filter(r => r.result === 'incorrect').length;
+  const pct = total > 0 ? Math.round(correct / total * 100) : 0;
+
+  let subjName = isAll ? 'All Subjects' : (SUBJECTS.find(s => s.id === quizState.subject) || {name: quizState.subject}).name;
+
+  let html =
+    '<h2>' + escapeHTML(childName) + '\'s ' + subjName + ' Report</h2>' +
+    '<div class="stat-row">' +
+      '<div class="stat-box"><div class="stat-val">' + total + '</div><div class="stat-label">Questions</div></div>' +
+      '<div class="stat-box"><div class="stat-val" style="color:var(--green)">' + correct + '</div><div class="stat-label">Correct</div></div>' +
+      '<div class="stat-box"><div class="stat-val" style="color:var(--yellow)">' + difficulty + '</div><div class="stat-label">With Difficulty</div></div>' +
+      '<div class="stat-box"><div class="stat-val" style="color:var(--highlight)">' + incorrect + '</div><div class="stat-label">Incorrect</div></div>' +
+      '<div class="stat-box"><div class="stat-val">' + pct + '%</div><div class="stat-label">Accuracy</div></div>' +
+      '<div class="stat-box"><div class="stat-val" style="color:var(--yellow)">Best: ' + bestStreak + '</div><div class="stat-label">Best Streak</div></div>' +
+    '</div>';
+
+  const subjectsToReport = isAll ? quizState.childSubjects : [quizState.subject];
+
+  for (const subj of subjectsToReport) {
+    const subjLabel = (SUBJECTS.find(s => s.id === subj) || {name: subj}).name;
+    const finalLevel = isAll ? quizState.currentLevels[subj] : quizState.currentLevel;
+    const startLevel = isAll ? quizState.startLevels[subj] : quizState.startLevel;
+    if (finalLevel === undefined || startLevel === undefined) continue;
+    const finalGrade = Math.floor(finalLevel / 10);
+    const finalDecile = finalLevel % 10;
+    const startGrade = Math.floor(startLevel / 10);
+    const startDecile = startLevel % 10;
+    const gradeColor = finalLevel >= startLevel ? 'var(--green)' : 'var(--highlight)';
+    const gradeWidth = ((finalDecile + 1) / 10) * 100;
+
+    html +=
+      '<h3 style="margin-top:20px;">' + subjLabel + '</h3>' +
+      '<table class="report-table">' +
+        '<tr><th>Metric</th><th>Value</th></tr>' +
+        '<tr><td>Starting Level</td><td>Grade ' + startGrade + ', Decile ' + startDecile + '/10</td></tr>' +
+        '<tr><td>Final Level</td><td style="color:' + gradeColor + ';font-weight:700">Grade ' + finalGrade + ', Decile ' + finalDecile + '/10</td></tr>' +
+        '<tr><td>Change</td><td>' + (finalLevel >= startLevel ? 'Up' : 'Down') + ' ' + Math.abs(finalLevel - startLevel) + ' levels</td></tr>' +
+      '</table>' +
+      '<p style="margin-bottom:4px;font-size:0.9rem;">Grade ' + finalGrade + ' Position (Decile ' + finalDecile + '/10):</p>' +
+      '<div class="grade-bar"><div class="grade-fill" style="width:' + gradeWidth + '%;background:' + gradeColor + '"></div></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text-dim);margin-top:2px;">' +
+        '<span>Grade ' + finalGrade + '.0</span><span>Grade ' + finalGrade + '.5</span><span>Grade ' + finalGrade + '.9</span>' +
+      '</div>';
+  }
+
+  let recentWrong = results.filter(r => r.result === 'incorrect').slice(-5);
+  if (recentWrong.length > 0) {
+    html += '<h3 style="margin-top:20px;">Questions to Review</h3>' +
+      '<table class="report-table"><tr><th>Question</th><th>Answer</th></tr>' +
+      recentWrong.map(r => '<tr><td>' + escapeHTML(r.question) + '</td><td>' + escapeHTML(r.answer) + '</td></tr>').join('') +
+      '</table>';
+  }
+
+  if (results.length > 1) {
+    const levels = results.map(r => r.level);
+    const minL = Math.min(...levels);
+    const maxL = Math.max(...levels);
+    html += '<h3>Difficulty Progression</h3><div style="font-family:monospace;font-size:0.8rem;color:var(--text-dim);line-height:1.6;">';
+    const step = Math.max(1, Math.floor(results.length / 20));
+    for (let i = 0; i < results.length; i += step) {
+      const r = results[i];
+      const g = Math.floor(r.level / 10);
+      const d = r.level % 10;
+      const barLen = Math.max(1, Math.round((r.level - minL + 1) / Math.max(1, maxL - minL + 1) * 20));
+      const bar = Array(barLen + 1).join('#');
+      const color = r.result === 'correct' ? 'var(--green)' : r.result === 'difficulty' ? 'var(--yellow)' : 'var(--highlight)';
+      html += '<div>Q' + String(i+1).padStart(3,' ') + ' <span style="color:' + color + '">' + bar + '</span> G' + g + '.' + d + '</div>';
+    }
+    html += '</div>';
+  }
+
+  document.getElementById('reportContent').innerHTML = html;
+  showScreen('report');
+  quizState = null;
+}
+
+// ===============================================
+//  KEYBOARD SHORTCUTS
+// ===============================================
+
+document.addEventListener('keydown', (e) => {
+  if (!quizState) return;
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if (!quizState.showingAnswer) showAnswer();
+  } else if (quizState.showingAnswer) {
+    if (e.key === '1' || e.key === 'c' || e.key === 'C') recordAnswer('correct');
+    else if (e.key === '2' || e.key === 'd' || e.key === 'D') recordAnswer('difficulty');
+    else if (e.key === '3' || e.key === 'i' || e.key === 'I') recordAnswer('incorrect');
+  }
+});
+
+// Enter key on add child name input
+document.getElementById('childNameInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); addChild(); }
+});
+
+// ===============================================
+//  MODE TOGGLE
+// ===============================================
+
+function toggleMode() {
+  state.distracted = !state.distracted;
+  updateToggleVisual();
+  saveState();
+}
+
+function updateToggleVisual() {
+  const el = document.getElementById('modeToggle');
+  if (state.distracted) el.classList.add('on');
+  else el.classList.remove('on');
+}
+
+// ===============================================
+//  FEATURE TOGGLES (TTS, Voice, Timer)
+// ===============================================
+
+function toggleFeature(feat) {
+  state[feat] = !state[feat];
+  updateFeatureToggles();
+  saveState();
+  if (feat === 'voice' && !state.voice) stopVoiceRecognition();
+  if (feat === 'timer' && !state.timer) stopTimer();
+}
+
+function updateFeatureToggles() {
+  ['tts', 'voice', 'timer'].forEach(f => {
+    const el = document.getElementById(f + 'Toggle');
+    if (el) {
+      if (state[f]) el.classList.add('on');
+      else el.classList.remove('on');
+    }
+  });
+}
+
+// ── Text-to-Speech ──
+
+function speak(text) {
+  if (!state.tts) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.9;
+  u.pitch = 1;
+  u.lang = 'en-CA';
+  window.speechSynthesis.speak(u);
+}
+
+// ── Sound Effects ──
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+
+  if (type === 'correct') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);
+    osc.frequency.setValueAtTime(659, now + 0.1);
+    osc.frequency.setValueAtTime(784, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    osc.start(now); osc.stop(now + 0.4);
+  } else if (type === 'streak') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523, now);
+    osc.frequency.setValueAtTime(659, now + 0.08);
+    osc.frequency.setValueAtTime(784, now + 0.16);
+    osc.frequency.setValueAtTime(1047, now + 0.24);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc.start(now); osc.stop(now + 0.5);
+  } else if (type === 'incorrect') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.setValueAtTime(150, now + 0.15);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.start(now); osc.stop(now + 0.3);
+  } else if (type === 'timerWarning') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'timeUp') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.setValueAtTime(200, now + 0.2);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    osc.start(now); osc.stop(now + 0.4);
+  }
+}
+
+function updateStreakDisplay() {
+  const el = document.getElementById('streakDisplay');
+  if (!el) return;
+  if (streak >= 3) {
+    el.textContent = 'Streak: ' + streak + '!' + (streak >= 5 ? ' !!' : '') + (streak >= 10 ? '!!!' : '');
+    el.style.display = 'block';
+  } else if (streak > 0) {
+    el.textContent = streak + ' in a row';
+    el.style.display = 'block';
+  } else {
+    el.textContent = '';
+  }
+}
+
+// ── Timer ──
+
+function startTimer() {
+  stopTimer();
+  if (!state.timer) return;
+  timerSeconds = state.distracted ? TIMER_DURATION.distracted : TIMER_DURATION.focused;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    updateTimerDisplay();
+    if (timerSeconds === 10) playSound('timerWarning');
+    if (timerSeconds === 5) playSound('timerWarning');
+    if (timerSeconds <= 0) {
+      playSound('timeUp');
+      stopTimer();
+      if (quizState && !quizState.showingAnswer) showAnswer();
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  const el = document.getElementById('timerDisplay');
+  if (el) { el.textContent = ''; el.className = 'timer-display'; }
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timerDisplay');
+  if (!el || !state.timer) { if (el) el.textContent = ''; return; }
+  el.textContent = 'Timer: ' + timerSeconds + 's';
+  el.className = 'timer-display';
+  if (timerSeconds <= 5) el.classList.add('danger');
+  else if (timerSeconds <= 10) el.classList.add('warning');
+}
+
+// ── Voice Recognition ──
+
+let recognition = null;
+let voiceListening = false;
+
+function startVoiceRecognition() {
+  if (!state.voice) return;
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('voiceStatus').textContent = 'Voice not supported on this browser';
+    return;
+  }
+  stopVoiceRecognition();
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-CA';
+
+  const statusEl = document.getElementById('voiceStatus');
+
+  recognition.onstart = () => {
+    voiceListening = true;
+    if (statusEl) { statusEl.textContent = 'Listening...'; statusEl.className = 'voice-status listening'; }
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+    if (statusEl) statusEl.textContent = 'Heard: "' + transcript + '"';
+    if (event.results[0].isFinal && quizState) {
+      const answer = quizState.currentQuestion.a.toLowerCase().trim();
+      const heard = transcript;
+      const match = answer.includes(heard) || heard.includes(answer) ||
+        heard.replace(/[^0-9.-]/g, '') === answer.replace(/[^0-9.-]/g, '');
+      if (statusEl) {
+        statusEl.textContent = match ? '"' + transcript + '" - Sounds right!' : '"' + transcript + '"';
+      }
+    }
+  };
+
+  recognition.onerror = (event) => {
+    voiceListening = false;
+    if (event.error !== 'aborted' && event.error !== 'no-speech') {
+      if (statusEl) statusEl.textContent = 'Voice: ' + event.error;
+    }
+  };
+
+  recognition.onend = () => {
+    voiceListening = false;
+    if (state.voice && quizState && !quizState.showingAnswer) {
+      setTimeout(() => { if (state.voice && quizState && !quizState.showingAnswer) startVoiceRecognition(); }, 300);
+    } else {
+      if (statusEl) { statusEl.textContent = ''; statusEl.className = 'voice-status'; }
+    }
+  };
+
+  recognition.start();
+}
+
+function stopVoiceRecognition() {
+  if (recognition) { try { recognition.abort(); } catch(e) {} recognition = null; }
+  voiceListening = false;
+  const statusEl = document.getElementById('voiceStatus');
+  if (statusEl) { statusEl.textContent = ''; statusEl.className = 'voice-status'; }
+}
+
+// ===============================================
+//  PROGRESS BACKUP / RESTORE
+// ===============================================
+
+function exportProgress() {
+  const exportData = {
+    state: state,
+    children: CHILDREN
+  };
+  const data = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'learning-hub-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importProgress(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (parsed.children) {
+        CHILDREN = parsed.children;
+        saveChildren();
+      }
+      if (parsed.state && parsed.state.sessions) {
+        state.sessions = parsed.state.sessions;
+        saveState();
+      } else if (parsed.sessions) {
+        state.sessions = parsed.sessions;
+        saveState();
+      }
+      alert('Progress restored successfully!');
+      location.reload();
+    } catch(err) {
+      alert('Error reading backup: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ===============================================
+//  INIT
+// ===============================================
+
+loadChildren();
+loadState();
+updateToggleVisual();
+updateFeatureToggles();
+renderHome();
+renderChildTabs();
+</script>
+</body>
+</html>
