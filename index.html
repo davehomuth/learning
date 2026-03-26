@@ -418,7 +418,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.4</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.5</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -580,7 +580,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.4';
+const APP_VERSION = '3.5';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -755,13 +755,19 @@ function getSession(childId) {
           math: child.startDecile.math,
           english: child.startDecile.english,
           science: child.startDecile.science,
-          newWords: child.startDecile.english
+          newWords: child.startDecile.english,
+          // Separate focused/distracted levels
+          math_focused: child.startDecile.math,
+          math_distracted: child.startDecile.math,
+          english_focused: child.startDecile.english,
+          english_distracted: child.startDecile.english,
+          science_focused: child.startDecile.science,
+          science_distracted: child.startDecile.science,
+          newWords_focused: child.startDecile.english,
+          newWords_distracted: child.startDecile.english
         },
         history: {}
       };
-      if (!state.sessions[childId].levels.newWords) {
-        state.sessions[childId].levels.newWords = state.sessions[childId].levels.english;
-      }
     }
   }
   // Ensure daddy sessions have ER levels on older saves
@@ -769,7 +775,26 @@ function getSession(childId) {
     if (!state.sessions[childId].levels.erQuestions) state.sessions[childId].levels.erQuestions = 30;
     if (!state.sessions[childId].levels.newResearch) state.sessions[childId].levels.newResearch = 30;
   }
+  // Ensure focused/distracted level keys exist (migrate old saves)
+  if (childId !== 'daddy') {
+    const lvls = state.sessions[childId].levels;
+    for (const subj of ['math','english','science','newWords']) {
+      if (lvls[subj] !== undefined) {
+        if (lvls[subj + '_focused'] === undefined) lvls[subj + '_focused'] = lvls[subj];
+        if (lvls[subj + '_distracted'] === undefined) lvls[subj + '_distracted'] = lvls[subj];
+      }
+    }
+  }
   return state.sessions[childId];
+}
+
+// Get the level key for a subject based on current mode (focused/distracted)
+function getLevelKey(subject, distracted) {
+  const mode = distracted ? '_distracted' : '_focused';
+  if (['math','english','science','newWords'].includes(subject)) {
+    return subject + mode;
+  }
+  return subject; // for ER, research, etc. no mode split
 }
 
 function saveState() {
@@ -1028,7 +1053,7 @@ function genMath7(d, dist) {
       (() => { const a=randInt(20,50),b=randInt(20,50); return { q:`What is ${a} times ${b}?`, a:`${a*b}` }; })(),
       (() => { const a=randInt(-20,20),b=randInt(-20,20); return { q:`What is ${a} × ${b}?`, a:`${a*b}` }; })(),
       (() => { const a=randInt(2,10); return { q:`What is ${a} to the power of 3?`, a:`${a*a*a}` }; })(),
-      (() => { const a=randInt(100,999),b=randInt(100,999); return { q:`Estimate: is ${a} + ${b} closer to ${Math.round((a+b)/100)*100-100} or ${Math.round((a+b)/100)*100+100}?`, a:`${Math.round((a+b)/100)*100}` }; })(),
+      (() => { const a=randInt(100,999),b=randInt(100,999); const sum=a+b; const lo=Math.floor(sum/100)*100; const hi=lo+100; const closer=(sum-lo)<=(hi-sum)?lo:hi; return { q:`Estimate: is ${a} + ${b} closer to ${lo} or ${hi}?`, a:`${closer} (actual: ${sum})` }; })(),
       (() => { const r=randInt(3,15); return { q:`What is the area of a circle with radius ${r}? (use π ≈ 3.14)`, a:`${(3.14*r*r).toFixed(2)}` }; })()
     ]);
   }
@@ -1393,7 +1418,11 @@ function genWordStudy(childId) {
   const words = getStudyWords(childId);
   if (words.length === 0) return null;
   const w = pick(words);
-  // All kids: word study is about meaning
+  if (childId === 'cole' || childId === 'mackenzie') {
+    // Cole/Mack: show word in big letters, they read it aloud
+    return { q: w, a: w, _displayWord: w.toUpperCase(), _wordStudyBigWord: true, _customWord: w };
+  }
+  // Logan: word study is about meaning
   return { q: `What does "${w}" mean?`, a: `(Check with Dad for the meaning of "${w}")`, _customWord: w };
 }
 
@@ -2445,14 +2474,16 @@ function renderSubjectScreen() {
         continue;
       }
     } else if (subj.id === 'newWords') {
-      const lvl = session.levels.newWords || session.levels.english;
-      const grade = Math.floor(lvl / 10);
-      const decile = lvl % 10;
+      const fLvl = session.levels.newWords_focused || session.levels.newWords || session.levels.english;
+      const dLvl = session.levels.newWords_distracted || session.levels.newWords || session.levels.english;
+      const fG = Math.floor(fLvl / 10); const fD = fLvl % 10;
+      const dG = Math.floor(dLvl / 10); const dD = dLvl % 10;
       btn.innerHTML = `
         <span class="subj-icon">${subj.icon}</span>
         ${subj.name}
         <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Learn new vocabulary</div>
-        <div style="font-size:0.7rem;color:var(--text-dim);">Level: Grade ${grade}.${decile}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">🎯 Focused: Grade ${fG}.${fD}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">🏃 Distracted: Grade ${dG}.${dD}</div>
       `;
     } else if (subj.id === 'custom') {
       const cardCount = getCustomFlashcards(state.activeChild).length;
@@ -2469,13 +2500,17 @@ function renderSubjectScreen() {
         continue;
       }
     } else {
-      const lvl = session.levels[subj.id];
-      const grade = Math.floor(lvl / 10);
-      const decile = lvl % 10;
+      const fKey = subj.id + '_focused';
+      const dKey = subj.id + '_distracted';
+      const fLvl = session.levels[fKey] !== undefined ? session.levels[fKey] : session.levels[subj.id];
+      const dLvl = session.levels[dKey] !== undefined ? session.levels[dKey] : session.levels[subj.id];
+      const fG = Math.floor(fLvl / 10); const fD = fLvl % 10;
+      const dG = Math.floor(dLvl / 10); const dD = dLvl % 10;
       btn.innerHTML = `
         <span class="subj-icon">${subj.icon}</span>
         ${subj.name}
-        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Level: Grade ${grade}.${decile}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-top:4px;">🎯 Focused: Grade ${fG}.${fD}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">🏃 Distracted: Grade ${dG}.${dD}</div>
       `;
     }
     btn.onclick = () => startQuiz(subj.id);
@@ -2818,14 +2853,21 @@ document.getElementById('flashcardA').addEventListener('keydown', function(e) {
 function saveQuizState() {
   if (!quizState) return;
   const session = getSession(quizState.childId);
+  const dist = quizState.quizDistracted;
   if (quizState.isAll) {
     for (const s of quizState.childSubjects) {
-      session.levels[s] = quizState.currentLevels[s];
+      const key = getLevelKey(s, dist);
+      session.levels[key] = quizState.currentLevels[s];
+      session.levels[s] = quizState.currentLevels[s]; // also save to legacy key
     }
   } else if (quizState.isNewWords) {
-    session.levels.newWords = quizState.currentLevel;
-  } else if (!quizState.isWordStudy) {
-    session.levels[quizState.subject] = quizState.currentLevel;
+    const key = getLevelKey('newWords', dist);
+    session.levels[key] = quizState.currentLevel;
+    session.levels.newWords = quizState.currentLevel; // legacy
+  } else if (!quizState.isWordStudy && !quizState.isSpelling && !quizState.isWordFlashcards && !quizState.isCustom) {
+    const key = getLevelKey(quizState.subject, dist);
+    session.levels[key] = quizState.currentLevel;
+    session.levels[quizState.subject] = quizState.currentLevel; // legacy
     if (!session.history[quizState.subject]) session.history[quizState.subject] = [];
     session.history[quizState.subject] = quizState.results;
   }
@@ -2856,20 +2898,38 @@ function startQuiz(subject) {
   const childSubjects = getChildSubjects(childId);
 
   // For "all" mode, we track levels per subject individually
+  const distracted = state.distracted;
   const startLevels = {};
   if (isAll) {
-    for (const s of childSubjects) startLevels[s] = session.levels[s];
+    for (const s of childSubjects) {
+      const key = getLevelKey(s, distracted);
+      startLevels[s] = session.levels[key] !== undefined ? session.levels[key] : session.levels[s];
+    }
   } else if (isNewWords) {
-    startLevels.newWords = session.levels.newWords;
+    const key = getLevelKey('newWords', distracted);
+    startLevels.newWords = session.levels[key] !== undefined ? session.levels[key] : session.levels.newWords;
   } else if (isER || isResearch) {
     startLevels[subject] = session.levels[subject] || 30;
   } else if (!isWordStudy && !isCustom && !isSpelling && !isWordFlashcards) {
-    startLevels[subject] = session.levels[subject];
+    const key = getLevelKey(subject, distracted);
+    startLevels[subject] = session.levels[key] !== undefined ? session.levels[key] : session.levels[subject];
   }
 
   const prevHistory = isAll ? [] : (session.history[subject] || []);
 
-  const startLevel = isAll ? null : (isNewWords ? session.levels.newWords : (isER ? (session.levels.erQuestions || 30) : (isResearch ? (session.levels.newResearch || 30) : ((isWordStudy || isCustom || isSpelling || isWordFlashcards) ? 0 : session.levels[subject]))));
+  const getStartLevel = () => {
+    if (isAll) return null;
+    if (isNewWords) {
+      const key = getLevelKey('newWords', distracted);
+      return session.levels[key] !== undefined ? session.levels[key] : session.levels.newWords;
+    }
+    if (isER) return session.levels.erQuestions || 30;
+    if (isResearch) return session.levels.newResearch || 30;
+    if (isWordStudy || isCustom || isSpelling || isWordFlashcards) return 0;
+    const key = getLevelKey(subject, distracted);
+    return session.levels[key] !== undefined ? session.levels[key] : session.levels[subject];
+  };
+  const startLevel = getStartLevel();
 
   quizState = {
     childId,
@@ -2882,8 +2942,9 @@ function startQuiz(subject) {
     isSpelling,
     isWordFlashcards,
     isResearch,
+    quizDistracted: distracted, // lock mode for this session
     currentLevels: { ...startLevels },
-    currentLevel: isAll ? session.levels[childSubjects[0]] : startLevel,
+    currentLevel: isAll ? (session.levels[getLevelKey(childSubjects[0], distracted)] || session.levels[childSubjects[0]]) : startLevel,
     startLevels: { ...startLevels },
     startLevel: startLevel,
     currentSubject: isAll ? childSubjects[0] : subject,
@@ -3033,6 +3094,9 @@ function renderQuiz() {
   const questionTextEl = document.getElementById('questionText');
   if (quizState.isWordFlashcards && quizState.currentQuestion._wordFlashcardBigWord) {
     // Word Flashcards: show the word in big white letters
+    questionTextEl.innerHTML = '<div style="font-size:4rem;font-weight:800;letter-spacing:4px;color:white;">' + quizState.currentQuestion.q.toUpperCase() + '</div>';
+  } else if (quizState.currentQuestion._wordStudyBigWord) {
+    // Cole/Mack Word Study: show word in big white letters
     questionTextEl.innerHTML = '<div style="font-size:4rem;font-weight:800;letter-spacing:4px;color:white;">' + quizState.currentQuestion.q.toUpperCase() + '</div>';
   } else if (quizState.isWordStudy && quizState.currentQuestion._displayWord && !quizState.showingAnswer) {
     questionTextEl.innerHTML = quizState.currentQuestion.q + '<div style="font-size:3rem;margin-top:20px;font-weight:800;letter-spacing:4px;">' + quizState.currentQuestion._displayWord + '</div>';
