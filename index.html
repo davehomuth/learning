@@ -66,6 +66,7 @@
   .child-tab.active-cole { border-color: var(--cole); background: rgba(129,199,132,0.2); }
   .child-tab.active-mackenzie { border-color: var(--mackenzie); background: rgba(244,143,177,0.2); }
   .child-tab.active-daddy { border-color: var(--daddy); background: rgba(255,167,38,0.2); }
+  .child-tab.active-multiplayer { border-color: var(--yellow); background: rgba(240,192,64,0.2); }
 
   .mode-toggle {
     display: flex;
@@ -134,6 +135,7 @@
   .home-card.cole { border-color: var(--cole); }
   .home-card.mackenzie { border-color: var(--mackenzie); }
   .home-card.daddy { border-color: var(--daddy); }
+  .home-card.multiplayer { border-color: var(--yellow); }
   .home-card .emoji { font-size: 3rem; margin-bottom: 10px; }
   .home-card .name { font-size: 1.4rem; font-weight: 700; }
   .home-card .info { color: var(--text-dim); margin-top: 6px; font-size: 0.9rem; }
@@ -418,7 +420,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.5</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.6</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -462,6 +464,24 @@
     <button onclick="exportProgress()" style="font-size:0.7rem;padding:6px 12px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;margin:4px;">📤 Backup Progress</button>
     <button onclick="document.getElementById('importFile').click()" style="font-size:0.7rem;padding:6px 12px;background:var(--accent);color:var(--text-dim);border:1px solid var(--text-dim);border-radius:6px;cursor:pointer;margin:4px;">📥 Restore Progress</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importProgress(event)">
+  </div>
+</div>
+
+<!-- ── Multiplayer Setup Screen ── -->
+<div class="screen" id="multiplayerSetupScreen">
+  <div style="text-align:center;">
+    <h2 class="section-title">🎮 Multiplayer Mode</h2>
+    <p class="section-sub">Who is learning today?</p>
+  </div>
+  <div style="max-width:400px;margin:20px auto;">
+    <div id="mpPlayerList"></div>
+  </div>
+  <div style="text-align:center;margin-top:20px;">
+    <h3 style="font-size:1rem;margin-bottom:12px;">Choose a Subject</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;" id="mpSubjectButtons"></div>
+  </div>
+  <div style="text-align:center;margin-top:20px;">
+    <button class="btn btn-back" onclick="showScreen('home')">Back</button>
   </div>
 </div>
 
@@ -557,6 +577,7 @@
   </div>
   <div class="streak-display" id="streakDisplay"></div>
   <div class="timer-display" id="timerDisplay"></div>
+  <div id="mpBanner" style="display:none;text-align:center;padding:14px;margin-bottom:12px;background:var(--card);border-radius:12px;font-size:2rem;font-weight:800;"></div>
   <div class="question-card" id="questionCard">
     <div class="question-text" id="questionText"></div>
     <div class="answer-text" id="answerText" style="display:none"></div>
@@ -580,7 +601,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.5';
+const APP_VERSION = '3.6';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -728,6 +749,7 @@ let state = {
   tts: false,
   voice: false,
   timer: false,
+  multiplayerActive: false,
   sessions: {} // keyed by childId, stores per-child progress
 };
 
@@ -2327,6 +2349,10 @@ function showScreen(name) {
       document.getElementById('flashcardEntryScreen').classList.add('active');
       renderFlashcardEntry();
       break;
+    case 'multiplayerSetup':
+      document.getElementById('multiplayerSetupScreen').classList.add('active');
+      renderMultiplayerSetup();
+      break;
   }
 }
 
@@ -2357,6 +2383,17 @@ function renderHome() {
     `;
     container.appendChild(card);
   }
+  // Multiplayer card
+  const mpCard = document.createElement('button');
+  mpCard.type = 'button';
+  mpCard.className = 'home-card multiplayer';
+  mpCard.addEventListener('click', () => showScreen('multiplayerSetup'));
+  mpCard.innerHTML = `
+    <div class="emoji">🎮</div>
+    <div class="name">Multiplayer</div>
+    <div class="info">Multiple kids at once</div>
+  `;
+  container.appendChild(mpCard);
 }
 
 function renderChildTabs() {
@@ -2365,15 +2402,26 @@ function renderChildTabs() {
   for (const [id, child] of Object.entries(CHILDREN)) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `child-tab ${state.activeChild === id ? `active-${child.color}` : ''}`;
+    btn.className = `child-tab ${state.activeChild === id && !state.multiplayerActive ? `active-${child.color}` : ''}`;
     btn.textContent = child.name;
     btn.addEventListener('click', () => {
-      // Save current quiz state if active
+      state.multiplayerActive = false;
       if (quizState) saveQuizState();
       selectChild(id);
     });
     container.appendChild(btn);
   }
+  // Multiplayer tab
+  const mpBtn = document.createElement('button');
+  mpBtn.type = 'button';
+  mpBtn.className = `child-tab ${state.multiplayerActive ? 'active-multiplayer' : ''}`;
+  mpBtn.style.color = state.multiplayerActive ? 'var(--yellow)' : '';
+  mpBtn.textContent = '🎮 Multi';
+  mpBtn.addEventListener('click', () => {
+    if (quizState) saveQuizState();
+    showScreen('multiplayerSetup');
+  });
+  container.appendChild(mpBtn);
 }
 
 const DADDY_SUBJECTS = [
@@ -2845,6 +2893,106 @@ document.getElementById('flashcardA').addEventListener('keydown', function(e) {
 });
 
 // ═══════════════════════════════════════════
+//  MULTIPLAYER MODE
+// ═══════════════════════════════════════════
+
+let multiplayerState = {
+  players: [],       // [{id, lite}] — selected players
+  currentPlayerIdx: 0,
+  subject: null,
+  active: false
+};
+
+function renderMultiplayerSetup() {
+  const container = document.getElementById('mpPlayerList');
+  const kids = ['logan', 'cole', 'mackenzie']; // No daddy in multiplayer
+  container.innerHTML = kids.map(id => {
+    const child = CHILDREN[id];
+    const checked = multiplayerState.players.some(p => p.id === id);
+    const isLite = multiplayerState.players.find(p => p.id === id)?.lite || false;
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;background:var(--card);border-radius:12px;border:2px solid var(--${child.color});">
+        <input type="checkbox" id="mp_${id}" ${checked ? 'checked' : ''} onchange="toggleMPPlayer('${id}')"
+          style="width:24px;height:24px;cursor:pointer;accent-color:var(--${child.color});">
+        <label for="mp_${id}" style="flex:1;cursor:pointer;font-size:1.2rem;font-weight:600;">
+          ${child.emoji} ${child.name}
+          <span style="font-size:0.8rem;color:var(--text-dim);font-weight:400;margin-left:6px;">${child.info}</span>
+        </label>
+        ${id === 'mackenzie' ? `
+          <label style="font-size:0.75rem;color:var(--yellow);cursor:pointer;display:flex;align-items:center;gap:4px;">
+            <input type="checkbox" id="mp_lite_${id}" ${isLite ? 'checked' : ''} onchange="toggleMPLite('${id}')"
+              style="width:18px;height:18px;cursor:pointer;accent-color:var(--yellow);">
+            Lite
+          </label>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // Subject buttons
+  const subjectContainer = document.getElementById('mpSubjectButtons');
+  const subjects = [
+    { id: 'all', name: 'All Subjects', icon: '🎯' },
+    { id: 'math', name: 'Math', icon: '🔢' },
+    { id: 'english', name: 'English', icon: '📖' }
+  ];
+  subjectContainer.innerHTML = subjects.map(s =>
+    `<button class="btn btn-primary" style="min-width:120px;" onclick="startMultiplayer('${s.id}')">${s.icon} ${s.name}</button>`
+  ).join('');
+}
+
+function toggleMPPlayer(id) {
+  const idx = multiplayerState.players.findIndex(p => p.id === id);
+  if (idx !== -1) {
+    multiplayerState.players.splice(idx, 1);
+  } else {
+    multiplayerState.players.push({ id, lite: false });
+  }
+  renderMultiplayerSetup();
+}
+
+function toggleMPLite(id) {
+  const player = multiplayerState.players.find(p => p.id === id);
+  if (player) player.lite = !player.lite;
+}
+
+function startMultiplayer(subject) {
+  if (multiplayerState.players.length < 2) {
+    alert('Select at least 2 players for multiplayer!');
+    return;
+  }
+  multiplayerState.subject = subject;
+  multiplayerState.currentPlayerIdx = 0;
+  multiplayerState.active = true;
+  state.multiplayerActive = true;
+
+  // Start quiz for the first player
+  const firstPlayer = multiplayerState.players[0];
+  state.activeChild = firstPlayer.id;
+  renderChildTabs();
+  startQuiz(subject);
+  // Tag the quiz as multiplayer
+  quizState._multiplayer = true;
+  quizState._mpPlayerName = CHILDREN[firstPlayer.id].name;
+}
+
+function mpNextPlayer() {
+  // Save current player's quiz state
+  if (quizState) saveQuizState();
+
+  // Move to next player
+  multiplayerState.currentPlayerIdx = (multiplayerState.currentPlayerIdx + 1) % multiplayerState.players.length;
+  const nextPlayer = multiplayerState.players[multiplayerState.currentPlayerIdx];
+
+  // Switch child and start their quiz
+  state.activeChild = nextPlayer.id;
+  renderChildTabs();
+  startQuiz(multiplayerState.subject);
+  quizState._multiplayer = true;
+  quizState._mpPlayerName = CHILDREN[nextPlayer.id].name;
+}
+
+// ═══════════════════════════════════════════
 //  QUIZ ENGINE
 // ═══════════════════════════════════════════
 
@@ -3087,8 +3235,24 @@ function renderQuiz() {
     ? (() => { const l = quizState.currentLevel; return l < 20 ? 'Intern' : l < 40 ? 'Resident' : l < 50 ? 'Attending' : 'Expert'; })() + ` (${quizState.currentLevel})`
     : `Grade ${grade}.${decile}`;
 
+  // In multiplayer, show big player name banner
+  const isMP = multiplayerState.active;
+  let infoPrefix = '';
+  if (isMP) {
+    infoPrefix = `🎮 `;
+  }
   document.getElementById('quizInfo').textContent =
-    `${child.emoji} ${child.name} | ${currentSubjName} | ${levelLabel} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
+    `${infoPrefix}${child.emoji} ${child.name} | ${currentSubjName} | ${levelLabel} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
+
+  // Show large player name banner in multiplayer
+  const mpBanner = document.getElementById('mpBanner');
+  if (isMP) {
+    mpBanner.style.display = '';
+    mpBanner.style.border = `3px solid var(--${child.color})`;
+    mpBanner.textContent = `${child.emoji} ${child.name}'s Turn!`;
+  } else {
+    mpBanner.style.display = 'none';
+  }
 
   // Word Study: show large display word for Cole/Mackenzie to read
   const questionTextEl = document.getElementById('questionText');
@@ -3303,7 +3467,13 @@ function recordAnswer(result) {
   }
 
   saveQuizState();
-  nextQuestion();
+
+  // In multiplayer mode, switch to next player after each answer
+  if (multiplayerState.active) {
+    mpNextPlayer();
+  } else {
+    nextQuestion();
+  }
 }
 
 function finishQuiz() {
@@ -3311,6 +3481,13 @@ function finishQuiz() {
   stopTimer();
   stopVoiceRecognition();
   window.speechSynthesis.cancel();
+
+  // End multiplayer mode
+  if (multiplayerState.active) {
+    multiplayerState.active = false;
+    state.multiplayerActive = false;
+    renderChildTabs();
+  }
 
   const results = quizState.sessionResults;
   const childName = CHILDREN[quizState.childId].name;
