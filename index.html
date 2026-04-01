@@ -173,6 +173,7 @@
   }
   .quiz-meta { font-size: 0.85rem; color: var(--text-dim); }
   .question-card {
+    position: relative;
     background: var(--card);
     border-radius: 16px;
     padding: 40px 30px;
@@ -420,7 +421,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.7</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.8</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -579,10 +580,23 @@
   <div class="timer-display" id="timerDisplay"></div>
   <div id="mpBanner" style="display:none;text-align:center;padding:14px;margin-bottom:12px;background:var(--card);border-radius:12px;font-size:2rem;font-weight:800;"></div>
   <div class="question-card" id="questionCard">
+    <button id="scratchpadBtn" onclick="toggleScratchpad()" style="display:none;position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.5rem;cursor:pointer;opacity:0.6;z-index:5;" title="Open Scratchpad">📝</button>
     <div class="question-text" id="questionText"></div>
     <div class="answer-text" id="answerText" style="display:none"></div>
     <div class="quiz-buttons" id="quizButtons"></div>
     <div class="voice-status" id="voiceStatus"></div>
+  </div>
+  <!-- Scratchpad overlay -->
+  <div id="scratchpadOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--card);">
+      <span style="font-weight:700;font-size:1rem;color:var(--text);">📝 Scratchpad</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="clearScratchpad()" style="background:var(--accent);border:none;color:var(--text);padding:6px 14px;border-radius:8px;font-size:0.85rem;cursor:pointer;">Clear</button>
+        <button onclick="toggleScratchpad()" style="background:var(--highlight);border:none;color:white;padding:6px 14px;border-radius:8px;font-size:0.85rem;cursor:pointer;">Close</button>
+      </div>
+    </div>
+    <div id="scratchpadQuestionBar" style="padding:8px 16px;background:var(--accent);font-size:0.85rem;color:var(--text-dim);text-align:center;"></div>
+    <canvas id="scratchpadCanvas" style="flex:1;background:white;cursor:crosshair;touch-action:none;"></canvas>
   </div>
 </div>
 
@@ -601,7 +615,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.7';
+const APP_VERSION = '3.8';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -3252,6 +3266,11 @@ function renderQuiz() {
   document.getElementById('quizInfo').textContent =
     `${infoPrefix}${child.emoji} ${child.name} | ${currentSubjName} | ${levelLabel} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
 
+  // Show/hide scratchpad button
+  updateScratchpadBtn();
+  // Auto-close scratchpad on new question and clear it
+  if (scratchpadOpen) { toggleScratchpad(); }
+
   // Show large player name banner in multiplayer
   const mpBanner = document.getElementById('mpBanner');
   if (isMP) {
@@ -3600,6 +3619,111 @@ function finishQuiz() {
   document.getElementById('reportContent').innerHTML = html;
   showScreen('report');
   quizState = null;
+}
+
+// ═══════════════════════════════════════════
+//  SCRATCHPAD (for Logan's math)
+// ═══════════════════════════════════════════
+
+let scratchpadOpen = false;
+let scratchpadDrawing = false;
+
+function toggleScratchpad() {
+  const overlay = document.getElementById('scratchpadOverlay');
+  scratchpadOpen = !scratchpadOpen;
+  overlay.style.display = scratchpadOpen ? 'flex' : 'none';
+  if (scratchpadOpen) {
+    initScratchpad();
+    // Show the current question at the top
+    if (quizState && quizState.currentQuestion) {
+      document.getElementById('scratchpadQuestionBar').textContent = quizState.currentQuestion.q;
+    }
+  }
+}
+
+function initScratchpad() {
+  const canvas = document.getElementById('scratchpadCanvas');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const questionBarHeight = document.getElementById('scratchpadQuestionBar').offsetHeight;
+  const headerHeight = canvas.parentElement.querySelector('div').offsetHeight + questionBarHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight - headerHeight - 10;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Remove old listeners by cloning
+  const newCanvas = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas, canvas);
+
+  const c = newCanvas;
+  const cx = c.getContext('2d');
+  cx.fillStyle = 'white';
+  cx.fillRect(0, 0, c.width, c.height);
+  cx.strokeStyle = '#333';
+  cx.lineWidth = 2;
+  cx.lineCap = 'round';
+  cx.lineJoin = 'round';
+
+  function getPos(e) {
+    const rect = c.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return { x: (touch.clientX - rect.left) * (c.width / rect.width), y: (touch.clientY - rect.top) * (c.height / rect.height) };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    scratchpadDrawing = true;
+    const pos = getPos(e);
+    cx.beginPath();
+    cx.moveTo(pos.x, pos.y);
+  }
+
+  function draw(e) {
+    e.preventDefault();
+    if (!scratchpadDrawing) return;
+    const pos = getPos(e);
+    cx.lineTo(pos.x, pos.y);
+    cx.stroke();
+  }
+
+  function endDraw(e) {
+    e.preventDefault();
+    scratchpadDrawing = false;
+  }
+
+  // Mouse events
+  c.addEventListener('mousedown', startDraw);
+  c.addEventListener('mousemove', draw);
+  c.addEventListener('mouseup', endDraw);
+  c.addEventListener('mouseleave', endDraw);
+
+  // Touch events
+  c.addEventListener('touchstart', startDraw, { passive: false });
+  c.addEventListener('touchmove', draw, { passive: false });
+  c.addEventListener('touchend', endDraw);
+  c.addEventListener('touchcancel', endDraw);
+}
+
+function clearScratchpad() {
+  const canvas = document.getElementById('scratchpadCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// Show/hide scratchpad icon based on child and subject
+function updateScratchpadBtn() {
+  const btn = document.getElementById('scratchpadBtn');
+  if (!btn || !quizState) { if (btn) btn.style.display = 'none'; return; }
+  // Show for Logan on math questions (or any math in All Subjects)
+  const isMath = quizState.currentSubject === 'math' || quizState.subject === 'math';
+  const isLoganOrAll = quizState.childId === 'logan';
+  btn.style.display = (isLoganOrAll && isMath) ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════
