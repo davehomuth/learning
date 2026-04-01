@@ -420,7 +420,7 @@
 
 <!-- ── Top Bar ── -->
 <div class="top-bar" id="topBar">
-  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.6</span></h1>
+  <h1>Homuth Learning Hub <span style="font-size:0.55rem;color:var(--text-dim);font-weight:400;">v3.7</span></h1>
   <div class="child-tabs" id="childTabs"></div>
   <div class="mode-toggle">
     <label>Focused</label>
@@ -601,7 +601,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.6';
+const APP_VERSION = '3.7';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -2900,7 +2900,8 @@ let multiplayerState = {
   players: [],       // [{id, lite}] — selected players
   currentPlayerIdx: 0,
   subject: null,
-  active: false
+  active: false,
+  quizStates: {}     // keyed by childId — stores each player's quizState
 };
 
 function renderMultiplayerSetup() {
@@ -2964,32 +2965,39 @@ function startMultiplayer(subject) {
   multiplayerState.subject = subject;
   multiplayerState.currentPlayerIdx = 0;
   multiplayerState.active = true;
+  multiplayerState.quizStates = {};
   state.multiplayerActive = true;
 
-  // Start quiz for the first player
+  // Initialize quiz states for all players
+  for (const player of multiplayerState.players) {
+    state.activeChild = player.id;
+    startQuiz(subject);
+    quizState._multiplayer = true;
+    multiplayerState.quizStates[player.id] = quizState;
+  }
+
+  // Start with first player — their first question is already loaded from startQuiz
   const firstPlayer = multiplayerState.players[0];
   state.activeChild = firstPlayer.id;
+  quizState = multiplayerState.quizStates[firstPlayer.id];
   renderChildTabs();
-  startQuiz(subject);
-  // Tag the quiz as multiplayer
-  quizState._multiplayer = true;
-  quizState._mpPlayerName = CHILDREN[firstPlayer.id].name;
 }
 
 function mpNextPlayer() {
   // Save current player's quiz state
-  if (quizState) saveQuizState();
+  const currentPlayer = multiplayerState.players[multiplayerState.currentPlayerIdx];
+  multiplayerState.quizStates[currentPlayer.id] = quizState;
+  saveQuizState();
 
   // Move to next player
   multiplayerState.currentPlayerIdx = (multiplayerState.currentPlayerIdx + 1) % multiplayerState.players.length;
   const nextPlayer = multiplayerState.players[multiplayerState.currentPlayerIdx];
 
-  // Switch child and start their quiz
+  // Restore next player's quiz state and advance to next question
   state.activeChild = nextPlayer.id;
+  quizState = multiplayerState.quizStates[nextPlayer.id];
   renderChildTabs();
-  startQuiz(multiplayerState.subject);
-  quizState._multiplayer = true;
-  quizState._mpPlayerName = CHILDREN[nextPlayer.id].name;
+  nextQuestion();
 }
 
 // ═══════════════════════════════════════════
