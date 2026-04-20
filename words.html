@@ -7,19 +7,20 @@
 <title>Homuth Word Explorer</title>
 <style>
   :root {
-    --bg: #E0F2FE;
-    --bg-alt: #F0F9FF;
-    --primary: #0E7490;
-    --primary-dark: #155E75;
-    --accent: #FACC15;
-    --accent-dark: #CA8A04;
-    --word: #0C4A6E;
-    --text: #0C4A6E;
-    --text-dim: #475569;
-    --danger: #DC2626;
-    --success: #059669;
-    --card: #FFFFFF;
-    --border: #BAE6FD;
+    /* Matches Homuth Learning Hub palette */
+    --bg: #1a1a2e;
+    --bg-alt: #0f3460;
+    --primary: #e94560;
+    --primary-dark: #c43350;
+    --accent: #f0c040;
+    --accent-dark: #1a1a2e;
+    --word: #ffffff;
+    --text: #eeeeee;
+    --text-dim: #aaaaaa;
+    --danger: #e94560;
+    --success: #4ecca3;
+    --card: #16213e;
+    --border: #0f3460;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow-x: hidden; }
@@ -34,7 +35,7 @@
   .screen.active { display: flex; }
 
   .topbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 2px; }
-  .topbar .title { font-size: 20px; font-weight: 800; color: var(--primary-dark); letter-spacing: 0.5px; }
+  .topbar .title { font-size: 20px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; }
   .topbar .version { font-size: 11px; color: var(--text-dim); }
   .topbar .update-badge {
     font-size: 11px; background: var(--accent); color: var(--accent-dark);
@@ -44,7 +45,7 @@
 
   .card {
     background: var(--card); border-radius: 18px; padding: 20px;
-    box-shadow: 0 4px 20px rgba(14,116,144,0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     border: 1px solid var(--border);
   }
 
@@ -67,7 +68,7 @@
   .row { display: flex; gap: 10px; }
   .row .btn { flex: 1; }
 
-  h2 { color: var(--primary-dark); font-size: 22px; margin-bottom: 4px; }
+  h2 { color: var(--primary); font-size: 22px; margin-bottom: 4px; }
   p.sub { color: var(--text-dim); font-size: 14px; }
 
   /* PROFILE SCREEN */
@@ -78,9 +79,9 @@
     transition: transform 0.1s, border-color 0.1s, box-shadow 0.1s;
   }
   .profile-btn:active { transform: scale(0.96); }
-  .profile-btn:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(14,116,144,0.18); }
+  .profile-btn:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(233,69,96,0.25); }
   .profile-btn .emoji { font-size: 42px; display: block; margin-bottom: 6px; }
-  .profile-btn .name { font-size: 18px; font-weight: 700; color: var(--primary-dark); }
+  .profile-btn .name { font-size: 18px; font-weight: 700; color: var(--word); }
   .profile-btn .info { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
 
   .toggle-row {
@@ -91,7 +92,7 @@
   .toggle-row .label { font-weight: 600; font-size: 15px; }
   .toggle-row .hint { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
   .toggle {
-    position: relative; width: 52px; height: 30px; background: #CBD5E1;
+    position: relative; width: 52px; height: 30px; background: #0f3460;
     border-radius: 15px; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
   }
   .toggle.on { background: var(--primary); }
@@ -111,7 +112,7 @@
   .grade-adjust { display: inline-flex; align-items: center; gap: 6px; }
   .adj-btn {
     background: var(--bg-alt); border: 1px solid var(--border);
-    color: var(--primary-dark); width: 28px; height: 28px;
+    color: var(--primary); width: 28px; height: 28px;
     border-radius: 50%; font-size: 12px; font-weight: 700; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
     font-family: inherit; padding: 0;
@@ -137,7 +138,7 @@
     font-size: clamp(20px, 5vw, 24px); line-height: 1.55;
     color: var(--word); text-align: center; margin: 10px 0;
   }
-  .sentence-box b { color: var(--primary-dark); font-weight: 800; }
+  .sentence-box b { color: var(--accent); font-weight: 800; }
   .sentence-counter { text-align: center; font-size: 12px; color: var(--text-dim); margin-top: -6px; }
 
   /* DEFINITION SCREEN */
@@ -167,7 +168,7 @@
   .listen-stage .big-word { padding: 10px; }
   .listen-status { font-size: 13px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
   .listen-now { font-size: 18px; color: var(--text); text-align: center; line-height: 1.45; min-height: 60px; padding: 10px; }
-  .listen-now b { color: var(--primary-dark); font-weight: 800; }
+  .listen-now b { color: var(--accent); font-weight: 800; }
 
   .empty {
     text-align: center; padding: 40px 20px; color: var(--text-dim);
@@ -199,7 +200,7 @@
     border-radius: 14px; padding: 12px 16px; cursor: pointer;
     margin-bottom: 8px;
   }
-  .player-check.selected { border-color: var(--primary); background: #ECFEFF; }
+  .player-check.selected { border-color: var(--primary); background: rgba(233,69,96,0.15); }
   .player-check .checkbox {
     width: 26px; height: 26px; border-radius: 6px;
     border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center;
@@ -207,14 +208,14 @@
   }
   .player-check.selected .checkbox { background: var(--primary); }
   .player-check .emoji { font-size: 28px; }
-  .player-check .pname { font-size: 16px; font-weight: 700; color: var(--primary-dark); }
+  .player-check .pname { font-size: 16px; font-weight: 700; color: var(--word); }
   .player-check .pgrade { font-size: 12px; color: var(--text-dim); }
 
   .turn-banner {
-    background: linear-gradient(90deg, var(--accent) 0%, #FDE68A 100%);
-    color: var(--primary-dark); padding: 12px 16px; border-radius: 12px;
+    background: linear-gradient(90deg, var(--accent) 0%, #e8a628 100%);
+    color: #1a1a2e; padding: 12px 16px; border-radius: 12px;
     text-align: center; font-weight: 700; font-size: 15px;
-    box-shadow: 0 3px 10px rgba(250,204,21,0.3);
+    box-shadow: 0 3px 10px rgba(240,192,64,0.25);
   }
   .turn-banner .next { font-size: 12px; font-weight: 600; opacity: 0.75; margin-top: 3px; }
 </style>
@@ -362,7 +363,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.2";
+const VERSION = "1.3";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
