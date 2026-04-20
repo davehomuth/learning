@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="F45 Home">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a2e">
+<title>F45 Home Workout Timer</title>
+<style>
+  :root {
+    --work-color: #e74c3c;
+    --rest-color: #2ecc71;
+    --bg-dark: #1a1a2e;
+    --bg-card: #16213e;
+    --bg-input: #0f3460;
+    --text: #eee;
+    --text-muted: #999;
+    --accent: #e94560;
+    --accent2: #0f3460;
+    --transition-color: #f39c12;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+  h1, h2, h3 { font-weight: 600; }
+
+  /* ── Nav ── */
+  .nav {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    padding-top: calc(10px + var(--safe-top));
+    background: var(--bg-card);
+    border-bottom: 2px solid var(--accent);
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav h1 { font-size: 1.15rem; margin-right: auto; }
+  .nav button {
+    padding: 8px 16px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .9rem;
+    min-height: 40px;
+  }
+  .nav button.active, .nav button:active { background: var(--accent); }
+
+  /* ── Screens ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── Setup screen ── */
+  #setup-screen { padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: calc(16px + var(--safe-bottom)); }
+
+  .day-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .day-btn {
+    padding: 10px 14px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .9rem;
+    min-height: 44px;
+    flex: 1;
+    min-width: 44px;
+  }
+  .day-btn.active { background: var(--accent); font-weight: 700; }
+  .day-btn.today { border-color: #f1c40f; border-width: 2px; }
+
+  .card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .card h2 { font-size: .95rem; margin-bottom: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .card h3 { font-size: .85rem; margin: 10px 0 6px; color: var(--text-muted); }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: .75rem; color: var(--text-muted); }
+  .field input, .field select {
+    background: var(--bg-input);
+    border: 1px solid #333;
+    color: var(--text);
+    padding: 10px 8px;
+    border-radius: 8px;
+    font-size: 16px; /* prevents iOS zoom */
+  }
+
+  /* Station list */
+  .station-list { list-style: none; counter-reset: stn; }
+  .station-list li {
+    counter-increment: stn;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #222;
+  }
+  .station-list li::before {
+    content: counter(stn);
+    background: var(--accent2);
+    color: var(--text);
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; flex-shrink: 0;
+  }
+  .station-list input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #444;
+    color: var(--text);
+    padding: 6px 4px;
+    font-size: 16px;
+  }
+  .station-list .remove-btn {
+    background: none; border: none; color: #e74c3c; cursor: pointer;
+    font-size: 1.2rem; padding: 4px 8px; min-height: 44px; min-width: 44px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .add-station-btn {
+    margin-top: 8px;
+    padding: 10px 16px;
+    background: var(--accent2);
+    border: none;
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .9rem;
+    min-height: 44px;
+  }
+
+  /* Music */
+  .music-section { margin-top: 4px; }
+  .file-label {
+    display: inline-block;
+    padding: 10px 16px;
+    background: var(--accent2);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .9rem;
+    margin: 6px 0;
+    min-height: 44px;
+    line-height: 1.4;
+  }
+  #music-files { display: none; }
+  .volume-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+  .volume-row label { font-size: .8rem; color: var(--text-muted); min-width: 95px; }
+  .volume-row input[type="range"] { flex: 1; height: 24px; accent-color: var(--accent); }
+  .volume-row span { font-size: .8rem; min-width: 36px; text-align: right; }
+
+  .playlist-display { margin-top: 8px; }
+  .playlist-display .track {
+    display: flex; align-items: center; gap: 8px; padding: 4px 0;
+    font-size: .82rem; color: var(--text-muted);
+    border-bottom: 1px solid #222;
+  }
+  .playlist-display .track .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .playlist-display .track .remove-track {
+    background: none; border: none; color: #e74c3c; cursor: pointer;
+    font-size: 1rem; min-width: 36px; min-height: 36px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .start-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 12px;
+    min-height: 56px;
+  }
+  .start-btn:active { filter: brightness(0.9); }
+
+  /* ── Timer Screen ── */
+  #timer-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    padding: 12px 16px;
+    padding-top: calc(12px + var(--safe-top));
+    padding-bottom: calc(12px + var(--safe-bottom));
+    min-height: calc(100vh - 56px);
+    max-width: 500px;
+    margin: 0 auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #timer-screen.active { display: flex; }
+
+  .timer-top { width: 100%; }
+
+  .timer-phase {
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 2px;
+  }
+  .timer-phase.work { color: var(--work-color); }
+  .timer-phase.rest { color: var(--rest-color); }
+  .timer-phase.transition { color: var(--transition-color); }
+  .timer-phase.get-ready { color: var(--transition-color); }
+
+  .timer-clock {
+    font-size: clamp(5rem, 22vw, 9rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin: 4px 0;
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background: #333;
+    border-radius: 5px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.3s linear;
+  }
+  .progress-bar.work { background: var(--work-color); }
+  .progress-bar.rest { background: var(--rest-color); }
+  .progress-bar.transition { background: var(--transition-color); }
+  .progress-bar.get-ready { background: var(--transition-color); }
+
+  .timer-exercise {
+    font-size: clamp(1.3rem, 5vw, 2rem);
+    font-weight: 700;
+    margin: 8px 0 2px;
+    min-height: 1.4em;
+    line-height: 1.2;
+  }
+  .timer-next {
+    font-size: .9rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    min-height: 1.4em;
+  }
+
+  .timer-info {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
+    margin: 8px 0;
+  }
+  .info-box {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 8px 4px;
+    text-align: center;
+  }
+  .info-box .label { font-size: .6rem; color: var(--text-muted); text-transform: uppercase; }
+  .info-box .value { font-size: 1rem; font-weight: 700; }
+
+  .timer-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .timer-controls button {
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #fff;
+    min-height: 56px;
+  }
+  #btn-pause { background: var(--transition-color); }
+  #btn-stop { background: #e74c3c; }
+  .timer-controls button:active { filter: brightness(0.85); }
+
+  /* ── Summary Screen ── */
+  #summary-screen {
+    text-align: center;
+    padding: 40px 16px;
+    padding-bottom: calc(40px + var(--safe-bottom));
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  #summary-screen h2 { font-size: 2rem; margin-bottom: 16px; color: var(--rest-color); }
+  .summary-stats { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+  .summary-stats .info-box { min-width: 80px; padding: 12px 8px; }
+  .summary-stats .info-box .value { font-size: 1.4rem; }
+
+  /* ── Landscape on phone: shrink clock ── */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .timer-clock { font-size: 3.5rem; }
+    .timer-exercise { font-size: 1.1rem; }
+    .timer-phase { font-size: 1.1rem; }
+    #timer-screen { padding-top: 4px; min-height: calc(100vh - 48px); }
+    .info-box { padding: 4px 2px; }
+    .timer-controls button { padding: 10px; min-height: 44px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <h1>F45 Home</h1>
+  <button id="nav-setup" class="active" onclick="showScreen('setup')">Setup</button>
+  <button id="nav-timer" onclick="showScreen('timer')">Timer</button>
+</div>
+
+<!-- ════════════════ SETUP SCREEN ════════════════ -->
+<div id="setup-screen" class="screen active">
+
+  <div class="card">
+    <h2>Today's Workout</h2>
+    <div class="day-selector" id="day-selector"></div>
+    <div id="workout-name-display" style="font-size:1.15rem;font-weight:700;margin-top:6px;"></div>
+    <div id="workout-type-display" style="font-size:.85rem;color:var(--text-muted);"></div>
+  </div>
+
+  <div class="card">
+    <h2>Timing</h2>
+    <div class="grid">
+      <div class="field"><label>Pods</label><input type="number" id="cfg-pods" min="1" max="10" value="3" inputmode="numeric"></div>
+      <div class="field"><label>Stations per Pod</label><input type="number" id="cfg-stations" min="1" max="20" value="3" inputmode="numeric"></div>
+      <div class="field"><label>Laps</label><input type="number" id="cfg-laps" min="1" max="10" value="3" inputmode="numeric"></div>
+      <div class="field"><label>Sets per Station</label><input type="number" id="cfg-sets" min="1" max="5" value="1" inputmode="numeric"></div>
+    </div>
+    <h3>Intervals (seconds)</h3>
+    <div class="grid">
+      <div class="field"><label>Work Time</label><input type="number" id="cfg-work" min="5" max="120" value="35" inputmode="numeric"></div>
+      <div class="field"><label>Rest Time</label><input type="number" id="cfg-rest" min="0" max="60" value="15" inputmode="numeric"></div>
+      <div class="field"><label>Pod Transition</label><input type="number" id="cfg-pod-transition" min="0" max="60" value="15" inputmode="numeric"></div>
+      <div class="field"><label>Lap Transition</label><input type="number" id="cfg-lap-transition" min="0" max="120" value="45" inputmode="numeric"></div>
+    </div>
+    <div style="margin-top:10px;font-size:.85rem;color:var(--text-muted);">
+      Estimated duration: <strong id="est-duration">--:--</strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Exercise Stations</h2>
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:8px;">Ordered by pod &rarr; station. Tap names to edit.</p>
+    <ol class="station-list" id="station-list"></ol>
+    <button class="add-station-btn" onclick="addStation()">+ Add Station</button>
+  </div>
+
+  <div class="card">
+    <h2>Music</h2>
+    <div class="music-section">
+      <label class="file-label" for="music-files">+ Add tracks from library</label>
+      <input type="file" id="music-files" accept="audio/*" multiple>
+      <div class="volume-row">
+        <label>Work Volume</label>
+        <input type="range" id="vol-work" min="0" max="100" value="85">
+        <span id="vol-work-val">85%</span>
+      </div>
+      <div class="volume-row">
+        <label>Rest Volume</label>
+        <input type="range" id="vol-rest" min="0" max="100" value="30">
+        <span id="vol-rest-val">30%</span>
+      </div>
+      <div class="volume-row">
+        <label>Fade (ms)</label>
+        <input type="range" id="vol-fade" min="0" max="3000" value="800" step="100">
+        <span id="vol-fade-val">800</span>
+      </div>
+      <div class="playlist-display" id="playlist-display"></div>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startWorkout()">Start Workout</button>
+</div>
+
+<!-- ════════════════ TIMER SCREEN ════════════════ -->
+<div id="timer-screen" class="screen">
+  <div class="timer-top">
+    <div class="timer-phase" id="phase-label">GET READY</div>
+    <div class="timer-clock" id="clock">00:05</div>
+    <div class="progress-bar-container"><div class="progress-bar work" id="progress-bar"></div></div>
+  </div>
+  <div class="timer-exercise" id="current-exercise">--</div>
+  <div class="timer-next" id="next-exercise">Next: --</div>
+  <div class="timer-info">
+    <div class="info-box"><div class="label">Pod</div><div class="value" id="info-pod">-</div></div>
+    <div class="info-box"><div class="label">Station</div><div class="value" id="info-station">-</div></div>
+    <div class="info-box"><div class="label">Set</div><div class="value" id="info-set">-</div></div>
+    <div class="info-box"><div class="label">Lap</div><div class="value" id="info-lap">-</div></div>
+    <div class="info-box"><div class="label">Time</div><div class="value" id="info-elapsed">0:00</div></div>
+  </div>
+  <div class="timer-controls">
+    <button id="btn-pause" onclick="togglePause()">Pause</button>
+    <button id="btn-stop" onclick="stopWorkout()">Stop</button>
+  </div>
+</div>
+
+<!-- ════════════════ SUMMARY SCREEN ════════════════ -->
+<div id="summary-screen" class="screen">
+  <h2>Done!</h2>
+  <div class="summary-stats" id="summary-stats"></div>
+  <button class="start-btn" onclick="showScreen('setup')" style="max-width:300px;margin:20px auto;">Back to Setup</button>
+</div>
+
+<audio id="music-player" preload="auto" playsinline></audio>
+
+<script>
+// ─── Workout Database (swapped schedule: Mon↔Tue, Wed↔Thu, Fri↔Sun) ───
+const WORKOUTS = {
+  monday: {
+    name: "Romans", type: "Resistance",
+    pods: 3, stationsPerPod: 3, laps: 2, sets: 2,
+    workTime: 35, restTime: 25, podTransition: 15, lapTransition: 45,
+    exercises: [
+      "Barbell Deadlift","Dumbbell Bench Press","Barbell Back Squat",
+      "Pull-ups","Dumbbell Shoulder Press","Barbell Lunges",
+      "Dumbbell Rows","Tricep Dips","Leg Press"
+    ]
+  },
+  tuesday: {
+    name: "Bears", type: "Cardio",
+    pods: 1, stationsPerPod: 9, laps: 2, sets: 2,
+    workTime: 35, restTime: 10, podTransition: 0, lapTransition: 45,
+    exercises: [
+      "Box Jumps","Burpees","Mountain Climbers",
+      "Shuttle Runs","Jump Squats","High Knees",
+      "Lateral Hops","Plyo Push-ups","Tuck Jumps"
+    ]
+  },
+  wednesday: {
+    name: "Panthers", type: "Resistance",
+    pods: 3, stationsPerPod: 3, laps: 3, sets: 1,
+    workTime: 40, restTime: 20, podTransition: 15, lapTransition: 45,
+    exercises: [
+      "Goblet Squat","Dumbbell Curl to Press","Romanian Deadlift",
+      "Incline Dumbbell Press","Lateral Lunges","Cable Face Pulls",
+      "Hip Thrusts","Landmine Press","Farmer Carries"
+    ]
+  },
+  thursday: {
+    name: "Athletica", type: "Cardio",
+    pods: 3, stationsPerPod: 3, laps: 4, sets: 1,
+    workTime: 45, restTime: 15, podTransition: 15, lapTransition: 45,
+    exercises: [
+      "Battle Ropes","Ski Erg","Bike Sprint",
+      "Rowing Sprint","Sled Push","Assault Bike",
+      "Kettlebell Swings","Jump Rope","Bear Crawl"
+    ]
+  },
+  friday: {
+    name: "Renegade", type: "Resistance",
+    pods: 3, stationsPerPod: 3, laps: 2, sets: 2,
+    workTime: 35, restTime: 25, podTransition: 15, lapTransition: 45,
+    exercises: [
+      "Barbell Clean","Dumbbell Renegade Row","Front Squat",
+      "Weighted Pull-ups","Push Press","Step-ups",
+      "Bent Over Row","Skull Crushers","Hanging Leg Raise"
+    ]
+  },
+  saturday: {
+    name: "Hollywood", type: "Hybrid",
+    pods: 3, stationsPerPod: 6, laps: 2, sets: 1,
+    workTime: 40, restTime: 15, podTransition: 15, lapTransition: 45,
+    exercises: [
+      "Dumbbell Thrusters","Box Jump Overs","TRX Row","Burpee Tuck Jumps","Kettlebell Swing","Ab Rollout",
+      "Sled Push","Plyo Lunges","Dumbbell Snatch","Mountain Climbers","Wall Ball","Bicycle Crunches",
+      "Deadball Slams","Lateral Shuffles","Devil Press","Speed Skaters","Rower Sprint","Plank Hold"
+    ]
+  },
+  sunday: {
+    name: "Miami Nights", type: "Hybrid",
+    pods: 3, stationsPerPod: 3, laps: 3, sets: 1,
+    workTime: 40, restTime: 20, podTransition: 15, lapTransition: 45,
+    exercises: [
+      "Kettlebell Clean & Press","Box Jumps","TRX Push-up",
+      "Dumbbell Snatch","Shuttle Run","Ab Wheel",
+      "Sumo Deadlift","Burpees","Battle Ropes"
+    ]
+  }
+};
+
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ─── State ───
+let playlist = [];
+let currentTrackIndex = 0;
+let timerInterval = null;
+let isPaused = false;
+let workoutStartTime = 0;
+let workoutSequence = [];
+let seqIndex = 0;
+let phaseTimeLeft = 0;
+let phaseDuration = 0;
+let lastTickTime = 0;
+
+// Audio
+let audioCtx = null;
+let gainNode = null;
+let sourceNode = null;
+let audioSourceCreated = false; // createMediaElementSource can only be called once per element
+
+// Wake Lock
+let wakeLock = null;
+
+// ─── Wake Lock ───
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) { /* not available */ }
+  }
+}
+async function releaseWakeLock() {
+  if (wakeLock) { try { await wakeLock.release(); } catch(e){} wakeLock = null; }
+}
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock && document.visibilityState === 'visible' && timerInterval) {
+    await requestWakeLock();
+  }
+});
+
+// ─── Beeps (Web Audio oscillator) ───
+function ensureAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playBeep(freq, duration, count) {
+  ensureAudioCtx();
+  let t = audioCtx.currentTime;
+  for (let i = 0; i < count; i++) {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.3, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + duration / 1000);
+    osc.start(t);
+    osc.stop(t + duration / 1000 + 0.01);
+    t += (duration + 120) / 1000;
+  }
+}
+
+// ─── Init ───
+document.addEventListener('DOMContentLoaded', () => {
+  initDaySelector();
+  initVolumeSliders();
+  document.getElementById('music-files').addEventListener('change', handleMusicFiles);
+  document.querySelectorAll('#setup-screen input[type="number"]').forEach(el => {
+    el.addEventListener('input', updateEstimate);
+  });
+});
+
+// ─── Day selector ───
+function initDaySelector() {
+  const container = document.getElementById('day-selector');
+  const today = new Date().getDay();
+  DAYS.forEach((day, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (i === today ? ' active today' : '');
+    btn.textContent = DAY_LABELS[i];
+    btn.dataset.day = day;
+    btn.onclick = () => selectDay(day);
+    container.appendChild(btn);
+  });
+  selectDay(DAYS[today]);
+}
+
+function selectDay(day) {
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+  const w = WORKOUTS[day];
+  if (!w) return;
+  document.getElementById('workout-name-display').textContent = w.name;
+  document.getElementById('workout-type-display').textContent = w.type;
+  document.getElementById('cfg-pods').value = w.pods;
+  document.getElementById('cfg-stations').value = w.stationsPerPod;
+  document.getElementById('cfg-laps').value = w.laps;
+  document.getElementById('cfg-sets').value = w.sets;
+  document.getElementById('cfg-work').value = w.workTime;
+  document.getElementById('cfg-rest').value = w.restTime;
+  document.getElementById('cfg-pod-transition').value = w.podTransition;
+  document.getElementById('cfg-lap-transition').value = w.lapTransition;
+  renderStations(w.exercises);
+  updateEstimate();
+}
+
+// ─── Stations ───
+function renderStations(exercises) {
+  const list = document.getElementById('station-list');
+  list.innerHTML = '';
+  exercises.forEach((ex, i) => {
+    appendStationItem(list, ex);
+  });
+}
+
+function appendStationItem(list, name) {
+  const li = document.createElement('li');
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = name;
+  const btn = document.createElement('button');
+  btn.className = 'remove-btn';
+  btn.innerHTML = '&times;';
+  btn.onclick = () => { li.remove(); updateEstimate(); };
+  li.appendChild(input);
+  li.appendChild(btn);
+  list.appendChild(li);
+}
+
+function addStation() {
+  const list = document.getElementById('station-list');
+  appendStationItem(list, `Exercise ${list.children.length + 1}`);
+  updateEstimate();
+}
+
+function getExercises() {
+  return Array.from(document.querySelectorAll('#station-list input')).map(el => el.value.trim() || '?');
+}
+
+function getConfig() {
+  return {
+    pods: Math.max(1, +document.getElementById('cfg-pods').value || 1),
+    stationsPerPod: Math.max(1, +document.getElementById('cfg-stations').value || 1),
+    laps: Math.max(1, +document.getElementById('cfg-laps').value || 1),
+    sets: Math.max(1, +document.getElementById('cfg-sets').value || 1),
+    workTime: Math.max(5, +document.getElementById('cfg-work').value || 30),
+    restTime: Math.max(0, +document.getElementById('cfg-rest').value || 0),
+    podTransition: Math.max(0, +document.getElementById('cfg-pod-transition').value || 0),
+    lapTransition: Math.max(0, +document.getElementById('cfg-lap-transition').value || 0),
+    exercises: getExercises()
+  };
+}
+
+function updateEstimate() {
+  const c = getConfig();
+  const perStation = (c.workTime + c.restTime) * c.sets;
+  const perPod = perStation * c.stationsPerPod;
+  const perLap = (perPod * c.pods) + (c.podTransition * Math.max(0, c.pods - 1));
+  const total = (perLap * c.laps) + (c.lapTransition * Math.max(0, c.laps - 1)) + 5;
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  document.getElementById('est-duration').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+// ─── Volume sliders ───
+function initVolumeSliders() {
+  ['work', 'rest'].forEach(t => {
+    const s = document.getElementById(`vol-${t}`);
+    const d = document.getElementById(`vol-${t}-val`);
+    s.oninput = () => d.textContent = s.value + '%';
+  });
+  const fs = document.getElementById('vol-fade');
+  const fd = document.getElementById('vol-fade-val');
+  fs.oninput = () => fd.textContent = fs.value;
+}
+
+// ─── Music ───
+function handleMusicFiles(e) {
+  Array.from(e.target.files).forEach(f => {
+    playlist.push({ name: f.name.replace(/\.[^.]+$/, ''), url: URL.createObjectURL(f) });
+  });
+  e.target.value = ''; // allow re-selecting same files
+  renderPlaylist();
+}
+
+function renderPlaylist() {
+  const c = document.getElementById('playlist-display');
+  if (!playlist.length) { c.innerHTML = '<p style="font-size:.8rem;color:var(--text-muted);margin-top:6px;">No tracks yet.</p>'; return; }
+  c.innerHTML = playlist.map((t, i) =>
+    `<div class="track"><span class="name">${i + 1}. ${t.name}</span>
+     <button class="remove-track" onclick="removeTrack(${i})">&times;</button></div>`
+  ).join('');
+}
+
+function removeTrack(i) {
+  URL.revokeObjectURL(playlist[i].url);
+  playlist.splice(i, 1);
+  renderPlaylist();
+}
+
+function initMusicPlayback() {
+  if (!playlist.length) return;
+  ensureAudioCtx();
+  // Shuffle playlist for variety
+  for (let i = playlist.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [playlist[i], playlist[j]] = [playlist[j], playlist[i]];
+  }
+  currentTrackIndex = 0;
+  playTrack(0);
+}
+
+function playTrack(idx) {
+  if (!playlist.length) return;
+  if (idx >= playlist.length) idx = 0;
+  currentTrackIndex = idx;
+
+  const audio = document.getElementById('music-player');
+
+  // createMediaElementSource can only be called ONCE per element (Web Audio API rule)
+  // Connect it on first use only, then just swap src
+  if (!audioSourceCreated) {
+    ensureAudioCtx();
+    gainNode = audioCtx.createGain();
+    sourceNode = audioCtx.createMediaElementSource(audio);
+    sourceNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    audioSourceCreated = true;
+  }
+
+  audio.src = playlist[idx].url;
+  audio.load();
+  const volWork = +document.getElementById('vol-work').value / 100;
+  gainNode.gain.value = volWork;
+  audio.play().catch(() => {});
+  audio.onended = () => playTrack(idx + 1);
+}
+
+function setMusicVolume(fraction, fadeMs) {
+  if (!gainNode || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(Math.max(0.001, fraction), now + Math.max(0.05, fadeMs / 1000));
+}
+
+function stopMusic() {
+  const audio = document.getElementById('music-player');
+  audio.pause();
+  audio.src = '';
+}
+
+// ─── Screen management ───
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(name + '-screen').classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('nav-' + name);
+  if (btn) btn.classList.add('active');
+}
+
+// ─── Sequence builder ───
+function buildSequence(cfg) {
+  const seq = [];
+  seq.push({ type: 'get-ready', duration: 5, label: 'GET READY', exercise: 'Prepare!', next: '' });
+
+  for (let lap = 0; lap < cfg.laps; lap++) {
+    for (let pod = 0; pod < cfg.pods; pod++) {
+      for (let stn = 0; stn < cfg.stationsPerPod; stn++) {
+        const exIdx = pod * cfg.stationsPerPod + stn;
+        const exName = cfg.exercises[exIdx % cfg.exercises.length];
+        const isLastStation = stn === cfg.stationsPerPod - 1;
+        const isLastPod = pod === cfg.pods - 1;
+        const isLastLap = lap === cfg.laps - 1;
+
+        // Next exercise name
+        let nextExName = '';
+        if (!isLastStation) {
+          nextExName = cfg.exercises[(exIdx + 1) % cfg.exercises.length];
+        } else if (!isLastPod) {
+          nextExName = cfg.exercises[((pod + 1) * cfg.stationsPerPod) % cfg.exercises.length];
+        }
+
+        for (let set = 0; set < cfg.sets; set++) {
+          const isLastSet = set === cfg.sets - 1;
+          seq.push({
+            type: 'work', duration: cfg.workTime,
+            label: 'WORK', exercise: exName,
+            next: !isLastSet ? `Set ${set + 2} — ${exName}` : (cfg.restTime > 0 ? 'Rest' : (nextExName || '')),
+            pod: pod + 1, station: stn + 1, set: set + 1, lap: lap + 1,
+            totalPods: cfg.pods, totalStations: cfg.stationsPerPod, totalSets: cfg.sets, totalLaps: cfg.laps
+          });
+          // Rest — skip on the very last interval of the whole workout
+          if (cfg.restTime > 0 && !(isLastSet && isLastStation && isLastPod && isLastLap)) {
+            seq.push({
+              type: 'rest', duration: cfg.restTime,
+              label: 'REST', exercise: exName,
+              next: !isLastSet ? `Set ${set + 2} — ${exName}` : (nextExName || (isLastPod && !isLastLap ? `Lap ${lap + 2}` : 'Transition')),
+              pod: pod + 1, station: stn + 1, set: set + 1, lap: lap + 1,
+              totalPods: cfg.pods, totalStations: cfg.stationsPerPod, totalSets: cfg.sets, totalLaps: cfg.laps
+            });
+          }
+        }
+      }
+      // Pod transition
+      if (!isLastPod(pod, cfg) && cfg.podTransition > 0) {
+        const nextPodFirst = cfg.exercises[((pod + 1) * cfg.stationsPerPod) % cfg.exercises.length];
+        seq.push({
+          type: 'transition', duration: cfg.podTransition,
+          label: 'MOVE TO NEXT POD', exercise: `Pod ${pod + 2}`,
+          next: nextPodFirst,
+          pod: pod + 1, station: cfg.stationsPerPod, set: cfg.sets, lap: lap + 1,
+          totalPods: cfg.pods, totalStations: cfg.stationsPerPod, totalSets: cfg.sets, totalLaps: cfg.laps
+        });
+      }
+    }
+    // Lap transition
+    if (lap < cfg.laps - 1 && cfg.lapTransition > 0) {
+      seq.push({
+        type: 'transition', duration: cfg.lapTransition,
+        label: 'HYDRATION BREAK', exercise: 'Get water!',
+        next: `Lap ${lap + 2}`,
+        pod: cfg.pods, station: cfg.stationsPerPod, set: cfg.sets, lap: lap + 1,
+        totalPods: cfg.pods, totalStations: cfg.stationsPerPod, totalSets: cfg.sets, totalLaps: cfg.laps
+      });
+    }
+  }
+  return seq;
+
+  function isLastPod(pod, cfg) { return pod === cfg.pods - 1; }
+}
+
+// ─── Timer ───
+function startWorkout() {
+  const cfg = getConfig();
+  workoutSequence = buildSequence(cfg);
+  seqIndex = 0;
+  isPaused = false;
+  lastTickTime = 0;
+  workoutStartTime = Date.now();
+  showScreen('timer');
+  ensureAudioCtx();
+  requestWakeLock();
+  initMusicPlayback();
+  loadPhase();
+  timerInterval = setInterval(tick, 100);
+}
+
+function loadPhase() {
+  if (seqIndex >= workoutSequence.length) { finishWorkout(); return; }
+  const phase = workoutSequence[seqIndex];
+  phaseDuration = phase.duration;
+  phaseTimeLeft = phase.duration;
+
+  const phaseLabel = document.getElementById('phase-label');
+  phaseLabel.textContent = phase.label;
+  phaseLabel.className = 'timer-phase ' + phase.type;
+
+  document.getElementById('current-exercise').textContent = phase.exercise || '';
+  document.getElementById('next-exercise').textContent = phase.next ? `Next: ${phase.next}` : '';
+
+  updateClock();
+  updateProgress();
+
+  if (phase.pod != null) {
+    document.getElementById('info-pod').textContent = `${phase.pod}/${phase.totalPods}`;
+    document.getElementById('info-station').textContent = `${phase.station}/${phase.totalStations}`;
+    document.getElementById('info-set').textContent = `${phase.set}/${phase.totalSets}`;
+    document.getElementById('info-lap').textContent = `${phase.lap}/${phase.totalLaps}`;
+  }
+
+  // Music volume
+  const fadeMs = +document.getElementById('vol-fade').value;
+  if (phase.type === 'work') {
+    setMusicVolume(+document.getElementById('vol-work').value / 100, fadeMs);
+  } else {
+    setMusicVolume(+document.getElementById('vol-rest').value / 100, fadeMs);
+  }
+
+  // Beeps
+  if (phase.type === 'work') playBeep(880, 180, 3);
+  else if (phase.type === 'rest') playBeep(440, 350, 1);
+  else if (phase.type === 'transition') playBeep(660, 220, 2);
+}
+
+function tick() {
+  if (isPaused) return;
+  const now = Date.now();
+  if (!lastTickTime) { lastTickTime = now; return; }
+  const dt = (now - lastTickTime) / 1000;
+  lastTickTime = now;
+  phaseTimeLeft -= dt;
+
+  updateClock();
+  updateProgress();
+  updateElapsed();
+
+  // 3-2-1 countdown beeps
+  const ceil = Math.ceil(phaseTimeLeft);
+  if (ceil <= 3 && ceil > 0 && Math.abs(phaseTimeLeft - ceil) < 0.12) playBeep(550, 80, 1);
+
+  if (phaseTimeLeft <= 0) {
+    seqIndex++;
+    lastTickTime = 0;
+    loadPhase();
+  }
+}
+
+function updateClock() {
+  const t = Math.max(0, Math.ceil(phaseTimeLeft));
+  const m = Math.floor(t / 60);
+  const s = t % 60;
+  document.getElementById('clock').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  const phase = workoutSequence[seqIndex];
+  if (phase) {
+    const colors = { work: 'var(--work-color)', rest: 'var(--rest-color)', transition: 'var(--transition-color)', 'get-ready': 'var(--transition-color)' };
+    document.getElementById('clock').style.color = colors[phase.type] || 'var(--text)';
+  }
+}
+
+function updateProgress() {
+  const pct = phaseDuration > 0 ? ((phaseDuration - phaseTimeLeft) / phaseDuration) * 100 : 0;
+  document.getElementById('progress-bar').style.width = Math.min(100, Math.max(0, pct)) + '%';
+}
+
+function updateElapsed() {
+  const e = Math.floor((Date.now() - workoutStartTime) / 1000);
+  const m = Math.floor(e / 60);
+  const s = e % 60;
+  document.getElementById('info-elapsed').textContent = `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function togglePause() {
+  isPaused = !isPaused;
+  const btn = document.getElementById('btn-pause');
+  btn.textContent = isPaused ? 'Resume' : 'Pause';
+  const audio = document.getElementById('music-player');
+  if (isPaused) {
+    lastTickTime = 0;
+    audio.pause();
+  } else {
+    lastTickTime = Date.now();
+    audio.play().catch(() => {});
+  }
+}
+
+function stopWorkout() {
+  clearInterval(timerInterval); timerInterval = null; lastTickTime = 0;
+  releaseWakeLock();
+  stopMusic();
+  showScreen('setup');
+}
+
+function finishWorkout() {
+  clearInterval(timerInterval); timerInterval = null; lastTickTime = 0;
+  releaseWakeLock();
+  stopMusic();
+
+  const elapsed = Math.floor((Date.now() - workoutStartTime) / 1000);
+  const m = Math.floor(elapsed / 60), s = elapsed % 60;
+  const cfg = getConfig();
+  const intervals = workoutSequence.filter(x => x.type === 'work').length;
+
+  document.getElementById('summary-stats').innerHTML = `
+    <div class="info-box"><div class="label">Duration</div><div class="value">${m}:${String(s).padStart(2, '0')}</div></div>
+    <div class="info-box"><div class="label">Pods</div><div class="value">${cfg.pods}</div></div>
+    <div class="info-box"><div class="label">Stations</div><div class="value">${cfg.pods * cfg.stationsPerPod}</div></div>
+    <div class="info-box"><div class="label">Laps</div><div class="value">${cfg.laps}</div></div>
+    <div class="info-box"><div class="label">Intervals</div><div class="value">${intervals}</div></div>
+  `;
+  showScreen('summary');
+  playBeep(880, 250, 5);
+}
+
+setTimeout(updateEstimate, 50);
+</script>
+</body>
+</html>
