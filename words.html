@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Homuth Word Explorer</title>
+<style>
+  :root {
+    --bg: #E0F2FE;
+    --bg-alt: #F0F9FF;
+    --primary: #0E7490;
+    --primary-dark: #155E75;
+    --accent: #FACC15;
+    --accent-dark: #CA8A04;
+    --word: #0C4A6E;
+    --text: #0C4A6E;
+    --text-dim: #475569;
+    --danger: #DC2626;
+    --success: #059669;
+    --card: #FFFFFF;
+    --border: #BAE6FD;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow-x: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 16px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .app { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
+  .screen { display: none; flex-direction: column; gap: 14px; }
+  .screen.active { display: flex; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 2px; }
+  .topbar .title { font-size: 20px; font-weight: 800; color: var(--primary-dark); letter-spacing: 0.5px; }
+  .topbar .version { font-size: 11px; color: var(--text-dim); }
+  .topbar .update-badge {
+    font-size: 11px; background: var(--accent); color: var(--accent-dark);
+    padding: 3px 8px; border-radius: 999px; font-weight: 700; cursor: pointer;
+    display: none;
+  }
+
+  .card {
+    background: var(--card); border-radius: 18px; padding: 20px;
+    box-shadow: 0 4px 20px rgba(14,116,144,0.12);
+    border: 1px solid var(--border);
+  }
+
+  .btn {
+    display: block; width: 100%; padding: 18px 20px;
+    border: none; border-radius: 14px;
+    font-size: 18px; font-weight: 700; cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.08s;
+    font-family: inherit;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--primary); color: #fff; }
+  .btn.accent { background: var(--accent); color: var(--accent-dark); }
+  .btn.ghost { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+  .btn.danger { background: var(--danger); color: #fff; }
+  .btn.success { background: var(--success); color: #fff; }
+  .btn.small { padding: 10px 14px; font-size: 14px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .row { display: flex; gap: 10px; }
+  .row .btn { flex: 1; }
+
+  h2 { color: var(--primary-dark); font-size: 22px; margin-bottom: 4px; }
+  p.sub { color: var(--text-dim); font-size: 14px; }
+
+  /* PROFILE SCREEN */
+  .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .profile-btn {
+    background: var(--card); border: 2px solid var(--border); border-radius: 16px;
+    padding: 22px 12px; cursor: pointer; text-align: center;
+    transition: transform 0.1s, border-color 0.1s, box-shadow 0.1s;
+  }
+  .profile-btn:active { transform: scale(0.96); }
+  .profile-btn:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(14,116,144,0.18); }
+  .profile-btn .emoji { font-size: 42px; display: block; margin-bottom: 6px; }
+  .profile-btn .name { font-size: 18px; font-weight: 700; color: var(--primary-dark); }
+  .profile-btn .info { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border-radius: 14px; padding: 14px 18px;
+    border: 1px solid var(--border);
+  }
+  .toggle-row .label { font-weight: 600; font-size: 15px; }
+  .toggle-row .hint { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .toggle {
+    position: relative; width: 52px; height: 30px; background: #CBD5E1;
+    border-radius: 15px; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+  }
+  .toggle.on { background: var(--primary); }
+  .toggle::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 24px; height: 24px; background: #fff; border-radius: 50%;
+    transition: left 0.15s;
+  }
+  .toggle.on::after { left: 25px; }
+
+  /* WORD SCREEN */
+  .word-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px; color: var(--text-dim);
+  }
+  .word-chip { background: var(--primary); color: #fff; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .big-word {
+    font-size: clamp(42px, 11vw, 68px);
+    font-weight: 900; color: var(--word);
+    text-align: center; padding: 40px 12px 20px;
+    letter-spacing: 1px;
+    word-break: break-word;
+  }
+  .tts-btn {
+    display: block; margin: 0 auto 24px; background: transparent;
+    border: 2px solid var(--primary); color: var(--primary);
+    border-radius: 999px; padding: 8px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* SENTENCE SCREEN */
+  .sentence-box {
+    background: var(--card); border: 2px solid var(--primary);
+    border-radius: 16px; padding: 26px 22px;
+    font-size: clamp(20px, 5vw, 24px); line-height: 1.55;
+    color: var(--word); text-align: center; margin: 10px 0;
+  }
+  .sentence-box b { color: var(--primary-dark); font-weight: 800; }
+  .sentence-counter { text-align: center; font-size: 12px; color: var(--text-dim); margin-top: -6px; }
+
+  /* DEFINITION SCREEN */
+  .def-word { font-size: 36px; font-weight: 800; color: var(--word); text-align: center; margin-bottom: 4px; }
+  .def-box {
+    background: var(--card); border-left: 5px solid var(--accent);
+    border-radius: 12px; padding: 20px;
+    font-size: 20px; line-height: 1.5; color: var(--text);
+  }
+
+  /* MASTERED SCREEN */
+  .mastered-list { max-height: 60vh; overflow-y: auto; }
+  .mastered-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px;
+  }
+  .mastered-item .mw { font-size: 17px; font-weight: 600; color: var(--word); }
+  .mastered-item .btn.small { width: auto; padding: 8px 12px; font-size: 13px; }
+
+  /* LISTEN MODE */
+  .listen-stage {
+    background: var(--card); border-radius: 18px; padding: 28px 22px;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    min-height: 340px; justify-content: center; border: 2px dashed var(--primary);
+  }
+  .listen-stage .big-word { padding: 10px; }
+  .listen-status { font-size: 13px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .listen-now { font-size: 18px; color: var(--text); text-align: center; line-height: 1.45; min-height: 60px; padding: 10px; }
+  .listen-now b { color: var(--primary-dark); font-weight: 800; }
+
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--text-dim);
+  }
+
+  .footer-row { display: flex; gap: 8px; margin-top: 8px; }
+  .link-btn {
+    background: none; border: none; color: var(--primary);
+    font-size: 13px; text-decoration: underline; cursor: pointer; padding: 6px;
+    font-family: inherit;
+  }
+
+  /* MULTIPLAYER */
+  .mp-tile {
+    grid-column: span 2;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff; border: none; border-radius: 16px;
+    padding: 18px 12px; cursor: pointer; text-align: center;
+    transition: transform 0.1s;
+  }
+  .mp-tile:active { transform: scale(0.97); }
+  .mp-tile .emoji { font-size: 28px; }
+  .mp-tile .name { font-size: 16px; font-weight: 700; margin-top: 4px; }
+  .mp-tile .info { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+  .player-check {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 14px; padding: 12px 16px; cursor: pointer;
+    margin-bottom: 8px;
+  }
+  .player-check.selected { border-color: var(--primary); background: #ECFEFF; }
+  .player-check .checkbox {
+    width: 26px; height: 26px; border-radius: 6px;
+    border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #fff; background: transparent; flex-shrink: 0;
+  }
+  .player-check.selected .checkbox { background: var(--primary); }
+  .player-check .emoji { font-size: 28px; }
+  .player-check .pname { font-size: 16px; font-weight: 700; color: var(--primary-dark); }
+  .player-check .pgrade { font-size: 12px; color: var(--text-dim); }
+
+  .turn-banner {
+    background: linear-gradient(90deg, var(--accent) 0%, #FDE68A 100%);
+    color: var(--primary-dark); padding: 12px 16px; border-radius: 12px;
+    text-align: center; font-weight: 700; font-size: 15px;
+    box-shadow: 0 3px 10px rgba(250,204,21,0.3);
+  }
+  .turn-banner .next { font-size: 12px; font-weight: 600; opacity: 0.75; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="title">📚 Word Explorer</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="update-badge" id="updateBadge" onclick="applyUpdate()">Update available — tap</span>
+      <span class="version" id="versionLabel">v1.0</span>
+    </div>
+  </div>
+
+  <!-- PROFILE SCREEN -->
+  <div class="screen active" id="screen-profile">
+    <div class="card">
+      <h2>Who's learning today?</h2>
+      <p class="sub">Pick a name to start exploring words.</p>
+    </div>
+    <div class="profile-grid" id="profileGrid"></div>
+    <button class="mp-tile" onclick="openMultiplayerSelect()">
+      <div class="emoji">👥</div>
+      <div class="name">Multiplayer</div>
+      <div class="info">Rotate through 2+ kids, each at their own grade</div>
+    </button>
+    <div class="toggle-row">
+      <div>
+        <div class="label">🎧 Listen Mode</div>
+        <div class="hint">Reads words & sentences aloud, no screen needed</div>
+      </div>
+      <div class="toggle" id="listenToggle" onclick="toggleListen()"></div>
+    </div>
+    <div class="footer-row">
+      <button class="link-btn" onclick="openRefresh()">🔄 Refresh sentences</button>
+      <button class="link-btn" onclick="openHub()">↩ Back to Learning Hub</button>
+    </div>
+  </div>
+
+  <!-- WORD SCREEN -->
+  <div class="screen" id="screen-word">
+    <div class="turn-banner" id="wordTurnBanner" style="display:none;"></div>
+    <div class="card" style="padding:14px 16px;">
+      <div class="word-header">
+        <span id="wordChild">👦 Logan</span>
+        <span class="word-chip" id="wordGrade">Grade 5</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="big-word" id="bigWord">EXAMPLE</div>
+      <button class="tts-btn" onclick="speakWord()">🔊 Hear the word</button>
+      <button class="btn primary" onclick="showDefinition()">📖 Show Definition</button>
+      <div style="height:10px;"></div>
+      <button class="btn accent" onclick="showSentence()">💬 Show in a Sentence</button>
+    </div>
+    <div class="row">
+      <button class="btn ghost small" onclick="goProfile()">← Back</button>
+      <button class="btn ghost small" onclick="openMastered()">⭐ Mastered (<span id="masteredCount">0</span>)</button>
+    </div>
+  </div>
+
+  <!-- SENTENCE SCREEN -->
+  <div class="screen" id="screen-sentence">
+    <div class="turn-banner" id="sentenceTurnBanner" style="display:none;"></div>
+    <div class="card" style="padding:14px 16px;">
+      <div class="word-header">
+        <span id="sentenceChild">👦 Logan</span>
+        <span class="word-chip" id="sentenceGrade">Grade 5</span>
+      </div>
+    </div>
+    <div class="sentence-box" id="sentenceText">...</div>
+    <div class="sentence-counter" id="sentenceCounter">Sentence 1 of 10</div>
+    <button class="tts-btn" onclick="speakSentence()">🔊 Hear the sentence</button>
+    <button class="btn primary" onclick="showDefinition()">📖 Show Definition</button>
+    <button class="btn accent" onclick="nextSentence()">💬 New Sentence</button>
+    <button class="btn ghost small" onclick="showWordScreen()">← Back to Word</button>
+  </div>
+
+  <!-- DEFINITION SCREEN -->
+  <div class="screen" id="screen-definition">
+    <div class="turn-banner" id="defTurnBanner" style="display:none;"></div>
+    <div class="card" style="padding:14px 16px;">
+      <div class="word-header">
+        <span id="defChild">👦 Logan</span>
+        <span class="word-chip" id="defGrade">Grade 5</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="def-word" id="defWord">example</div>
+      <div class="def-box" id="defText">definition here</div>
+    </div>
+    <button class="tts-btn" onclick="speakDefinition()">🔊 Hear the definition</button>
+    <button class="btn success" onclick="masterCurrentWord()">⭐ Got it! Mastered</button>
+    <button class="btn primary" onclick="nextWord()">➡ Next Word</button>
+    <button class="btn accent" onclick="showSentence()">💬 Show in a Sentence</button>
+    <button class="btn ghost small" onclick="showWordScreen()">← Back to Word</button>
+  </div>
+
+  <!-- MASTERED SCREEN -->
+  <div class="screen" id="screen-mastered">
+    <div class="card" style="padding:14px 16px;">
+      <h2 id="masteredTitle">⭐ Mastered Words</h2>
+      <p class="sub" id="masteredSub">Words moved out of rotation.</p>
+    </div>
+    <div class="mastered-list" id="masteredList"></div>
+    <button class="btn ghost small" onclick="goWordFromMastered()">← Back</button>
+  </div>
+
+  <!-- MULTIPLAYER SELECT SCREEN -->
+  <div class="screen" id="screen-mp-select">
+    <div class="card">
+      <h2>👥 Multiplayer</h2>
+      <p class="sub">Pick 2 or more players. Each will get words at their own grade level. Turns rotate after every "Mastered" or "Next Word".</p>
+    </div>
+    <div id="mpPlayerList"></div>
+    <button class="btn primary" id="mpStartBtn" onclick="startMultiplayer()" disabled>▶ Start Game</button>
+    <button class="btn ghost small" onclick="goProfile()">← Back</button>
+  </div>
+
+  <!-- REFRESH SENTENCES SCREEN -->
+  <div class="screen" id="screen-refresh">
+    <div class="card">
+      <h2>🔄 Sentence Refresh</h2>
+      <p class="sub">Words where the child has seen most/all of the stored sentences. Tap "Copy List" and paste it in Claude — I'll regenerate a fresh batch and commit.</p>
+    </div>
+    <div class="card" id="refreshList" style="font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;max-height:50vh;overflow-y:auto;">Loading...</div>
+    <button class="btn primary" onclick="copyRefreshList()">📋 Copy List</button>
+    <button class="btn ghost small" onclick="goProfile()">← Back</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  VERSION / AUTO-UPDATE
+// ═══════════════════════════════════════════
+const VERSION = "1.1";
+const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
+let _remoteVersion = null;
+
+async function checkForUpdate() {
+  try {
+    const res = await fetch(VERSION_URL + "?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) return;
+    const remote = (await res.text()).trim();
+    _remoteVersion = remote;
+    if (remote && remote !== VERSION) {
+      document.getElementById("updateBadge").style.display = "inline-block";
+      document.getElementById("updateBadge").textContent = "Update " + remote + " — tap";
+    }
+  } catch(e) {}
+}
+function applyUpdate() {
+  // Cache-bust reload
+  const u = new URL(window.location.href);
+  u.searchParams.set("v", _remoteVersion || Date.now());
+  window.location.href = u.toString();
+}
+
+// ═══════════════════════════════════════════
+//  CHILDREN
+// ═══════════════════════════════════════════
+const CHILDREN = {
+  logan:     { name: "Logan",     emoji: "👦", info: "Grade 4 reading",    isDaddy: false, defaultGrade: 5 },
+  cole:      { name: "Cole",      emoji: "🧒", info: "Grade 1",            isDaddy: false, defaultGrade: 1 },
+  mackenzie: { name: "Mackenzie", emoji: "👧", info: "Kindergarten",       isDaddy: false, defaultGrade: 0 },
+  daddy:     { name: "Daddy",     emoji: "👨‍⚕️", info: "Advanced vocabulary", isDaddy: true,  defaultGrade: 6 },
+};
+
+// ═══════════════════════════════════════════
+//  WORD POOL
+//  Each word: { w, d, sentences: [10 strings, <b>word</b> marked inline] }
+// ═══════════════════════════════════════════
+const WORD_POOL = {
+  0: [
+    { w:"happy", d:"feeling good or glad", sentences:[
+      "The <b>happy</b> puppy wagged its tail.",
+      "Mom felt <b>happy</b> when she saw the card.",
+      "A <b>happy</b> smile spread across his face.",
+      "The baby was <b>happy</b> after her nap.",
+      "We sang a <b>happy</b> song on the bus.",
+      "It made me <b>happy</b> to help my brother.",
+      "The <b>happy</b> bird chirped all morning.",
+      "She clapped her hands, looking very <b>happy</b>.",
+      "A warm hug can make a sad person <b>happy</b>.",
+      "The <b>happy</b> dog ran in circles around the yard."
+    ]},
+    { w:"big", d:"large in size", sentences:[
+      "The <b>big</b> truck drove down the road.",
+      "We saw a <b>big</b> elephant at the zoo.",
+      "He packed his lunch in a <b>big</b> blue bag.",
+      "That tree is so <b>big</b> it reaches the clouds.",
+      "A <b>big</b> wave crashed on the beach.",
+      "The chef baked a <b>big</b> round cake.",
+      "Her grandpa gave her a <b>big</b> hug.",
+      "The <b>big</b> dog barked at the mailman.",
+      "We need a <b>big</b> box to hold all the toys.",
+      "He took a <b>big</b> bite of the apple."
+    ]},
+    { w:"fast", d:"moving quickly", sentences:[
+      "The <b>fast</b> bunny hopped away.",
+      "Race cars are very <b>fast</b>.",
+      "He ran <b>fast</b> to catch the bus.",
+      "The <b>fast</b> river pushed the leaves along.",
+      "She tied her shoes <b>fast</b> so she wouldn't be late.",
+      "A <b>fast</b> horse won the race.",
+      "The cheetah is a <b>fast</b> animal.",
+      "He ate his breakfast <b>fast</b> and ran out the door.",
+      "The <b>fast</b> boat zoomed across the lake.",
+      "Planes can fly very <b>fast</b> in the sky."
+    ]},
+    { w:"cold", d:"not warm, low temperature", sentences:[
+      "The ice cream is very <b>cold</b>.",
+      "It was <b>cold</b> outside, so we wore coats.",
+      "She drank a glass of <b>cold</b> milk.",
+      "The snow felt <b>cold</b> on his hands.",
+      "Polar bears live in <b>cold</b> places.",
+      "The pool water was too <b>cold</b> to swim.",
+      "A <b>cold</b> wind blew through the trees.",
+      "Winter is the <b>cold</b> season.",
+      "Please close the door — the <b>cold</b> is coming in.",
+      "He shivered in the <b>cold</b> morning air."
+    ]},
+    { w:"soft", d:"not hard, gentle to touch", sentences:[
+      "The <b>soft</b> blanket kept me warm.",
+      "The kitten's fur was so <b>soft</b>.",
+      "She slept on a <b>soft</b> pillow.",
+      "His teddy bear is brown and <b>soft</b>.",
+      "The baby's skin feels very <b>soft</b>.",
+      "Clouds look like <b>soft</b> cotton balls.",
+      "The <b>soft</b> grass tickled her toes.",
+      "Grandma spoke in a <b>soft</b> voice.",
+      "The <b>soft</b> bread was easy to chew.",
+      "He hugged the <b>soft</b> bunny toy tight."
+    ]},
+    { w:"loud", d:"making a lot of noise", sentences:[
+      "The <b>loud</b> thunder scared the cat.",
+      "The fire truck's siren was very <b>loud</b>.",
+      "Please don't be so <b>loud</b> — the baby is sleeping.",
+      "A <b>loud</b> crash came from the kitchen.",
+      "The drums were too <b>loud</b> for her ears.",
+      "He gave a <b>loud</b> cheer when his team scored.",
+      "The <b>loud</b> bell told us school was over.",
+      "She clapped with a <b>loud</b> smack.",
+      "Our puppy has a <b>loud</b> bark for such a small dog.",
+      "The <b>loud</b> music made the whole room shake."
+    ]}
+  ],
+  1: [
+    { w:"curious", d:"wanting to know or learn", sentences:[
+      "The <b>curious</b> kitten explored the garden.",
+      "Jamie was <b>curious</b> about how magnets work.",
+      "A <b>curious</b> child asks lots of questions.",
+      "The <b>curious</b> puppy sniffed the strange box.",
+      "She felt <b>curious</b> when she heard a tapping sound.",
+      "The <b>curious</b> boy peeked inside the cave.",
+      "Being <b>curious</b> helps you learn new things.",
+      "He was <b>curious</b> to see what was in the attic.",
+      "The <b>curious</b> squirrel climbed onto the windowsill.",
+      "Scientists are <b>curious</b> people who ask good questions."
+    ]},
+    { w:"gentle", d:"soft and careful", sentences:[
+      "Be <b>gentle</b> with the baby bird.",
+      "The <b>gentle</b> rain tapped on the roof.",
+      "She gave her puppy a <b>gentle</b> pat.",
+      "Grandpa has a <b>gentle</b> way of teaching.",
+      "A <b>gentle</b> breeze moved the curtains.",
+      "He used a <b>gentle</b> touch to hold the ladybug.",
+      "The nurse was <b>gentle</b> when she cleaned the cut.",
+      "Please use <b>gentle</b> hands with your little sister.",
+      "Horses need a <b>gentle</b> rider.",
+      "The <b>gentle</b> stream babbled through the forest."
+    ]},
+    { w:"proud", d:"feeling good about something you did", sentences:[
+      "She was <b>proud</b> of her drawing.",
+      "Dad felt <b>proud</b> when I tied my shoes by myself.",
+      "The <b>proud</b> team held up their trophy.",
+      "I'm <b>proud</b> that I helped clean the kitchen.",
+      "The <b>proud</b> peacock showed off its feathers.",
+      "He was <b>proud</b> to read the whole book.",
+      "Mom was <b>proud</b> of how kind I was.",
+      "The <b>proud</b> chef smiled at his cake.",
+      "Being <b>proud</b> of hard work feels great.",
+      "She stood tall, <b>proud</b> of finishing the race."
+    ]},
+    { w:"calm", d:"quiet and peaceful", sentences:[
+      "The <b>calm</b> lake had no waves.",
+      "Take a <b>calm</b> breath before you talk.",
+      "His voice was <b>calm</b> even when the dog barked.",
+      "The <b>calm</b> sea let the boat move smoothly.",
+      "After the storm the sky became <b>calm</b>.",
+      "She stayed <b>calm</b> when the lights went out.",
+      "The <b>calm</b> baby fell asleep quickly.",
+      "Yoga helps me feel <b>calm</b>.",
+      "A <b>calm</b> morning is good for reading.",
+      "The teacher kept her voice <b>calm</b> and kind."
+    ]},
+    { w:"clever", d:"smart and quick-thinking", sentences:[
+      "The <b>clever</b> fox found the food.",
+      "She had a <b>clever</b> plan to fix the toy.",
+      "That was a <b>clever</b> way to tie the rope.",
+      "The <b>clever</b> crow used a stick to get the bug.",
+      "He is <b>clever</b> at solving puzzles.",
+      "Her <b>clever</b> answer made everyone laugh.",
+      "A <b>clever</b> mouse knew where the cheese was hidden.",
+      "Ben thought of a <b>clever</b> trick in the game.",
+      "The <b>clever</b> dog learned to open the door.",
+      "It was <b>clever</b> of you to save half your snack."
+    ]},
+    { w:"cozy", d:"warm and comfortable", sentences:[
+      "The <b>cozy</b> bed made her sleepy.",
+      "We read books in the <b>cozy</b> chair.",
+      "His blanket fort was <b>cozy</b> and warm.",
+      "The cabin felt <b>cozy</b> when the fire was lit.",
+      "She curled up in her <b>cozy</b> sweater.",
+      "The kitten fell asleep in a <b>cozy</b> basket.",
+      "Rainy days are good for <b>cozy</b> movies.",
+      "My socks and slippers keep my feet <b>cozy</b>.",
+      "The <b>cozy</b> little room glowed with soft light.",
+      "We had hot cocoa in a <b>cozy</b> corner of the kitchen."
+    ]}
+  ],
+  2: [
+    { w:"patient", d:"able to wait without getting upset", sentences:[
+      "She was <b>patient</b> while waiting in line.",
+      "A <b>patient</b> teacher helps every student.",
+      "Be <b>patient</b> — the cookies need more time to bake.",
+      "The <b>patient</b> fisherman waited for a bite.",
+      "You have to be <b>patient</b> when training a puppy.",
+      "He stayed <b>patient</b> even when the traffic stopped.",
+      "Her <b>patient</b> smile made me feel better.",
+      "Learning to ride a bike takes a <b>patient</b> mind.",
+      "The <b>patient</b> artist slowly painted each leaf.",
+      "A <b>patient</b> listener is a good friend to have."
+    ]},
+    { w:"confident", d:"believing in yourself", sentences:[
+      "The <b>confident</b> speaker stood up tall.",
+      "She felt <b>confident</b> after practicing her song.",
+      "A <b>confident</b> swimmer isn't afraid of deep water.",
+      "He gave a <b>confident</b> answer in class.",
+      "The <b>confident</b> goalie stopped every shot.",
+      "Being <b>confident</b> helps when you try new things.",
+      "Her <b>confident</b> walk showed she was ready.",
+      "I felt <b>confident</b> because I had studied a lot.",
+      "The <b>confident</b> young chef invented a new recipe.",
+      "A <b>confident</b> leader listens and also decides."
+    ]},
+    { w:"gorgeous", d:"very beautiful", sentences:[
+      "The <b>gorgeous</b> sunset turned the sky orange.",
+      "She wore a <b>gorgeous</b> blue dress.",
+      "The garden was full of <b>gorgeous</b> flowers.",
+      "What a <b>gorgeous</b> view from the mountain!",
+      "The <b>gorgeous</b> peacock spread its tail feathers.",
+      "They painted a <b>gorgeous</b> mural on the wall.",
+      "The bride looked <b>gorgeous</b> in her white gown.",
+      "That is a <b>gorgeous</b> piece of cake.",
+      "The <b>gorgeous</b> rainbow stretched across the sky.",
+      "His photo of the lake was simply <b>gorgeous</b>."
+    ]},
+    { w:"ancient", d:"very very old", sentences:[
+      "The <b>ancient</b> castle was hundreds of years old.",
+      "We read about an <b>ancient</b> Egyptian pyramid.",
+      "An <b>ancient</b> tree stood in the middle of the park.",
+      "The museum displayed <b>ancient</b> stone tools.",
+      "Dinosaurs lived in <b>ancient</b> times.",
+      "She found an <b>ancient</b> coin buried in the sand.",
+      "The <b>ancient</b> map was made long before cars existed.",
+      "Our town has an <b>ancient</b> oak that everyone loves.",
+      "Some <b>ancient</b> books are kept in glass cases.",
+      "The <b>ancient</b> ruins told stories of a lost city."
+    ]},
+    { w:"brilliant", d:"very smart or very bright", sentences:[
+      "She had a <b>brilliant</b> idea to solve the problem.",
+      "The <b>brilliant</b> stars filled the night sky.",
+      "His <b>brilliant</b> answer surprised the judge.",
+      "The diamond gave off a <b>brilliant</b> sparkle.",
+      "A <b>brilliant</b> scientist invented a new machine.",
+      "Her <b>brilliant</b> smile lit up the room.",
+      "The fireworks made <b>brilliant</b> colors in the sky.",
+      "He is <b>brilliant</b> at fixing broken toys.",
+      "The <b>brilliant</b> teacher made math fun.",
+      "What a <b>brilliant</b> way to tell a story!"
+    ]},
+    { w:"delicious", d:"tasting really good", sentences:[
+      "The <b>delicious</b> cake disappeared quickly.",
+      "Grandma's soup is always <b>delicious</b>.",
+      "I smelled something <b>delicious</b> coming from the kitchen.",
+      "The <b>delicious</b> strawberries came from our garden.",
+      "That pizza was absolutely <b>delicious</b>.",
+      "A <b>delicious</b> breakfast gave me energy for school.",
+      "The bakery filled the street with a <b>delicious</b> smell.",
+      "Hot cocoa on a cold day is so <b>delicious</b>.",
+      "He said the chicken was <b>delicious</b> and asked for more.",
+      "The <b>delicious</b> mango was juicy and sweet."
+    ]}
+  ],
+  3: [
+    { w:"anxious", d:"feeling worried or nervous", sentences:[
+      "She felt <b>anxious</b> before the big test.",
+      "He was <b>anxious</b> about meeting the new coach.",
+      "An <b>anxious</b> dog paced by the door during the storm.",
+      "I feel <b>anxious</b> when I can't find my backpack.",
+      "The <b>anxious</b> parents waited at the hospital.",
+      "She tapped her foot, looking very <b>anxious</b>.",
+      "Being <b>anxious</b> is normal before a performance.",
+      "Deep breaths help when you feel <b>anxious</b>.",
+      "The <b>anxious</b> students checked their bags three times.",
+      "He was <b>anxious</b> about the results of the game."
+    ]},
+    { w:"magnificent", d:"extremely beautiful or impressive", sentences:[
+      "The <b>magnificent</b> palace had golden walls.",
+      "We saw a <b>magnificent</b> waterfall in the park.",
+      "Her painting was simply <b>magnificent</b>.",
+      "The orchestra gave a <b>magnificent</b> performance.",
+      "From the hilltop the view was <b>magnificent</b>.",
+      "The <b>magnificent</b> stag stood at the edge of the forest.",
+      "The castle's <b>magnificent</b> doors were carved with dragons.",
+      "He wore a <b>magnificent</b> cape to the costume party.",
+      "The <b>magnificent</b> ship sailed into the harbor.",
+      "It was a <b>magnificent</b> display of fireworks."
+    ]},
+    { w:"investigate", d:"to look into something carefully", sentences:[
+      "The detective will <b>investigate</b> the crime.",
+      "Scientists <b>investigate</b> new ideas every day.",
+      "Let's <b>investigate</b> the strange noise in the attic.",
+      "The puppy wanted to <b>investigate</b> the mystery box.",
+      "Police came to <b>investigate</b> the broken window.",
+      "We had to <b>investigate</b> why the plant was wilting.",
+      "He will <b>investigate</b> whether the bridge is safe.",
+      "Reporters <b>investigate</b> stories before printing them.",
+      "The team met to <b>investigate</b> what went wrong.",
+      "Always <b>investigate</b> before jumping to conclusions."
+    ]},
+    { w:"essential", d:"absolutely necessary", sentences:[
+      "Water is <b>essential</b> for life.",
+      "A good helmet is <b>essential</b> when biking.",
+      "Practice is <b>essential</b> if you want to improve.",
+      "Sleep is <b>essential</b> for a growing kid.",
+      "The <b>essential</b> tools were packed in the red box.",
+      "Sunlight is <b>essential</b> for plants to grow.",
+      "A map is <b>essential</b> when you're hiking new trails.",
+      "Trust is <b>essential</b> in a friendship.",
+      "It's <b>essential</b> to wash your hands before eating.",
+      "Warm clothes are <b>essential</b> in the winter."
+    ]},
+    { w:"precise", d:"exact and accurate", sentences:[
+      "The scientist made <b>precise</b> measurements.",
+      "Surgeons need <b>precise</b> movements.",
+      "Her <b>precise</b> drawing showed every window.",
+      "Clocks must be <b>precise</b> to work well.",
+      "A <b>precise</b> throw landed the ball in the basket.",
+      "The recipe needs a <b>precise</b> amount of salt.",
+      "He gave <b>precise</b> directions to the store.",
+      "Astronauts rely on <b>precise</b> calculations.",
+      "The chef made a <b>precise</b> cut with her knife.",
+      "Watchmakers do <b>precise</b> work with tiny gears."
+    ]},
+    { w:"accomplish", d:"to complete or achieve something", sentences:[
+      "She worked hard to <b>accomplish</b> her goal.",
+      "We can <b>accomplish</b> a lot when we work together.",
+      "He was proud to <b>accomplish</b> his reading challenge.",
+      "What do you want to <b>accomplish</b> this summer?",
+      "The team hoped to <b>accomplish</b> a tough climb.",
+      "You can <b>accomplish</b> great things with practice.",
+      "She planned to <b>accomplish</b> three chores before lunch.",
+      "They worked as a crew to <b>accomplish</b> the mission.",
+      "He wrote a list of what he wanted to <b>accomplish</b>.",
+      "To <b>accomplish</b> something hard, take it one step at a time."
+    ]}
+  ],
+  4: [
+    { w:"consequence", d:"what happens as a result of something", sentences:[
+      "The <b>consequence</b> of not studying was a poor grade.",
+      "Every action has a <b>consequence</b>, good or bad.",
+      "A natural <b>consequence</b> of eating candy is a tummy ache.",
+      "The <b>consequence</b> of forgetting his homework was extra work.",
+      "One <b>consequence</b> of the storm was a power outage.",
+      "She accepted the <b>consequence</b> of her choice without complaining.",
+      "The <b>consequence</b> of hitting a baseball inside is a broken lamp.",
+      "Kindness has the <b>consequence</b> of making friends feel good.",
+      "A major <b>consequence</b> of recycling is less trash in landfills.",
+      "He thought about the <b>consequence</b> before making his decision."
+    ]},
+    { w:"persistent", d:"keeping going and not giving up", sentences:[
+      "Her <b>persistent</b> practice made her a great pianist.",
+      "The <b>persistent</b> ant finally got the crumb.",
+      "A <b>persistent</b> cough kept him home from school.",
+      "Scientists have to be <b>persistent</b> when experiments fail.",
+      "His <b>persistent</b> effort paid off with a win.",
+      "She was <b>persistent</b> about learning her multiplication tables.",
+      "The <b>persistent</b> rain flooded the backyard.",
+      "A <b>persistent</b> knock at the door woke us up.",
+      "Being <b>persistent</b> means trying even when it's hard.",
+      "The <b>persistent</b> runner passed three other kids in the race."
+    ]},
+    { w:"reluctant", d:"not wanting to do something", sentences:[
+      "She was <b>reluctant</b> to try the strange food.",
+      "He was <b>reluctant</b> to leave the playground.",
+      "The <b>reluctant</b> puppy didn't want to get in the bath.",
+      "I was <b>reluctant</b> to admit I had been wrong.",
+      "The <b>reluctant</b> student slowly raised his hand.",
+      "She felt <b>reluctant</b> to join a new team at first.",
+      "He was <b>reluctant</b> to loan out his favorite book.",
+      "The cat was <b>reluctant</b> to come in from the rain.",
+      "Even though tired, she was <b>reluctant</b> to stop reading.",
+      "I'm <b>reluctant</b> to jump into cold pool water."
+    ]},
+    { w:"significant", d:"important or meaningful", sentences:[
+      "The discovery was <b>significant</b> for science.",
+      "Her birthday is a <b>significant</b> day for the whole family.",
+      "There was a <b>significant</b> drop in temperature overnight.",
+      "Voting is a <b>significant</b> part of being a citizen.",
+      "The tiny clue turned out to be <b>significant</b>.",
+      "A <b>significant</b> number of students joined the new club.",
+      "His grandfather's watch is <b>significant</b> to him.",
+      "The new bridge made a <b>significant</b> difference in traffic.",
+      "Practicing every day brought <b>significant</b> improvement.",
+      "There was a <b>significant</b> change in her attitude after the trip."
+    ]},
+    { w:"bewildered", d:"completely confused and puzzled", sentences:[
+      "The <b>bewildered</b> tourist was lost in the city.",
+      "He looked <b>bewildered</b> when he saw the empty classroom.",
+      "The <b>bewildered</b> dog tilted its head at the new sound.",
+      "She was <b>bewildered</b> by the tricky math problem.",
+      "The <b>bewildered</b> look on his face made us laugh.",
+      "He felt <b>bewildered</b> after waking from a strange dream.",
+      "The <b>bewildered</b> hiker turned the map upside down.",
+      "She gave a <b>bewildered</b> smile when everyone shouted surprise.",
+      "The <b>bewildered</b> chef couldn't find the missing ingredient.",
+      "A <b>bewildered</b> crowd stared at the strange light in the sky."
+    ]},
+    { w:"skeptical", d:"not easily convinced, doubtful", sentences:[
+      "She was <b>skeptical</b> about the magic trick.",
+      "I'm <b>skeptical</b> that the cat learned to open doors.",
+      "The <b>skeptical</b> judge asked for more proof.",
+      "He was <b>skeptical</b> of the story his brother told.",
+      "Scientists are <b>skeptical</b> until they see evidence.",
+      "Her <b>skeptical</b> look told me she didn't believe me.",
+      "Being <b>skeptical</b> can protect you from bad information.",
+      "The team was <b>skeptical</b> of the wild rumor.",
+      "He remained <b>skeptical</b> even after the demonstration.",
+      "A <b>skeptical</b> reader asks, \"Is this really true?\""
+    ]}
+  ],
+  5: [
+    { w:"ambiguous", d:"having more than one possible meaning", sentences:[
+      "The <b>ambiguous</b> instructions confused everyone.",
+      "Her answer was <b>ambiguous</b>, so we asked again.",
+      "The ending of the movie was <b>ambiguous</b>.",
+      "The sign's <b>ambiguous</b> wording caused drivers to slow down.",
+      "An <b>ambiguous</b> word can mean two different things.",
+      "His smile was <b>ambiguous</b> — I couldn't tell if he was joking.",
+      "The poem had several <b>ambiguous</b> lines we debated in class.",
+      "An <b>ambiguous</b> clue made the mystery harder to solve.",
+      "She tried to avoid <b>ambiguous</b> language in her essay.",
+      "The <b>ambiguous</b> rules led to an argument on the playground."
+    ]},
+    { w:"meticulous", d:"extremely careful about details", sentences:[
+      "The <b>meticulous</b> artist painted every tiny leaf.",
+      "His <b>meticulous</b> notes helped the whole study group.",
+      "A <b>meticulous</b> scientist records every measurement.",
+      "Her <b>meticulous</b> planning made the trip go smoothly.",
+      "The watchmaker did <b>meticulous</b> work on each gear.",
+      "He kept a <b>meticulous</b> list of every book he read.",
+      "Surgeons must be <b>meticulous</b> during operations.",
+      "Her <b>meticulous</b> handwriting was easy to read.",
+      "The chef is <b>meticulous</b> about fresh ingredients.",
+      "A <b>meticulous</b> editor catches every small typo."
+    ]},
+    { w:"plausible", d:"seeming reasonable or likely true", sentences:[
+      "His excuse was barely <b>plausible</b>.",
+      "The detective needed a <b>plausible</b> explanation for the footprints.",
+      "That story sounds <b>plausible</b>, but I'd still check the facts.",
+      "A <b>plausible</b> theory should match the evidence.",
+      "She gave a <b>plausible</b> reason for being late.",
+      "The idea seemed <b>plausible</b> until we ran the experiment.",
+      "It's <b>plausible</b> that the dog got out through the fence gap.",
+      "The author created a <b>plausible</b> alien world.",
+      "A <b>plausible</b> guess is better than none.",
+      "There must be a <b>plausible</b> way to solve this puzzle."
+    ]},
+    { w:"unanimous", d:"everyone fully agrees", sentences:[
+      "The vote to cancel homework was <b>unanimous</b>.",
+      "The team made a <b>unanimous</b> decision to play indoors.",
+      "Our family had a <b>unanimous</b> vote for pizza.",
+      "The judges gave a <b>unanimous</b> first-place rating.",
+      "There was <b>unanimous</b> support for the new playground.",
+      "A <b>unanimous</b> choice means nobody voted against it.",
+      "The class reached a <b>unanimous</b> agreement on the class pet.",
+      "Her idea got a <b>unanimous</b> thumbs-up from the group.",
+      "The council's <b>unanimous</b> approval surprised the mayor.",
+      "The panel's <b>unanimous</b> verdict was announced on the news."
+    ]},
+    { w:"subtle", d:"not obvious, hard to notice", sentences:[
+      "There was a <b>subtle</b> change in her expression.",
+      "The painting had <b>subtle</b> shades of blue.",
+      "He gave a <b>subtle</b> nod to tell me it was safe.",
+      "The mistake in the code was <b>subtle</b> but important.",
+      "The perfume had a <b>subtle</b> scent of flowers.",
+      "A <b>subtle</b> smile crossed her face as she read the letter.",
+      "The magician used a <b>subtle</b> movement to fool us.",
+      "There's a <b>subtle</b> difference between those two words.",
+      "His <b>subtle</b> hint told us he knew the secret.",
+      "The <b>subtle</b> rhythm of the music made heads nod."
+    ]},
+    { w:"resilient", d:"able to recover quickly from difficulty", sentences:[
+      "The <b>resilient</b> team bounced back after the loss.",
+      "Children are often very <b>resilient</b>.",
+      "A <b>resilient</b> plant keeps growing after being trimmed.",
+      "She proved to be <b>resilient</b> during the tough week.",
+      "Rubber is a <b>resilient</b> material that regains its shape.",
+      "The <b>resilient</b> community rebuilt after the storm.",
+      "His <b>resilient</b> spirit helped him through hard times.",
+      "A <b>resilient</b> goalie doesn't let one bad play ruin the game.",
+      "The <b>resilient</b> scientist tried again after each failure.",
+      "Being <b>resilient</b> means you keep getting up."
+    ]}
+  ],
+  6: [
+    { w:"ephemeral", d:"lasting for a very short time", sentences:[
+      "Social media trends are often <b>ephemeral</b>.",
+      "The beauty of a sunset is <b>ephemeral</b>.",
+      "Fame in the modern era can be <b>ephemeral</b>.",
+      "Her happiness was <b>ephemeral</b>, replaced by worry by afternoon.",
+      "Cherry blossoms are famously <b>ephemeral</b>, lasting only a week or two.",
+      "The <b>ephemeral</b> nature of memory fascinates neuroscientists.",
+      "Fireworks offer <b>ephemeral</b> brilliance against the night sky.",
+      "The artist specializes in <b>ephemeral</b> sculptures made of ice.",
+      "Childhood summers feel <b>ephemeral</b> in hindsight.",
+      "Market rallies can be surprisingly <b>ephemeral</b>."
+    ]},
+    { w:"ubiquitous", d:"seeming to be everywhere at once", sentences:[
+      "Smartphones have become <b>ubiquitous</b> in modern life.",
+      "Coffee shops are <b>ubiquitous</b> in downtown areas.",
+      "The <b>ubiquitous</b> QR code appears on nearly every menu.",
+      "Plastic waste is now <b>ubiquitous</b>, even in the deep ocean.",
+      "Security cameras are <b>ubiquitous</b> in large cities.",
+      "The phrase \"my bad\" has become <b>ubiquitous</b> in casual speech.",
+      "During flu season, coughing becomes <b>ubiquitous</b> in waiting rooms.",
+      "Streaming services are <b>ubiquitous</b> among families with kids.",
+      "The <b>ubiquitous</b> pigeon can be found in nearly every major city.",
+      "USB ports are <b>ubiquitous</b> in modern electronics."
+    ]},
+    { w:"pragmatic", d:"dealing with things practically rather than theoretically", sentences:[
+      "She took a <b>pragmatic</b> approach to solving the problem.",
+      "A <b>pragmatic</b> leader focuses on what actually works.",
+      "His <b>pragmatic</b> advice was exactly what the team needed.",
+      "In triage, clinicians must remain <b>pragmatic</b> under pressure.",
+      "The <b>pragmatic</b> plan cut costs without hurting quality.",
+      "She offered a <b>pragmatic</b> solution when others debated theory.",
+      "Engineers tend to be <b>pragmatic</b> about tradeoffs.",
+      "A <b>pragmatic</b> parent picks their battles carefully.",
+      "His <b>pragmatic</b> view of the situation kept everyone calm.",
+      "A <b>pragmatic</b> reading of the rules allowed the project to continue."
+    ]},
+    { w:"esoteric", d:"understood only by a small group with specialized knowledge", sentences:[
+      "The lecture on quantum loops was rather <b>esoteric</b>.",
+      "He has an <b>esoteric</b> hobby: collecting antique navigation tools.",
+      "Her dissertation tackled an <b>esoteric</b> corner of medieval history.",
+      "The <b>esoteric</b> jargon made the paper hard to read.",
+      "Only a few doctors understand that <b>esoteric</b> pathology.",
+      "The book explores the <b>esoteric</b> symbolism of alchemy.",
+      "His taste in music leans toward the <b>esoteric</b>.",
+      "The professor's <b>esoteric</b> references sailed over most students' heads.",
+      "An <b>esoteric</b> diagnosis requires specialist consultation.",
+      "The artist mixed mainstream appeal with <b>esoteric</b> influences."
+    ]},
+    { w:"quintessential", d:"representing the most perfect example of something", sentences:[
+      "Maple syrup is the <b>quintessential</b> Canadian export.",
+      "She is the <b>quintessential</b> professional — prepared and calm.",
+      "That diner serves the <b>quintessential</b> American breakfast.",
+      "The Mustang is the <b>quintessential</b> American muscle car.",
+      "His easygoing attitude makes him the <b>quintessential</b> camp counselor.",
+      "That song is the <b>quintessential</b> road-trip anthem.",
+      "A stethoscope is the <b>quintessential</b> tool of the physician.",
+      "The film is a <b>quintessential</b> example of 1980s sci-fi.",
+      "Hockey is the <b>quintessential</b> Canadian winter sport.",
+      "This recipe captures the <b>quintessential</b> flavor of the region."
+    ]},
+    { w:"surreptitious", d:"done in secret, trying to avoid being seen", sentences:[
+      "He took a <b>surreptitious</b> glance at his phone during the meeting.",
+      "She made a <b>surreptitious</b> exit through the side door.",
+      "The cat's <b>surreptitious</b> movements failed to fool the dog.",
+      "Their <b>surreptitious</b> planning made the surprise party a hit.",
+      "He cast a <b>surreptitious</b> look at his notes during the presentation.",
+      "The reporter took <b>surreptitious</b> photos from across the street.",
+      "A <b>surreptitious</b> agreement was reached between the two parties.",
+      "Her <b>surreptitious</b> smile suggested she knew more than she said.",
+      "The <b>surreptitious</b> hand signal passed the secret along.",
+      "He made a <b>surreptitious</b> attempt to sneak a cookie before dinner."
+    ]}
+  ]
+};
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let state = {
+  childId: null,
+  grade: null,           // 0-6
+  currentWord: null,     // { w, d, sentences[] }
+  currentWordIsCustom: false,
+  seenSentences: [],     // indices of sentences shown for currentWord in this session
+  listenMode: false,
+  speaking: false,
+  listenTimer: null,
+  multiplayer: null,     // { players: [childId,...], idx: number } or null
+};
+
+const LS = {
+  lastChild:    "words_lastChild",
+  listenMode:   "words_listenMode",
+  grade:        (c) => "words_grade_" + c,
+  atGrade:      (c) => "words_atGrade_" + c,
+  sentenceSeen: (c) => "words_sentSeen_" + c,  // { word: [seenIdxArr] }
+  archive:      (c) => "homuth_archive_" + c,   // SHARED with hub
+  studyWords:   (c) => "homuth_words_" + c,     // SHARED with hub
+  hubState:     "homuth_learning",               // read-only
+  recentWords:  (c) => "words_recent_" + c,     // [recent word strings for anti-repeat]
+};
+
+const PROMOTE_THRESHOLD = 10;
+
+// ═══════════════════════════════════════════
+//  PERSISTENCE HELPERS
+// ═══════════════════════════════════════════
+function lsGet(k, fallback) {
+  try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : fallback; }
+  catch(e) { return fallback; }
+}
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+
+function getArchive(childId) { return lsGet(LS.archive(childId), []); }
+function setArchive(childId, arr) {
+  try { localStorage.setItem(LS.archive(childId), JSON.stringify(arr)); } catch(e) {}
+}
+function getStudyWords(childId) { return lsGet(LS.studyWords(childId), []); }
+
+function getSeenMap(childId) { return lsGet(LS.sentenceSeen(childId), {}); }
+function saveSeenMap(childId, map) { lsSet(LS.sentenceSeen(childId), map); }
+
+function getRecentWords(childId) { return lsGet(LS.recentWords(childId), []); }
+function pushRecentWord(childId, w) {
+  const arr = getRecentWords(childId);
+  arr.push(w);
+  while (arr.length > 15) arr.shift();
+  lsSet(LS.recentWords(childId), arr);
+}
+
+function getChildGrade(childId) {
+  // 1. Stored grade from this app
+  const stored = lsGet(LS.grade(childId), null);
+  if (stored !== null) return stored;
+  // 2. Read from hub's english_focused decile
+  try {
+    const hub = JSON.parse(localStorage.getItem(LS.hubState) || "{}");
+    const session = hub.sessions && hub.sessions[childId];
+    if (session && session.levels) {
+      const decile = session.levels.english_focused !== undefined
+        ? session.levels.english_focused
+        : session.levels.english;
+      if (typeof decile === "number") {
+        const grade = Math.max(0, Math.min(5, Math.floor(decile / 10)));
+        return grade;
+      }
+    }
+  } catch(e) {}
+  // 3. Default per child
+  return CHILDREN[childId].defaultGrade;
+}
+function setChildGrade(childId, grade) { lsSet(LS.grade(childId), grade); }
+function getAtGrade(childId) { return lsGet(LS.atGrade(childId), 0); }
+function setAtGrade(childId, n) { lsSet(LS.atGrade(childId), n); }
+
+// ═══════════════════════════════════════════
+//  WORD POOL LOOKUP
+// ═══════════════════════════════════════════
+function findPoolEntry(word) {
+  const w = (word || "").toLowerCase();
+  for (const g of Object.keys(WORD_POOL)) {
+    const hit = WORD_POOL[g].find(e => e.w.toLowerCase() === w);
+    if (hit) return { entry: hit, grade: +g };
+  }
+  return null;
+}
+
+function buildActivePool(childId, grade) {
+  // Base grade pool + adjacent grades (grade-1 as review, grade+1 as stretch)
+  // All filtered by archive (mastered words excluded)
+  const archive = new Set(getArchive(childId).map(s => s.toLowerCase()));
+  const pool = [];
+  const seenW = new Set();
+  const addGrade = (g) => {
+    if (!WORD_POOL[g]) return;
+    for (const e of WORD_POOL[g]) {
+      const wl = e.w.toLowerCase();
+      if (archive.has(wl)) continue;
+      if (seenW.has(wl)) continue;
+      seenW.add(wl);
+      pool.push({ ...e, _grade: g, custom: false });
+    }
+  };
+  addGrade(grade);
+  if (grade > 0) addGrade(grade - 1);
+  if (WORD_POOL[grade + 1]) addGrade(grade + 1);
+
+  // Add child's custom study words that HAVE pool entries (with sentences)
+  // Custom words without sentences: include with custom flag (sentence button will warn)
+  const custom = getStudyWords(childId);
+  for (const raw of custom) {
+    const wl = (raw || "").toLowerCase();
+    if (!wl || archive.has(wl) || seenW.has(wl)) continue;
+    const hit = findPoolEntry(wl);
+    if (hit) {
+      seenW.add(wl);
+      pool.push({ ...hit.entry, _grade: hit.grade, custom: false });
+    } else {
+      seenW.add(wl);
+      pool.push({ w: wl, d: "(No stored definition — tap Refresh to request one.)", sentences: [], _grade: grade, custom: true });
+    }
+  }
+  return pool;
+}
+
+function pickNextWord(childId, grade) {
+  const pool = buildActivePool(childId, grade);
+  if (pool.length === 0) return null;
+  const recent = new Set(getRecentWords(childId).map(s => s.toLowerCase()));
+  let fresh = pool.filter(e => !recent.has(e.w.toLowerCase()));
+  if (fresh.length === 0) fresh = pool; // all seen recently, reset
+  const pick = fresh[Math.floor(Math.random() * fresh.length)];
+  pushRecentWord(childId, pick.w);
+  return pick;
+}
+
+// ═══════════════════════════════════════════
+//  RENDER — PROFILE
+// ═══════════════════════════════════════════
+function renderProfileGrid() {
+  const grid = document.getElementById("profileGrid");
+  grid.innerHTML = "";
+  for (const id of Object.keys(CHILDREN)) {
+    const c = CHILDREN[id];
+    const g = getChildGrade(id);
+    const mastered = getArchive(id).length;
+    const gradeLabel = c.isDaddy ? "Advanced" : ("Grade " + g);
+    const btn = document.createElement("div");
+    btn.className = "profile-btn";
+    btn.onclick = () => selectChild(id);
+    btn.innerHTML = `
+      <span class="emoji">${c.emoji}</span>
+      <div class="name">${c.name}</div>
+      <div class="info">${gradeLabel} · ⭐ ${mastered}</div>
+    `;
+    grid.appendChild(btn);
+  }
+  // listen toggle state
+  const toggleEl = document.getElementById("listenToggle");
+  toggleEl.classList.toggle("on", !!state.listenMode);
+}
+
+function toggleListen() {
+  state.listenMode = !state.listenMode;
+  lsSet(LS.listenMode, state.listenMode);
+  document.getElementById("listenToggle").classList.toggle("on", state.listenMode);
+}
+
+function selectChild(id) {
+  state.multiplayer = null;
+  state.childId = id;
+  state.grade = getChildGrade(id);
+  lsSet(LS.lastChild, id);
+  nextWord();
+  if (state.listenMode) startListenMode();
+  else showWordScreen();
+}
+
+// ═══════════════════════════════════════════
+//  MULTIPLAYER
+// ═══════════════════════════════════════════
+let _mpSelected = new Set();
+function openMultiplayerSelect() {
+  _mpSelected = new Set();
+  const list = document.getElementById("mpPlayerList");
+  list.innerHTML = Object.keys(CHILDREN).map(id => {
+    const c = CHILDREN[id];
+    const g = getChildGrade(id);
+    const gradeLabel = c.isDaddy ? "Advanced" : ("Grade " + g);
+    return `<div class="player-check" id="mpRow-${id}" onclick="toggleMpPlayer('${id}')">
+      <div class="checkbox" id="mpBox-${id}">✓</div>
+      <div class="emoji">${c.emoji}</div>
+      <div>
+        <div class="pname">${c.name}</div>
+        <div class="pgrade">${gradeLabel}</div>
+      </div>
+    </div>`;
+  }).join("");
+  // Hide checkmark for unselected
+  Object.keys(CHILDREN).forEach(id => {
+    document.getElementById("mpBox-" + id).textContent = "";
+  });
+  document.getElementById("mpStartBtn").disabled = true;
+  showScreen("screen-mp-select");
+}
+
+function toggleMpPlayer(id) {
+  if (_mpSelected.has(id)) _mpSelected.delete(id);
+  else _mpSelected.add(id);
+  const row = document.getElementById("mpRow-" + id);
+  const box = document.getElementById("mpBox-" + id);
+  if (_mpSelected.has(id)) { row.classList.add("selected"); box.textContent = "✓"; }
+  else { row.classList.remove("selected"); box.textContent = ""; }
+  document.getElementById("mpStartBtn").disabled = _mpSelected.size < 2;
+}
+
+function startMultiplayer() {
+  if (_mpSelected.size < 2) return;
+  // Preserve selection order as insertion order of Set
+  const players = Array.from(_mpSelected);
+  state.multiplayer = { players, idx: 0 };
+  state.childId = players[0];
+  state.grade = getChildGrade(state.childId);
+  nextWord();
+  if (state.listenMode) startListenMode();
+  else showWordScreen();
+}
+
+function rotatePlayer() {
+  if (!state.multiplayer) return;
+  state.multiplayer.idx = (state.multiplayer.idx + 1) % state.multiplayer.players.length;
+  state.childId = state.multiplayer.players[state.multiplayer.idx];
+  state.grade = getChildGrade(state.childId);
+}
+
+function currentTurnHtml() {
+  if (!state.multiplayer) return "";
+  const mp = state.multiplayer;
+  const cur = CHILDREN[mp.players[mp.idx]];
+  const nextId = mp.players[(mp.idx + 1) % mp.players.length];
+  const nxt = CHILDREN[nextId];
+  return `${cur.emoji} <strong>${cur.name}'s turn</strong><div class="next">Next up: ${nxt.emoji} ${nxt.name}</div>`;
+}
+
+function updateTurnBanners() {
+  const html = currentTurnHtml();
+  const show = !!state.multiplayer;
+  ["wordTurnBanner","sentenceTurnBanner","defTurnBanner"].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = show ? "block" : "none";
+    el.innerHTML = html;
+  });
+}
+
+// ═══════════════════════════════════════════
+//  RENDER — WORD / SENTENCE / DEFINITION
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function showWordScreen() {
+  stopSpeaking();
+  if (state.listenTimer) { clearTimeout(state.listenTimer); state.listenTimer = null; }
+  if (!state.currentWord) return goProfile();
+  const c = CHILDREN[state.childId];
+  document.getElementById("wordChild").textContent = c.emoji + " " + c.name;
+  document.getElementById("wordGrade").textContent = c.isDaddy ? "Advanced" : ("Grade " + state.grade);
+  document.getElementById("bigWord").textContent = state.currentWord.w.toUpperCase();
+  document.getElementById("masteredCount").textContent = getArchive(state.childId).length;
+  updateTurnBanners();
+  showScreen("screen-word");
+}
+
+function showSentence() {
+  if (!state.currentWord) return;
+  if (state.currentWord.sentences.length === 0) {
+    alert("No sentences stored yet for this word. Tap 🔄 Refresh sentences on the home screen to request some.");
+    return;
+  }
+  advanceSentenceIndex();
+  const idx = state.seenSentences[state.seenSentences.length - 1];
+  const sentence = state.currentWord.sentences[idx];
+  const c = CHILDREN[state.childId];
+  document.getElementById("sentenceChild").textContent = c.emoji + " " + c.name;
+  document.getElementById("sentenceGrade").textContent = c.isDaddy ? "Advanced" : ("Grade " + state.grade);
+  document.getElementById("sentenceText").innerHTML = sentence;
+  document.getElementById("sentenceCounter").textContent =
+    "Sentence " + state.seenSentences.length + " of " + state.currentWord.sentences.length;
+  updateTurnBanners();
+  showScreen("screen-sentence");
+  persistSeen();
+}
+
+function nextSentence() { showSentence(); }
+
+function advanceSentenceIndex() {
+  const total = state.currentWord.sentences.length;
+  // Prefer unseen indices; if all seen, reset list
+  const seenSet = new Set(state.seenSentences);
+  const unseen = [];
+  for (let i = 0; i < total; i++) if (!seenSet.has(i)) unseen.push(i);
+  let pickIdx;
+  if (unseen.length > 0) {
+    pickIdx = unseen[Math.floor(Math.random() * unseen.length)];
+  } else {
+    // Cycle: clear local seen (but keep persisted cross-session memory)
+    state.seenSentences = [];
+    pickIdx = Math.floor(Math.random() * total);
+  }
+  state.seenSentences.push(pickIdx);
+}
+
+function persistSeen() {
+  if (!state.currentWord) return;
+  const map = getSeenMap(state.childId);
+  const w = state.currentWord.w.toLowerCase();
+  const prev = map[w] || [];
+  const last = state.seenSentences[state.seenSentences.length - 1];
+  if (!prev.includes(last)) prev.push(last);
+  map[w] = prev;
+  saveSeenMap(state.childId, map);
+}
+
+function showDefinition() {
+  if (!state.currentWord) return;
+  stopSpeaking();
+  const c = CHILDREN[state.childId];
+  document.getElementById("defChild").textContent = c.emoji + " " + c.name;
+  document.getElementById("defGrade").textContent = c.isDaddy ? "Advanced" : ("Grade " + state.grade);
+  document.getElementById("defWord").textContent = state.currentWord.w;
+  document.getElementById("defText").textContent = state.currentWord.d;
+  updateTurnBanners();
+  showScreen("screen-definition");
+}
+
+function nextWord() {
+  stopSpeaking();
+  if (!state.childId) return goProfile();
+  // Rotate to next player if in multiplayer mode (skip on very first call — state.currentWord is null)
+  if (state.multiplayer && state.currentWord) rotatePlayer();
+  const pick = pickNextWord(state.childId, state.grade);
+  if (!pick) {
+    alert("All words at this level are mastered! Great work. Tap ⭐ Mastered to bring some back into rotation, or a parent can bump to the next grade.");
+    goProfile();
+    return;
+  }
+  state.currentWord = pick;
+  state.currentWordIsCustom = !!pick.custom;
+  state.seenSentences = [];
+  // Preload previously-seen indices for long-term memory (still within sentence count)
+  const seenMap = getSeenMap(state.childId);
+  const prior = seenMap[pick.w.toLowerCase()] || [];
+  if (pick.sentences.length > 0 && prior.length >= pick.sentences.length) {
+    // All seen — clear to allow recycling
+    // (keep persisted map for refresh detection)
+  }
+  if (state.listenMode) startListenForWord();
+  else showWordScreen();
+}
+
+// ═══════════════════════════════════════════
+//  MASTERED
+// ═══════════════════════════════════════════
+function masterCurrentWord() {
+  if (!state.currentWord) return;
+  const w = state.currentWord.w.toLowerCase();
+  const arc = getArchive(state.childId);
+  if (!arc.includes(w)) arc.push(w);
+  setArchive(state.childId, arc);
+  // Promotion logic: count at current grade, bump when reaching threshold
+  let at = getAtGrade(state.childId) + 1;
+  if (at >= PROMOTE_THRESHOLD) {
+    const max = CHILDREN[state.childId].isDaddy ? 6 : 5;
+    if (state.grade < max) {
+      state.grade = state.grade + 1;
+      setChildGrade(state.childId, state.grade);
+      at = 0;
+      setTimeout(() => alert("🎉 " + CHILDREN[state.childId].name + " leveled up! Now working at " +
+        (CHILDREN[state.childId].isDaddy ? "Advanced" : ("Grade " + state.grade)) + "."), 50);
+    }
+  }
+  setAtGrade(state.childId, at);
+  nextWord();
+}
+
+function openMastered() {
+  const childId = state.childId;
+  const c = CHILDREN[childId];
+  document.getElementById("masteredTitle").textContent = "⭐ " + c.name + "'s Mastered Words";
+  const list = document.getElementById("masteredList");
+  const arc = getArchive(childId);
+  if (arc.length === 0) {
+    list.innerHTML = '<div class="empty">No mastered words yet. Tap "Got it! Mastered" on a definition screen to archive a word here.</div>';
+  } else {
+    list.innerHTML = arc.map((w, i) =>
+      `<div class="mastered-item">
+        <span class="mw">${escapeHtml(w)}</span>
+        <button class="btn primary small" onclick="returnToRotation(${i})">↩ Rotation</button>
+      </div>`
+    ).join("");
+  }
+  document.getElementById("masteredSub").textContent =
+    arc.length + " word" + (arc.length === 1 ? "" : "s") + " mastered. Shared with the Learning Hub.";
+  showScreen("screen-mastered");
+}
+
+function returnToRotation(index) {
+  const arc = getArchive(state.childId);
+  arc.splice(index, 1);
+  setArchive(state.childId, arc);
+  openMastered();
+}
+
+function goWordFromMastered() {
+  if (state.currentWord) showWordScreen();
+  else goProfile();
+}
+
+// ═══════════════════════════════════════════
+//  REFRESH SENTENCES SCREEN
+// ═══════════════════════════════════════════
+function openRefresh() {
+  const threshold = 7; // warn when a child has seen 7+ of 10 stored
+  const lines = [];
+  lines.push("Words Explorer v" + VERSION + " — Sentence Refresh Report");
+  lines.push("Generated: " + new Date().toISOString().slice(0, 10));
+  lines.push("");
+  for (const id of Object.keys(CHILDREN)) {
+    const seenMap = getSeenMap(id);
+    const studyWords = getStudyWords(id);
+    const running = [];
+    const custom = [];
+    for (const w of Object.keys(seenMap)) {
+      const hit = findPoolEntry(w);
+      const total = hit ? hit.entry.sentences.length : 0;
+      if (total === 0) continue;
+      if ((seenMap[w] || []).length >= threshold) {
+        running.push(w + " (" + (seenMap[w] || []).length + "/" + total + ")");
+      }
+    }
+    for (const w of studyWords) {
+      if (!findPoolEntry(w)) custom.push(w);
+    }
+    if (running.length === 0 && custom.length === 0) continue;
+    lines.push("## " + CHILDREN[id].name);
+    if (running.length) {
+      lines.push("Running low on sentences (add 10 more each):");
+      running.forEach(r => lines.push("  - " + r));
+    }
+    if (custom.length) {
+      lines.push("Custom words needing definition + 10 sentences:");
+      custom.forEach(c => lines.push("  - " + c));
+    }
+    lines.push("");
+  }
+  if (lines.length <= 3) lines.push("✅ Nothing to refresh yet. Keep learning!");
+  document.getElementById("refreshList").textContent = lines.join("\n");
+  showScreen("screen-refresh");
+}
+
+function copyRefreshList() {
+  const txt = document.getElementById("refreshList").textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(
+      () => alert("Copied. Paste it into a Claude chat and I'll regenerate the sentences."),
+      () => fallbackCopy(txt)
+    );
+  } else fallbackCopy(txt);
+}
+function fallbackCopy(txt) {
+  const ta = document.createElement("textarea");
+  ta.value = txt; document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); alert("Copied."); } catch(e) { alert("Copy failed — select the text manually."); }
+  document.body.removeChild(ta);
+}
+
+// ═══════════════════════════════════════════
+//  TTS
+// ═══════════════════════════════════════════
+function speak(text, opts = {}) {
+  if (!("speechSynthesis" in window)) return Promise.resolve();
+  return new Promise(resolve => {
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = opts.rate || 0.95;
+      u.pitch = opts.pitch || 1.0;
+      u.lang = "en-US";
+      u.onend = () => { state.speaking = false; resolve(); };
+      u.onerror = () => { state.speaking = false; resolve(); };
+      state.speaking = true;
+      window.speechSynthesis.speak(u);
+    } catch(e) { resolve(); }
+  });
+}
+function stopSpeaking() {
+  try { window.speechSynthesis.cancel(); } catch(e) {}
+  state.speaking = false;
+}
+function stripTags(html) { return html.replace(/<[^>]+>/g, ""); }
+function speakWord() { if (state.currentWord) speak(state.currentWord.w, { rate: 0.8 }); }
+function speakDefinition() { if (state.currentWord) speak(state.currentWord.w + ". " + state.currentWord.d); }
+function speakSentence() {
+  if (!state.currentWord) return;
+  const idx = state.seenSentences[state.seenSentences.length - 1];
+  if (idx === undefined) return;
+  speak(stripTags(state.currentWord.sentences[idx]));
+}
+
+// ═══════════════════════════════════════════
+//  LISTEN MODE
+// ═══════════════════════════════════════════
+function startListenMode() {
+  // Re-use word screen visuals but auto-advance TTS
+  showWordScreen();
+  startListenForWord();
+}
+async function startListenForWord() {
+  if (!state.listenMode || !state.currentWord) return;
+  showWordScreen();
+  const w = state.currentWord;
+  await speak(w.w, { rate: 0.75 });
+  await pause(400);
+  await speak(w.w + ". " + w.d, { rate: 0.95 });
+  await pause(500);
+  if (w.sentences.length > 0) {
+    // Pick up to 3 unseen sentences
+    const sentIndices = [];
+    while (sentIndices.length < 3 && sentIndices.length < w.sentences.length) {
+      advanceSentenceIndex();
+      sentIndices.push(state.seenSentences[state.seenSentences.length - 1]);
+      persistSeen();
+    }
+    for (const i of sentIndices) {
+      if (!state.listenMode) return;
+      await speak(stripTags(w.sentences[i]));
+      await pause(1200);
+    }
+  }
+  // Auto-advance to next word after a short pause
+  state.listenTimer = setTimeout(() => {
+    if (state.listenMode) nextWord();
+  }, 1500);
+}
+function pause(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════
+//  UTIL / NAV
+// ═══════════════════════════════════════════
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, ch => ({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[ch])); }
+
+function goProfile() {
+  stopSpeaking();
+  if (state.listenTimer) { clearTimeout(state.listenTimer); state.listenTimer = null; }
+  state.currentWord = null;
+  state.multiplayer = null;
+  renderProfileGrid();
+  showScreen("screen-profile");
+}
+
+function openHub() { window.location.href = "index.html"; }
+
+// ═══════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════
+function boot() {
+  document.getElementById("versionLabel").textContent = "v" + VERSION;
+  state.listenMode = !!lsGet(LS.listenMode, false);
+  renderProfileGrid();
+  checkForUpdate();
+  setInterval(checkForUpdate, 5 * 60 * 1000); // recheck every 5 min
+}
+boot();
+</script>
+</body>
+</html>
