@@ -108,6 +108,15 @@
     font-size: 14px; color: var(--text-dim);
   }
   .word-chip { background: var(--primary); color: #fff; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+  .grade-adjust { display: inline-flex; align-items: center; gap: 6px; }
+  .adj-btn {
+    background: var(--bg-alt); border: 1px solid var(--border);
+    color: var(--primary-dark); width: 28px; height: 28px;
+    border-radius: 50%; font-size: 12px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: inherit; padding: 0;
+  }
+  .adj-btn:active { background: var(--primary); color: #fff; }
   .big-word {
     font-size: clamp(42px, 11vw, 68px);
     font-weight: 900; color: var(--word);
@@ -251,7 +260,11 @@
     <div class="card" style="padding:14px 16px;">
       <div class="word-header">
         <span id="wordChild">👦 Logan</span>
-        <span class="word-chip" id="wordGrade">Grade 5</span>
+        <div class="grade-adjust">
+          <button class="adj-btn" onclick="bumpGrade(-1)" title="Easier words">▼</button>
+          <span class="word-chip" id="wordGrade">Grade 5</span>
+          <button class="adj-btn" onclick="bumpGrade(1)" title="Harder words">▲</button>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -273,7 +286,11 @@
     <div class="card" style="padding:14px 16px;">
       <div class="word-header">
         <span id="sentenceChild">👦 Logan</span>
-        <span class="word-chip" id="sentenceGrade">Grade 5</span>
+        <div class="grade-adjust">
+          <button class="adj-btn" onclick="bumpGrade(-1)" title="Easier words">▼</button>
+          <span class="word-chip" id="sentenceGrade">Grade 5</span>
+          <button class="adj-btn" onclick="bumpGrade(1)" title="Harder words">▲</button>
+        </div>
       </div>
     </div>
     <div class="sentence-box" id="sentenceText">...</div>
@@ -290,7 +307,11 @@
     <div class="card" style="padding:14px 16px;">
       <div class="word-header">
         <span id="defChild">👦 Logan</span>
-        <span class="word-chip" id="defGrade">Grade 5</span>
+        <div class="grade-adjust">
+          <button class="adj-btn" onclick="bumpGrade(-1)" title="Easier words">▼</button>
+          <span class="word-chip" id="defGrade">Grade 5</span>
+          <button class="adj-btn" onclick="bumpGrade(1)" title="Harder words">▲</button>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -341,7 +362,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.1";
+const VERSION = "1.2";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -1132,6 +1153,26 @@ function startMultiplayer() {
   else showWordScreen();
 }
 
+function bumpGrade(delta) {
+  if (!state.childId) return;
+  const isDaddy = CHILDREN[state.childId].isDaddy;
+  const max = isDaddy ? 6 : 5;
+  const min = 0;
+  const next = Math.max(min, Math.min(max, state.grade + delta));
+  if (next === state.grade) return;
+  state.grade = next;
+  setChildGrade(state.childId, next);
+  setAtGrade(state.childId, 0); // reset promotion counter on manual change
+  const label = isDaddy ? "Advanced" : ("Grade " + next);
+  // Update any visible grade chips
+  ["wordGrade","sentenceGrade","defGrade"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+  // Pick a new word at the new grade — don't rotate player in multiplayer
+  nextWord({ skipRotate: true });
+}
+
 function rotatePlayer() {
   if (!state.multiplayer) return;
   state.multiplayer.idx = (state.multiplayer.idx + 1) % state.multiplayer.players.length;
@@ -1241,11 +1282,12 @@ function showDefinition() {
   showScreen("screen-definition");
 }
 
-function nextWord() {
+function nextWord(opts) {
   stopSpeaking();
   if (!state.childId) return goProfile();
+  const skipRotate = opts && opts.skipRotate;
   // Rotate to next player if in multiplayer mode (skip on very first call — state.currentWord is null)
-  if (state.multiplayer && state.currentWord) rotatePlayer();
+  if (state.multiplayer && state.currentWord && !skipRotate) rotatePlayer();
   const pick = pickNextWord(state.childId, state.grade);
   if (!pick) {
     alert("All words at this level are mastered! Great work. Tap ⭐ Mastered to bring some back into rotation, or a parent can bump to the next grade.");
