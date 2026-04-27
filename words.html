@@ -63,6 +63,7 @@
   .btn.danger { background: var(--danger); color: #fff; }
   .btn.success { background: var(--success); color: #fff; }
   .btn.small { padding: 10px 14px; font-size: 14px; }
+  .btn.mastered-btn { margin-top: 18px; opacity: 0.85; max-width: 72%; margin-left: auto; margin-right: auto; display: block; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .row { display: flex; gap: 10px; }
@@ -262,18 +263,18 @@
       <div class="word-header">
         <span id="wordChild">👦 Logan</span>
         <div class="grade-adjust">
-          <button class="adj-btn" onclick="bumpGrade(-1)" title="Easier words">▼</button>
+          <button class="adj-btn" onclick="bumpDecile(-1)" title="Easier words">▼</button>
           <span class="word-chip" id="wordGrade">Grade 5</span>
-          <button class="adj-btn" onclick="bumpGrade(1)" title="Harder words">▲</button>
+          <button class="adj-btn" onclick="bumpDecile(1)" title="Harder words">▲</button>
         </div>
       </div>
     </div>
     <div class="card">
       <div class="big-word" id="bigWord">EXAMPLE</div>
       <button class="tts-btn" onclick="speakWord()">🔊 Hear the word</button>
-      <button class="btn primary" onclick="showDefinition()">📖 Show Definition</button>
-      <div style="height:10px;"></div>
       <button class="btn accent" onclick="showSentence()">💬 Show in a Sentence</button>
+      <div style="height:10px;"></div>
+      <button class="btn primary" onclick="showDefinition()">📖 Show Definition</button>
     </div>
     <div class="row">
       <button class="btn ghost small" onclick="goProfile()">← Back</button>
@@ -288,9 +289,9 @@
       <div class="word-header">
         <span id="sentenceChild">👦 Logan</span>
         <div class="grade-adjust">
-          <button class="adj-btn" onclick="bumpGrade(-1)" title="Easier words">▼</button>
+          <button class="adj-btn" onclick="bumpDecile(-1)" title="Easier words">▼</button>
           <span class="word-chip" id="sentenceGrade">Grade 5</span>
-          <button class="adj-btn" onclick="bumpGrade(1)" title="Harder words">▲</button>
+          <button class="adj-btn" onclick="bumpDecile(1)" title="Harder words">▲</button>
         </div>
       </div>
     </div>
@@ -309,9 +310,9 @@
       <div class="word-header">
         <span id="defChild">👦 Logan</span>
         <div class="grade-adjust">
-          <button class="adj-btn" onclick="bumpGrade(-1)" title="Easier words">▼</button>
+          <button class="adj-btn" onclick="bumpDecile(-1)" title="Easier words">▼</button>
           <span class="word-chip" id="defGrade">Grade 5</span>
-          <button class="adj-btn" onclick="bumpGrade(1)" title="Harder words">▲</button>
+          <button class="adj-btn" onclick="bumpDecile(1)" title="Harder words">▲</button>
         </div>
       </div>
     </div>
@@ -320,10 +321,10 @@
       <div class="def-box" id="defText">definition here</div>
     </div>
     <button class="tts-btn" onclick="speakDefinition()">🔊 Hear the definition</button>
-    <button class="btn success" onclick="masterCurrentWord()">⭐ Got it! Mastered</button>
     <button class="btn primary" onclick="nextWord()">➡ Next Word</button>
     <button class="btn accent" onclick="showSentence()">💬 Show in a Sentence</button>
     <button class="btn ghost small" onclick="showWordScreen()">← Back to Word</button>
+    <button class="btn success small mastered-btn" onclick="masterCurrentWord()">⭐ Too Easy — Mastered</button>
   </div>
 
   <!-- MASTERED SCREEN -->
@@ -363,7 +364,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.3";
+const VERSION = "1.4";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -393,7 +394,7 @@ const CHILDREN = {
   logan:     { name: "Logan",     emoji: "👦", info: "Grade 4 reading",    isDaddy: false, defaultGrade: 5 },
   cole:      { name: "Cole",      emoji: "🧒", info: "Grade 1",            isDaddy: false, defaultGrade: 1 },
   mackenzie: { name: "Mackenzie", emoji: "👧", info: "Kindergarten",       isDaddy: false, defaultGrade: 0 },
-  daddy:     { name: "Daddy",     emoji: "👨‍⚕️", info: "Advanced vocabulary", isDaddy: true,  defaultGrade: 6 },
+  daddy:     { name: "Daddy",     emoji: "👨‍⚕️", info: "Advanced vocabulary", isDaddy: true,  defaultGrade: 2 },
 };
 
 // ═══════════════════════════════════════════
@@ -844,8 +845,14 @@ const WORD_POOL = {
       "The <b>resilient</b> scientist tried again after each failure.",
       "Being <b>resilient</b> means you keep getting up."
     ]}
-  ],
-  6: [
+  ]
+};
+
+// ═══════════════════════════════════════════
+//  DADDY_POOL — advanced vocabulary, deciles 0-59 across 6 grades
+// ═══════════════════════════════════════════
+const DADDY_POOL = {
+  0: [
     { w:"ephemeral", d:"lasting for a very short time", sentences:[
       "Social media trends are often <b>ephemeral</b>.",
       "The beauty of a sunset is <b>ephemeral</b>.",
@@ -918,6 +925,376 @@ const WORD_POOL = {
       "The <b>surreptitious</b> hand signal passed the secret along.",
       "He made a <b>surreptitious</b> attempt to sneak a cookie before dinner."
     ]}
+  ],
+  1: [
+    { w:"gregarious", d:"enjoying being with other people, sociable", sentences:[
+      "The <b>gregarious</b> host made every guest feel welcome.",
+      "She has a <b>gregarious</b> personality and thrives at parties.",
+      "Not every doctor is <b>gregarious</b> — some prefer quiet consults.",
+      "His <b>gregarious</b> nature made him the natural team captain.",
+      "A <b>gregarious</b> dog needs plenty of time at the park.",
+      "Being <b>gregarious</b> can be exhausting for an introvert.",
+      "The <b>gregarious</b> new neighbor introduced herself to everyone on the block.",
+      "Even a <b>gregarious</b> speaker gets nervous before a big keynote.",
+      "Our staff room is full of <b>gregarious</b> chatter at lunchtime.",
+      "The <b>gregarious</b> retriever charmed every visitor at the rink."
+    ]},
+    { w:"prudent", d:"careful and wise in practical matters", sentences:[
+      "It was <b>prudent</b> of her to save money before the trip.",
+      "A <b>prudent</b> investor diversifies across several funds.",
+      "Taking snow tires off too early is rarely <b>prudent</b> in Ontario.",
+      "The <b>prudent</b> course is to order the imaging before the referral.",
+      "He made a <b>prudent</b> decision to decline the risky case.",
+      "A <b>prudent</b> manager keeps an emergency fund for slow quarters.",
+      "It is <b>prudent</b> to double-check the drug dose in pediatrics.",
+      "The <b>prudent</b> captain turned the ship back before the storm hit.",
+      "Financial planners preach <b>prudent</b> long-term thinking.",
+      "She felt it was <b>prudent</b> to get a second opinion."
+    ]},
+    { w:"eloquent", d:"fluent and persuasive in speaking or writing", sentences:[
+      "The <b>eloquent</b> speaker held the audience spellbound.",
+      "Her <b>eloquent</b> letter convinced the board to reconsider.",
+      "He gave an <b>eloquent</b> defense of his research proposal.",
+      "The judge's <b>eloquent</b> ruling was quoted in every newspaper.",
+      "Even an <b>eloquent</b> writer needs a good editor.",
+      "His silence was more <b>eloquent</b> than words could have been.",
+      "The politician delivered an <b>eloquent</b> concession speech.",
+      "She is known for her <b>eloquent</b> grand-rounds presentations.",
+      "A truly <b>eloquent</b> essay makes complex ideas feel simple.",
+      "The coach's <b>eloquent</b> locker-room talk rallied the team."
+    ]},
+    { w:"tenacious", d:"holding on firmly; persistent", sentences:[
+      "Her <b>tenacious</b> grip on the rope kept her from falling.",
+      "A <b>tenacious</b> reporter eventually uncovered the truth.",
+      "Only a <b>tenacious</b> runner finishes the ultramarathon.",
+      "The <b>tenacious</b> stain refused to come out of the shirt.",
+      "His <b>tenacious</b> pursuit of the diagnosis paid off.",
+      "Bureaucracies can be <b>tenacious</b> obstacles to reform.",
+      "The <b>tenacious</b> defender never let the striker get free.",
+      "Researchers must be <b>tenacious</b> when experiments keep failing.",
+      "She has a <b>tenacious</b> memory for clinical details.",
+      "A <b>tenacious</b> advocate stayed on the case for years."
+    ]},
+    { w:"pensive", d:"engaged in deep or serious thought", sentences:[
+      "He sat by the window looking <b>pensive</b>.",
+      "Her <b>pensive</b> expression suggested bad news.",
+      "After rounds he was in a <b>pensive</b> mood all afternoon.",
+      "The <b>pensive</b> painting shows a girl staring at a letter.",
+      "A <b>pensive</b> silence fell over the room.",
+      "He became <b>pensive</b> after reading the biopsy report.",
+      "Her <b>pensive</b> walk through the forest helped her decide.",
+      "The final chapter has a <b>pensive</b>, elegiac tone.",
+      "A <b>pensive</b> coffee break sometimes beats another meeting.",
+      "He was <b>pensive</b> for days after his mentor retired."
+    ]},
+    { w:"equivocal", d:"ambiguous, open to more than one interpretation", sentences:[
+      "The test results were <b>equivocal</b>, so we ordered further imaging.",
+      "Her <b>equivocal</b> answer did not reassure the committee.",
+      "An <b>equivocal</b> ECG should be compared to prior tracings.",
+      "The politician gave an <b>equivocal</b> response about the new policy.",
+      "We flagged the <b>equivocal</b> lab value for repeat testing.",
+      "His <b>equivocal</b> body language confused the interviewer.",
+      "An <b>equivocal</b> finding is never a green light for surgery.",
+      "She wrote an <b>equivocal</b> letter of reference at best.",
+      "The evidence was too <b>equivocal</b> to change management.",
+      "Radiologists carefully note <b>equivocal</b> features in their reports."
+    ]}
+  ],
+  2: [
+    { w:"magnanimous", d:"generous and forgiving, especially to a rival", sentences:[
+      "The <b>magnanimous</b> winner praised every other competitor.",
+      "It was <b>magnanimous</b> of him to apologize first.",
+      "Her <b>magnanimous</b> donation saved the community program.",
+      "A <b>magnanimous</b> boss gives credit and takes blame.",
+      "The <b>magnanimous</b> gesture ended a long-running feud.",
+      "Even a <b>magnanimous</b> leader has limits to their patience.",
+      "His <b>magnanimous</b> spirit made him beloved in the ward.",
+      "A <b>magnanimous</b> letter from the loser set the tone for recovery.",
+      "She was <b>magnanimous</b> in defeat, congratulating her opponent warmly.",
+      "The <b>magnanimous</b> verdict included significant community programs."
+    ]},
+    { w:"sanguine", d:"optimistic or positive, especially in a bad situation", sentences:[
+      "She remained <b>sanguine</b> about the project's chances.",
+      "Despite the results, he stayed <b>sanguine</b> about the treatment plan.",
+      "The CEO was <b>sanguine</b> about the quarter's prospects.",
+      "A <b>sanguine</b> outlook helps patients through long recoveries.",
+      "It is hard to be <b>sanguine</b> after three failed transplants.",
+      "The coach gave a <b>sanguine</b> assessment at halftime.",
+      "Analysts are <b>sanguine</b> on the company's long-term fundamentals.",
+      "She has a <b>sanguine</b> temperament that weathers setbacks well.",
+      "His <b>sanguine</b> tone reassured the worried residents.",
+      "I am not <b>sanguine</b> about finishing by Friday."
+    ]},
+    { w:"phlegmatic", d:"calm, unemotional, hard to ruffle", sentences:[
+      "The <b>phlegmatic</b> goalie seemed unfazed by the crowd noise.",
+      "Our charge nurse is remarkably <b>phlegmatic</b> during a code.",
+      "A <b>phlegmatic</b> attitude helps trauma teams function.",
+      "His <b>phlegmatic</b> response surprised those expecting anger.",
+      "The British are sometimes stereotyped as <b>phlegmatic</b>.",
+      "She delivered the <b>phlegmatic</b> report without inflection.",
+      "A <b>phlegmatic</b> surgeon makes steady decisions under pressure.",
+      "Even a <b>phlegmatic</b> pilot raised an eyebrow at that turbulence.",
+      "The dog's <b>phlegmatic</b> reaction to fireworks impressed the trainer.",
+      "Being <b>phlegmatic</b> is an asset in emergency medicine."
+    ]},
+    { w:"truculent", d:"aggressively defiant or hostile", sentences:[
+      "The <b>truculent</b> patient refused all attempts at IV access.",
+      "His <b>truculent</b> tone derailed the negotiation.",
+      "A <b>truculent</b> crowd gathered outside the courthouse.",
+      "She had a <b>truculent</b> reputation in committee meetings.",
+      "The <b>truculent</b> teenager slammed the door and left.",
+      "Even the most <b>truculent</b> critics had to admit the film's craft.",
+      "A <b>truculent</b> reply to reviewers is rarely a good idea.",
+      "The <b>truculent</b> competitor challenged every official's call.",
+      "His <b>truculent</b> manner masked genuine anxiety.",
+      "The <b>truculent</b> negotiator walked out of the meeting twice."
+    ]},
+    { w:"recalcitrant", d:"stubbornly resistant to authority or control", sentences:[
+      "The <b>recalcitrant</b> dog refused to come in from the rain.",
+      "A <b>recalcitrant</b> infection may require longer therapy.",
+      "He was known as a <b>recalcitrant</b> voice on the committee.",
+      "The <b>recalcitrant</b> bolt needed penetrating oil before it budged.",
+      "A <b>recalcitrant</b> arrhythmia sometimes requires ablation.",
+      "Teachers learn strategies for the <b>recalcitrant</b> student.",
+      "The <b>recalcitrant</b> witness was held in contempt.",
+      "Treating <b>recalcitrant</b> eczema requires patience and layered care.",
+      "A <b>recalcitrant</b> cough persisted for eight weeks.",
+      "Even <b>recalcitrant</b> negotiators come around with the right incentive."
+    ]},
+    { w:"idiosyncratic", d:"peculiar or distinctive to an individual", sentences:[
+      "Her <b>idiosyncratic</b> filing system baffles everyone else.",
+      "The composer had an <b>idiosyncratic</b> approach to harmony.",
+      "His <b>idiosyncratic</b> exam technique still somehow works.",
+      "The novel's <b>idiosyncratic</b> voice either charms or alienates readers.",
+      "Every clinician develops <b>idiosyncratic</b> shorthand in their notes.",
+      "The dog's <b>idiosyncratic</b> bark sounds like a yodel.",
+      "An <b>idiosyncratic</b> reaction can occur even with low-risk drugs.",
+      "She has an <b>idiosyncratic</b> coffee order that no barista remembers.",
+      "The team tolerates his <b>idiosyncratic</b> coaching style because it wins.",
+      "His <b>idiosyncratic</b> handwriting looks like no one else's."
+    ]}
+  ],
+  3: [
+    { w:"mendacious", d:"not telling the truth; dishonest", sentences:[
+      "The <b>mendacious</b> witness contradicted herself three times.",
+      "His <b>mendacious</b> social media posts went viral anyway.",
+      "A <b>mendacious</b> insurance claim can trigger a fraud investigation.",
+      "The <b>mendacious</b> campaign ad was pulled after fact-checkers complained.",
+      "She could spot a <b>mendacious</b> history from the first sentence.",
+      "Children learn early that <b>mendacious</b> answers create more trouble.",
+      "The court dismissed the <b>mendacious</b> affidavit.",
+      "A <b>mendacious</b> resume is a fast route to being fired.",
+      "Historians labeled the regime's statements <b>mendacious</b> at best.",
+      "A chart full of <b>mendacious</b> details can endanger patients."
+    ]},
+    { w:"pernicious", d:"having a harmful effect, especially in a gradual or subtle way", sentences:[
+      "Misinformation has a <b>pernicious</b> effect on public trust.",
+      "A <b>pernicious</b> rumor can damage a career for years.",
+      "Left untreated, <b>pernicious</b> anemia causes neurological damage.",
+      "The <b>pernicious</b> culture of burnout haunts many hospitals.",
+      "Sugar's <b>pernicious</b> metabolic effects compound over decades.",
+      "A <b>pernicious</b> bias sneaks into otherwise thoughtful research.",
+      "The documentary exposed the <b>pernicious</b> marketing of infant formula.",
+      "Social media's <b>pernicious</b> design exploits dopamine feedback.",
+      "The <b>pernicious</b> influence of the lobbyists distorted the bill.",
+      "Even low-level chronic stress has <b>pernicious</b> long-term effects."
+    ]},
+    { w:"obsequious", d:"excessively eager to please, subservient", sentences:[
+      "The <b>obsequious</b> waiter hovered throughout the meal.",
+      "His <b>obsequious</b> emails to the boss made colleagues roll their eyes.",
+      "An <b>obsequious</b> compliment loses all credibility.",
+      "The new intern's <b>obsequious</b> manner wore thin quickly.",
+      "Board members tire of <b>obsequious</b> CEOs.",
+      "Her <b>obsequious</b> bows made the diplomat uncomfortable.",
+      "Avoid <b>obsequious</b> phrasing in your cover letter.",
+      "The <b>obsequious</b> courtier was mocked in the play.",
+      "Dogs sometimes confuse <b>obsequious</b> behavior with genuine affection.",
+      "An <b>obsequious</b> assistant rarely challenges bad decisions."
+    ]},
+    { w:"vehement", d:"showing strong feeling, forceful or passionate", sentences:[
+      "She gave a <b>vehement</b> defense of her research methodology.",
+      "His <b>vehement</b> objection ended the discussion.",
+      "A <b>vehement</b> denial is not the same as evidence.",
+      "The crowd's <b>vehement</b> cheering shook the stadium.",
+      "Her <b>vehement</b> opposition to the policy surprised everyone.",
+      "A <b>vehement</b> argument broke out over the coach's decision.",
+      "The lawyer gave a <b>vehement</b> closing argument.",
+      "His <b>vehement</b> tone convinced no one.",
+      "Few issues provoke <b>vehement</b> debate like vaccines and masks.",
+      "A <b>vehement</b> refusal can sometimes be reconsidered later."
+    ]},
+    { w:"pusillanimous", d:"showing a lack of courage, cowardly", sentences:[
+      "His <b>pusillanimous</b> retreat from the debate disappointed supporters.",
+      "The editorial called the response <b>pusillanimous</b>.",
+      "A <b>pusillanimous</b> leader avoids every hard decision.",
+      "The general refused to be remembered as <b>pusillanimous</b>.",
+      "Her <b>pusillanimous</b> silence at the meeting was telling.",
+      "History rarely forgives <b>pusillanimous</b> compromise with injustice.",
+      "The company's <b>pusillanimous</b> apology satisfied no one.",
+      "A <b>pusillanimous</b> decision today creates bigger problems tomorrow.",
+      "He was accused of <b>pusillanimous</b> conduct in the crisis.",
+      "Even a <b>pusillanimous</b> gesture is better than outright betrayal."
+    ]},
+    { w:"indefatigable", d:"tireless, never seeming to get tired", sentences:[
+      "The <b>indefatigable</b> volunteer worked every weekend of the campaign.",
+      "An <b>indefatigable</b> ER nurse can be a unit's backbone.",
+      "Her <b>indefatigable</b> research yielded three major papers.",
+      "The <b>indefatigable</b> coach ran extra drills after practice.",
+      "Marie Curie was an <b>indefatigable</b> investigator.",
+      "His <b>indefatigable</b> optimism sustained the team.",
+      "The <b>indefatigable</b> dog retrieved the ball a hundred times.",
+      "She is an <b>indefatigable</b> advocate for patients' rights.",
+      "The <b>indefatigable</b> mountaineer reached every summit she attempted.",
+      "An <b>indefatigable</b> editor catches what others miss."
+    ]}
+  ],
+  4: [
+    { w:"perspicacious", d:"having keen insight, mentally sharp", sentences:[
+      "Her <b>perspicacious</b> comments cut to the heart of the matter.",
+      "A <b>perspicacious</b> clinician noticed the subtle gait abnormality.",
+      "His <b>perspicacious</b> question silenced the entire panel.",
+      "The <b>perspicacious</b> detective solved the case in one afternoon.",
+      "A <b>perspicacious</b> reader catches foreshadowing the first time through.",
+      "Her <b>perspicacious</b> analysis reshaped the department's strategy.",
+      "A <b>perspicacious</b> mentor can see your blind spots.",
+      "His <b>perspicacious</b> edits made every paragraph tighter.",
+      "The <b>perspicacious</b> negotiator sensed the opening immediately.",
+      "Being <b>perspicacious</b> is not the same as being cynical."
+    ]},
+    { w:"rapacious", d:"aggressively greedy or grasping", sentences:[
+      "The <b>rapacious</b> hedge fund stripped the company of assets.",
+      "A <b>rapacious</b> landlord raised rents every year.",
+      "History is full of <b>rapacious</b> empires.",
+      "The <b>rapacious</b> developer demolished the old neighborhood.",
+      "A <b>rapacious</b> appetite for attention drives some political careers.",
+      "Critics called the deal <b>rapacious</b> and predatory.",
+      "The <b>rapacious</b> wolf in the folk tale targets the smallest goats.",
+      "A <b>rapacious</b> pricing scheme backfired after consumer outcry.",
+      "His <b>rapacious</b> ambition alienated even his allies.",
+      "The <b>rapacious</b> fishing fleet emptied the bay within a season."
+    ]},
+    { w:"ineffable", d:"too great or extreme to be expressed in words", sentences:[
+      "She wrote about the <b>ineffable</b> beauty of the Arctic dawn.",
+      "There is an <b>ineffable</b> joy in a child's first laugh.",
+      "The documentary captured the <b>ineffable</b> sorrow of the refugees.",
+      "Grief has an <b>ineffable</b> quality that changes everyone differently.",
+      "The musician chased an <b>ineffable</b> sound for decades.",
+      "He felt an <b>ineffable</b> peace at the summit.",
+      "An <b>ineffable</b> bond formed between the rescuer and the rescued dog.",
+      "The painting has an <b>ineffable</b> presence you only feel in person.",
+      "Some patients describe an <b>ineffable</b> sense that something is wrong.",
+      "The sunset over the mountain was simply <b>ineffable</b>."
+    ]},
+    { w:"vituperative", d:"bitter and abusive in language", sentences:[
+      "His <b>vituperative</b> review sparked an online feud.",
+      "The <b>vituperative</b> exchange filled ten pages of transcript.",
+      "A <b>vituperative</b> editorial rarely persuades new readers.",
+      "Her <b>vituperative</b> resignation letter went viral.",
+      "The lawyer's <b>vituperative</b> closing was admonished by the judge.",
+      "Social media amplifies <b>vituperative</b> commentary.",
+      "A <b>vituperative</b> email sent at 2 AM is always a mistake.",
+      "The senator's <b>vituperative</b> speech ended all hope of compromise.",
+      "Critics grew <b>vituperative</b> after the sequel disappointed.",
+      "A <b>vituperative</b> rant is not the same as a strong argument."
+    ]},
+    { w:"acquiescent", d:"accepting without protest; compliant", sentences:[
+      "She gave an <b>acquiescent</b> nod even though she disagreed.",
+      "The <b>acquiescent</b> board approved every proposal unchanged.",
+      "His <b>acquiescent</b> silence was mistaken for agreement.",
+      "An <b>acquiescent</b> patient may still harbor doubts.",
+      "The <b>acquiescent</b> staff never pushed back on the new policy.",
+      "A manager who wants <b>acquiescent</b> staff will never get real feedback.",
+      "Her <b>acquiescent</b> smile hid her plans to transfer.",
+      "An <b>acquiescent</b> reader accepts whatever the author claims.",
+      "His <b>acquiescent</b> shrug ended the debate.",
+      "The <b>acquiescent</b> jury returned the verdict in under an hour."
+    ]},
+    { w:"antediluvian", d:"extremely old-fashioned or outdated", sentences:[
+      "The office still uses <b>antediluvian</b> fax machines for referrals.",
+      "His <b>antediluvian</b> views on gender surprised the younger staff.",
+      "The <b>antediluvian</b> software crashed during the demo.",
+      "Some hospital charting systems feel <b>antediluvian</b> to newcomers.",
+      "An <b>antediluvian</b> policy forbade even discussing the topic.",
+      "That phone is so <b>antediluvian</b> it lacks a camera.",
+      "The pub's <b>antediluvian</b> charm was half its appeal.",
+      "An <b>antediluvian</b> engine block weighed a quarter-ton.",
+      "Her <b>antediluvian</b> typewriter still produces perfect manuscripts.",
+      "The critic dismissed the film's plot as <b>antediluvian</b>."
+    ]}
+  ],
+  5: [
+    { w:"apocryphal", d:"of doubtful authenticity, though widely told", sentences:[
+      "That famous quote is probably <b>apocryphal</b>.",
+      "An <b>apocryphal</b> story about Einstein keeps circulating online.",
+      "The <b>apocryphal</b> origin of the recipe doesn't match the records.",
+      "Historians dismiss the meeting as <b>apocryphal</b>.",
+      "A good lecture separates the <b>apocryphal</b> from the verifiable.",
+      "Many medical adages are <b>apocryphal</b> but memorable.",
+      "The <b>apocryphal</b> battle never appeared in any primary source.",
+      "Her <b>apocryphal</b> anecdote about the dean got a laugh anyway.",
+      "An <b>apocryphal</b> tale is harder to dislodge than a real one.",
+      "The <b>apocryphal</b> warning has outlived the circumstances that spawned it."
+    ]},
+    { w:"bellicose", d:"aggressive or eager to fight", sentences:[
+      "His <b>bellicose</b> rhetoric alarmed the allied nations.",
+      "A <b>bellicose</b> neighbor turned every fence dispute into a crisis.",
+      "The senator's <b>bellicose</b> speech made headlines overnight.",
+      "Their <b>bellicose</b> coach drew technical fouls every game.",
+      "A <b>bellicose</b> tone in negotiations usually backfires.",
+      "She softened her <b>bellicose</b> opening once the stakes became clear.",
+      "The editorial accused the regime of <b>bellicose</b> posturing.",
+      "A <b>bellicose</b> email is almost never the right play.",
+      "His <b>bellicose</b> stance on tariffs rattled the markets.",
+      "The country's <b>bellicose</b> history made diplomacy difficult."
+    ]},
+    { w:"deleterious", d:"causing harm or damage", sentences:[
+      "Chronic sleep loss has <b>deleterious</b> effects on cognition.",
+      "The policy had <b>deleterious</b> consequences for small clinics.",
+      "<b>Deleterious</b> mutations are what cancer genetics tries to identify.",
+      "The drug's <b>deleterious</b> interaction with warfarin was well documented.",
+      "Excess screen time may be <b>deleterious</b> to toddler language development.",
+      "The <b>deleterious</b> effects of the budget cuts took years to surface.",
+      "A <b>deleterious</b> mold spread through the old files.",
+      "Sitting all day is <b>deleterious</b> to both back and mood.",
+      "The report flagged several <b>deleterious</b> unintended consequences.",
+      "Lead exposure has <b>deleterious</b> effects on developing brains."
+    ]},
+    { w:"grandiloquent", d:"pompous or extravagant in language or style", sentences:[
+      "His <b>grandiloquent</b> speech earned polite applause and little else.",
+      "A <b>grandiloquent</b> memo rarely survives the committee's redlining.",
+      "The <b>grandiloquent</b> title did not match the slim pamphlet inside.",
+      "Her <b>grandiloquent</b> grant application needed aggressive editing.",
+      "Avoid <b>grandiloquent</b> language in a discharge summary.",
+      "The <b>grandiloquent</b> architect lectured the board for an hour.",
+      "<b>Grandiloquent</b> promises make patients wary.",
+      "A <b>grandiloquent</b> introduction cannot save a weak paper.",
+      "His <b>grandiloquent</b> toast embarrassed even the bride.",
+      "The novel's <b>grandiloquent</b> prose felt dated by chapter three."
+    ]},
+    { w:"inveterate", d:"long-established and unlikely to change; habitual", sentences:[
+      "An <b>inveterate</b> gambler needs more than willpower to quit.",
+      "She is an <b>inveterate</b> reader of medical mysteries.",
+      "His <b>inveterate</b> optimism survived every disappointment.",
+      "The <b>inveterate</b> smoker finally quit after his first MI.",
+      "I am an <b>inveterate</b> list-maker before every trip.",
+      "Her <b>inveterate</b> habit of fact-checking saved us more than once.",
+      "An <b>inveterate</b> procrastinator struggles to finish dissertations.",
+      "The <b>inveterate</b> traveler had stamps from fifty countries.",
+      "His <b>inveterate</b> distrust of cats was lifelong.",
+      "<b>Inveterate</b> habits yield only to deliberate replacement."
+    ]},
+    { w:"sesquipedalian", d:"given to using long words", sentences:[
+      "His <b>sesquipedalian</b> writing style slowed every committee meeting.",
+      "Critics called the novel <b>sesquipedalian</b> to its detriment.",
+      "A <b>sesquipedalian</b> style rarely improves clinical documentation.",
+      "The lecturer's <b>sesquipedalian</b> vocabulary alienated undergraduates.",
+      "Even a <b>sesquipedalian</b> can write plainly when the stakes require it.",
+      "A <b>sesquipedalian</b> review article is every resident's nightmare.",
+      "His editor begged him to tone down his <b>sesquipedalian</b> tendencies.",
+      "The word <b>sesquipedalian</b> is itself beautifully sesquipedalian.",
+      "A <b>sesquipedalian</b> opening paragraph scares readers off.",
+      "She cultivated a <b>sesquipedalian</b> style in her literary essays."
+    ]}
   ]
 };
 
@@ -926,7 +1303,7 @@ const WORD_POOL = {
 // ═══════════════════════════════════════════
 let state = {
   childId: null,
-  grade: null,           // 0-6
+  decile: null,          // 0-59 (kids), 0-59 (Daddy)
   currentWord: null,     // { w, d, sentences[] }
   currentWordIsCustom: false,
   seenSentences: [],     // indices of sentences shown for currentWord in this session
@@ -939,16 +1316,18 @@ let state = {
 const LS = {
   lastChild:    "words_lastChild",
   listenMode:   "words_listenMode",
-  grade:        (c) => "words_grade_" + c,
-  atGrade:      (c) => "words_atGrade_" + c,
-  sentenceSeen: (c) => "words_sentSeen_" + c,  // { word: [seenIdxArr] }
-  archive:      (c) => "homuth_archive_" + c,   // SHARED with hub
-  studyWords:   (c) => "homuth_words_" + c,     // SHARED with hub
+  grade:        (c) => "words_grade_" + c,       // legacy (v1.3 and prior) — read-only migration
+  decile:       (c) => "words_decile_" + c,      // new in v1.4 (0-59)
+  atGrade:      (c) => "words_atGrade_" + c,     // promotion counter (re-used for per-decile)
+  sentenceSeen: (c) => "words_sentSeen_" + c,    // { word: [seenIdxArr] }
+  archive:      (c) => "homuth_archive_" + c,    // SHARED with hub
+  studyWords:   (c) => "homuth_words_" + c,      // SHARED with hub
   hubState:     "homuth_learning",               // read-only
-  recentWords:  (c) => "words_recent_" + c,     // [recent word strings for anti-repeat]
+  recentWords:  (c) => "words_recent_" + c,      // [recent word strings for anti-repeat]
 };
 
-const PROMOTE_THRESHOLD = 10;
+const PROMOTE_THRESHOLD_KID   = 10;  // kids move up 1 decile per 10 mastered
+const PROMOTE_THRESHOLD_DADDY = 15;  // Daddy moves up 1 decile per 15 mastered
 
 // ═══════════════════════════════════════════
 //  PERSISTENCE HELPERS
@@ -976,28 +1355,45 @@ function pushRecentWord(childId, w) {
   lsSet(LS.recentWords(childId), arr);
 }
 
-function getChildGrade(childId) {
-  // 1. Stored grade from this app
-  const stored = lsGet(LS.grade(childId), null);
-  if (stored !== null) return stored;
-  // 2. Read from hub's english_focused decile
+function clampDecile(d) { return Math.max(0, Math.min(59, d | 0)); }
+function decileToGrade(d) { return Math.max(0, Math.min(5, Math.floor(d / 10))); }
+function subtierForDecile(d) {
+  // within grade (d % 10): 0-3 = low, 4-6 = medium, 7-9 = high
+  const r = d % 10;
+  if (r <= 3) return "low";
+  if (r <= 6) return "mid";
+  return "high";
+}
+
+function getChildDecile(childId) {
+  // 1. Stored decile from this app (v1.4+)
+  const stored = lsGet(LS.decile(childId), null);
+  if (typeof stored === "number") return clampDecile(stored);
+  // 2. Migrate legacy grade storage (v1.3 and earlier)
+  const legacyGrade = lsGet(LS.grade(childId), null);
+  if (typeof legacyGrade === "number") {
+    const migrated = clampDecile(legacyGrade * 10 + 5);
+    lsSet(LS.decile(childId), migrated);
+    return migrated;
+  }
+  // 3. Read from hub's english_distracted decile
   try {
     const hub = JSON.parse(localStorage.getItem(LS.hubState) || "{}");
     const session = hub.sessions && hub.sessions[childId];
     if (session && session.levels) {
-      const decile = session.levels.english_focused !== undefined
-        ? session.levels.english_focused
-        : session.levels.english;
-      if (typeof decile === "number") {
-        const grade = Math.max(0, Math.min(5, Math.floor(decile / 10)));
-        return grade;
-      }
+      const d = session.levels.english_distracted !== undefined
+        ? session.levels.english_distracted
+        : (session.levels.english_focused !== undefined
+            ? session.levels.english_focused
+            : session.levels.english);
+      if (typeof d === "number") return clampDecile(d);
     }
   } catch(e) {}
-  // 3. Default per child
-  return CHILDREN[childId].defaultGrade;
+  // 4. Default per child (defaultGrade is 0-5, map to middle of that grade)
+  const dg = (CHILDREN[childId].defaultGrade || 0);
+  return clampDecile(dg * 10 + 5);
 }
-function setChildGrade(childId, grade) { lsSet(LS.grade(childId), grade); }
+function setChildDecile(childId, d) { lsSet(LS.decile(childId), clampDecile(d)); }
 function getAtGrade(childId) { return lsGet(LS.atGrade(childId), 0); }
 function setAtGrade(childId, n) { lsSet(LS.atGrade(childId), n); }
 
@@ -1008,33 +1404,61 @@ function findPoolEntry(word) {
   const w = (word || "").toLowerCase();
   for (const g of Object.keys(WORD_POOL)) {
     const hit = WORD_POOL[g].find(e => e.w.toLowerCase() === w);
-    if (hit) return { entry: hit, grade: +g };
+    if (hit) return { entry: hit, grade: +g, source: "kid" };
+  }
+  for (const g of Object.keys(DADDY_POOL)) {
+    const hit = DADDY_POOL[g].find(e => e.w.toLowerCase() === w);
+    if (hit) return { entry: hit, grade: +g, source: "daddy" };
   }
   return null;
 }
 
-function buildActivePool(childId, grade) {
-  // Base grade pool + adjacent grades (grade-1 as review, grade+1 as stretch)
-  // All filtered by archive (mastered words excluded)
+// Slice a flat grade array into low/mid/high thirds
+function subPoolForTier(arr, tier) {
+  if (!arr || arr.length === 0) return [];
+  const n = arr.length;
+  const third = Math.ceil(n / 3);
+  if (tier === "low")  return arr.slice(0, third);
+  if (tier === "mid")  return arr.slice(third, 2 * third);
+  return arr.slice(2 * third); // high
+}
+
+function buildActivePool(childId, decile) {
+  // Use DADDY_POOL for Daddy, WORD_POOL for kids.
+  // Base = current grade & subtier. Review = previous subtier (within same grade, or last subtier of prev grade).
+  // Stretch = next subtier similarly. Archive-filtered.
+  const isDaddy = !!CHILDREN[childId].isDaddy;
+  const POOL = isDaddy ? DADDY_POOL : WORD_POOL;
   const archive = new Set(getArchive(childId).map(s => s.toLowerCase()));
   const pool = [];
   const seenW = new Set();
-  const addGrade = (g) => {
-    if (!WORD_POOL[g]) return;
-    for (const e of WORD_POOL[g]) {
+
+  const addSlice = (g, tier) => {
+    if (!POOL[g]) return;
+    const sub = subPoolForTier(POOL[g], tier);
+    for (const e of sub) {
       const wl = e.w.toLowerCase();
-      if (archive.has(wl)) continue;
-      if (seenW.has(wl)) continue;
+      if (archive.has(wl) || seenW.has(wl)) continue;
       seenW.add(wl);
-      pool.push({ ...e, _grade: g, custom: false });
+      pool.push({ ...e, _grade: g, _tier: tier, custom: false });
     }
   };
-  addGrade(grade);
-  if (grade > 0) addGrade(grade - 1);
-  if (WORD_POOL[grade + 1]) addGrade(grade + 1);
 
-  // Add child's custom study words that HAVE pool entries (with sentences)
-  // Custom words without sentences: include with custom flag (sentence button will warn)
+  const grade = decileToGrade(decile);
+  const tier = subtierForDecile(decile);
+  const tierOrder = ["low", "mid", "high"];
+  const tIdx = tierOrder.indexOf(tier);
+
+  // Base — current grade/tier
+  addSlice(grade, tier);
+  // Review — previous tier
+  if (tIdx > 0) addSlice(grade, tierOrder[tIdx - 1]);
+  else if (grade > 0) addSlice(grade - 1, "high");
+  // Stretch — next tier
+  if (tIdx < 2) addSlice(grade, tierOrder[tIdx + 1]);
+  else if (POOL[grade + 1]) addSlice(grade + 1, "low");
+
+  // Custom study words
   const custom = getStudyWords(childId);
   for (const raw of custom) {
     const wl = (raw || "").toLowerCase();
@@ -1042,17 +1466,17 @@ function buildActivePool(childId, grade) {
     const hit = findPoolEntry(wl);
     if (hit) {
       seenW.add(wl);
-      pool.push({ ...hit.entry, _grade: hit.grade, custom: false });
+      pool.push({ ...hit.entry, _grade: hit.grade, _tier: tier, custom: false });
     } else {
       seenW.add(wl);
-      pool.push({ w: wl, d: "(No stored definition — tap Refresh to request one.)", sentences: [], _grade: grade, custom: true });
+      pool.push({ w: wl, d: "(No stored definition — tap Refresh to request one.)", sentences: [], _grade: grade, _tier: tier, custom: true });
     }
   }
   return pool;
 }
 
-function pickNextWord(childId, grade) {
-  const pool = buildActivePool(childId, grade);
+function pickNextWord(childId, decile) {
+  const pool = buildActivePool(childId, decile);
   if (pool.length === 0) return null;
   const recent = new Set(getRecentWords(childId).map(s => s.toLowerCase()));
   let fresh = pool.filter(e => !recent.has(e.w.toLowerCase()));
@@ -1065,14 +1489,24 @@ function pickNextWord(childId, grade) {
 // ═══════════════════════════════════════════
 //  RENDER — PROFILE
 // ═══════════════════════════════════════════
+// Display helper: decile → human label ("Grade X.Y" for kids, "Advanced Lvl N" for Daddy)
+function decileLabel(childId, decile) {
+  const c = CHILDREN[childId];
+  const d = clampDecile(decile);
+  if (c.isDaddy) return "Advanced Lvl " + (d + 1);
+  const g = decileToGrade(d);
+  const tenths = d % 10;
+  return "Grade " + g + "." + tenths;
+}
+
 function renderProfileGrid() {
   const grid = document.getElementById("profileGrid");
   grid.innerHTML = "";
   for (const id of Object.keys(CHILDREN)) {
     const c = CHILDREN[id];
-    const g = getChildGrade(id);
+    const d = getChildDecile(id);
     const mastered = getArchive(id).length;
-    const gradeLabel = c.isDaddy ? "Advanced" : ("Grade " + g);
+    const gradeLabel = decileLabel(id, d);
     const btn = document.createElement("div");
     btn.className = "profile-btn";
     btn.onclick = () => selectChild(id);
@@ -1097,7 +1531,7 @@ function toggleListen() {
 function selectChild(id) {
   state.multiplayer = null;
   state.childId = id;
-  state.grade = getChildGrade(id);
+  state.decile = getChildDecile(id);
   lsSet(LS.lastChild, id);
   nextWord();
   if (state.listenMode) startListenMode();
@@ -1113,8 +1547,8 @@ function openMultiplayerSelect() {
   const list = document.getElementById("mpPlayerList");
   list.innerHTML = Object.keys(CHILDREN).map(id => {
     const c = CHILDREN[id];
-    const g = getChildGrade(id);
-    const gradeLabel = c.isDaddy ? "Advanced" : ("Grade " + g);
+    const d = getChildDecile(id);
+    const gradeLabel = decileLabel(id, d);
     return `<div class="player-check" id="mpRow-${id}" onclick="toggleMpPlayer('${id}')">
       <div class="checkbox" id="mpBox-${id}">✓</div>
       <div class="emoji">${c.emoji}</div>
@@ -1148,29 +1582,26 @@ function startMultiplayer() {
   const players = Array.from(_mpSelected);
   state.multiplayer = { players, idx: 0 };
   state.childId = players[0];
-  state.grade = getChildGrade(state.childId);
+  state.decile = getChildDecile(state.childId);
   nextWord();
   if (state.listenMode) startListenMode();
   else showWordScreen();
 }
 
-function bumpGrade(delta) {
+function bumpDecile(delta) {
   if (!state.childId) return;
-  const isDaddy = CHILDREN[state.childId].isDaddy;
-  const max = isDaddy ? 6 : 5;
-  const min = 0;
-  const next = Math.max(min, Math.min(max, state.grade + delta));
-  if (next === state.grade) return;
-  state.grade = next;
-  setChildGrade(state.childId, next);
+  // delta in deciles (±1 = one decile step; manual ▼/▲ buttons use ±3 for a noticeable jump)
+  const next = clampDecile((state.decile || 0) + delta);
+  if (next === state.decile) return;
+  state.decile = next;
+  setChildDecile(state.childId, next);
   setAtGrade(state.childId, 0); // reset promotion counter on manual change
-  const label = isDaddy ? "Advanced" : ("Grade " + next);
-  // Update any visible grade chips
+  const label = decileLabel(state.childId, next);
   ["wordGrade","sentenceGrade","defGrade"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = label;
   });
-  // Pick a new word at the new grade — don't rotate player in multiplayer
+  // Pick a new word at the new decile — don't rotate player in multiplayer
   nextWord({ skipRotate: true });
 }
 
@@ -1178,7 +1609,7 @@ function rotatePlayer() {
   if (!state.multiplayer) return;
   state.multiplayer.idx = (state.multiplayer.idx + 1) % state.multiplayer.players.length;
   state.childId = state.multiplayer.players[state.multiplayer.idx];
-  state.grade = getChildGrade(state.childId);
+  state.decile = getChildDecile(state.childId);
 }
 
 function currentTurnHtml() {
@@ -1214,7 +1645,7 @@ function showWordScreen() {
   if (!state.currentWord) return goProfile();
   const c = CHILDREN[state.childId];
   document.getElementById("wordChild").textContent = c.emoji + " " + c.name;
-  document.getElementById("wordGrade").textContent = c.isDaddy ? "Advanced" : ("Grade " + state.grade);
+  document.getElementById("wordGrade").textContent = decileLabel(state.childId, state.decile);
   document.getElementById("bigWord").textContent = state.currentWord.w.toUpperCase();
   document.getElementById("masteredCount").textContent = getArchive(state.childId).length;
   updateTurnBanners();
@@ -1232,7 +1663,7 @@ function showSentence() {
   const sentence = state.currentWord.sentences[idx];
   const c = CHILDREN[state.childId];
   document.getElementById("sentenceChild").textContent = c.emoji + " " + c.name;
-  document.getElementById("sentenceGrade").textContent = c.isDaddy ? "Advanced" : ("Grade " + state.grade);
+  document.getElementById("sentenceGrade").textContent = decileLabel(state.childId, state.decile);
   document.getElementById("sentenceText").innerHTML = sentence;
   document.getElementById("sentenceCounter").textContent =
     "Sentence " + state.seenSentences.length + " of " + state.currentWord.sentences.length;
@@ -1276,7 +1707,7 @@ function showDefinition() {
   stopSpeaking();
   const c = CHILDREN[state.childId];
   document.getElementById("defChild").textContent = c.emoji + " " + c.name;
-  document.getElementById("defGrade").textContent = c.isDaddy ? "Advanced" : ("Grade " + state.grade);
+  document.getElementById("defGrade").textContent = decileLabel(state.childId, state.decile);
   document.getElementById("defWord").textContent = state.currentWord.w;
   document.getElementById("defText").textContent = state.currentWord.d;
   updateTurnBanners();
@@ -1289,7 +1720,7 @@ function nextWord(opts) {
   const skipRotate = opts && opts.skipRotate;
   // Rotate to next player if in multiplayer mode (skip on very first call — state.currentWord is null)
   if (state.multiplayer && state.currentWord && !skipRotate) rotatePlayer();
-  const pick = pickNextWord(state.childId, state.grade);
+  const pick = pickNextWord(state.childId, state.decile);
   if (!pick) {
     alert("All words at this level are mastered! Great work. Tap ⭐ Mastered to bring some back into rotation, or a parent can bump to the next grade.");
     goProfile();
@@ -1318,16 +1749,18 @@ function masterCurrentWord() {
   const arc = getArchive(state.childId);
   if (!arc.includes(w)) arc.push(w);
   setArchive(state.childId, arc);
-  // Promotion logic: count at current grade, bump when reaching threshold
+  // Promotion logic: count mastered at current decile, bump +1 decile when threshold hit.
+  // Kids: 10 mastered → +1 decile. Daddy: 15 mastered → +1 decile.
+  const isDaddy = !!CHILDREN[state.childId].isDaddy;
+  const threshold = isDaddy ? PROMOTE_THRESHOLD_DADDY : PROMOTE_THRESHOLD_KID;
   let at = getAtGrade(state.childId) + 1;
-  if (at >= PROMOTE_THRESHOLD) {
-    const max = CHILDREN[state.childId].isDaddy ? 6 : 5;
-    if (state.grade < max) {
-      state.grade = state.grade + 1;
-      setChildGrade(state.childId, state.grade);
+  if (at >= threshold) {
+    if (state.decile < 59) {
+      state.decile = clampDecile(state.decile + 1);
+      setChildDecile(state.childId, state.decile);
       at = 0;
-      setTimeout(() => alert("🎉 " + CHILDREN[state.childId].name + " leveled up! Now working at " +
-        (CHILDREN[state.childId].isDaddy ? "Advanced" : ("Grade " + state.grade)) + "."), 50);
+      const label = decileLabel(state.childId, state.decile);
+      setTimeout(() => alert("🎉 " + CHILDREN[state.childId].name + " leveled up! Now working at " + label + "."), 50);
     }
   }
   setAtGrade(state.childId, at);
@@ -1341,7 +1774,7 @@ function openMastered() {
   const list = document.getElementById("masteredList");
   const arc = getArchive(childId);
   if (arc.length === 0) {
-    list.innerHTML = '<div class="empty">No mastered words yet. Tap "Got it! Mastered" on a definition screen to archive a word here.</div>';
+    list.innerHTML = '<div class="empty">No mastered words yet. Tap "Too Easy — Mastered" on a definition screen to archive a word here.</div>';
   } else {
     list.innerHTML = arc.map((w, i) =>
       `<div class="mastered-item">

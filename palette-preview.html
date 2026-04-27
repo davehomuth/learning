@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palette Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: #1a1a1a; padding: 24px; color: #fff; }
+  h1 { font-size: 22px; margin-bottom: 20px; text-align: center; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 1400px; margin: 0 auto; }
+  .palette-card { border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+  .palette-label { padding: 12px 20px; background: #222; color: #fff; font-weight: 600; font-size: 16px; }
+  .mockup { padding: 32px 24px; min-height: 520px; display: flex; flex-direction: column; align-items: center; }
+  .mock-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; font-size: 13px; opacity: 0.7; }
+  .mock-word { font-size: 56px; font-weight: 800; letter-spacing: 2px; margin: 40px 0 12px; text-align: center; }
+  .mock-pron { font-size: 16px; font-style: italic; opacity: 0.6; margin-bottom: 36px; }
+  .mock-btn { display: block; width: 100%; max-width: 340px; padding: 16px 20px; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
+  .mock-btn.primary { color: #fff; }
+  .mock-btn.accent { color: #fff; }
+  .mock-sentence { padding: 18px 22px; border-radius: 12px; font-size: 16px; line-height: 1.5; margin-bottom: 24px; max-width: 360px; text-align: center; }
+  .mock-sentence b { font-weight: 700; }
+  .mock-chip { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+
+  /* FOREST */
+  .forest { background: #FAF7F0; color: #1B263B; }
+  .forest .mock-word { color: #1B263B; }
+  .forest .mock-btn.primary { background: #2D6A4F; }
+  .forest .mock-btn.accent { background: #E76F51; }
+  .forest .mock-sentence { background: #fff; border: 2px solid #2D6A4F; color: #1B263B; }
+  .forest .mock-sentence b { color: #2D6A4F; }
+  .forest .mock-chip { background: #2D6A4F; color: #fff; }
+
+  /* OCEAN */
+  .ocean { background: #E0F2FE; color: #0C4A6E; }
+  .ocean .mock-word { color: #0C4A6E; }
+  .ocean .mock-btn.primary { background: #0E7490; }
+  .ocean .mock-btn.accent { background: #FACC15; color: #0C4A6E; }
+  .ocean .mock-sentence { background: #fff; border: 2px solid #0E7490; color: #0C4A6E; }
+  .ocean .mock-sentence b { color: #0E7490; }
+  .ocean .mock-chip { background: #0E7490; color: #fff; }
+
+  /* SUNSET */
+  .sunset { background: #FFF4E6; color: #7F1D1D; }
+  .sunset .mock-word { color: #7F1D1D; }
+  .sunset .mock-btn.primary { background: #D97706; }
+  .sunset .mock-btn.accent { background: #7C3AED; }
+  .sunset .mock-sentence { background: #fff; border: 2px solid #D97706; color: #7F1D1D; }
+  .sunset .mock-sentence b { color: #D97706; }
+  .sunset .mock-chip { background: #D97706; color: #fff; }
+
+  /* MINT LAVENDER */
+  .mint { background: #F9FAFB; color: #111827; }
+  .mint .mock-word { color: #111827; }
+  .mint .mock-btn.primary { background: #10B981; }
+  .mint .mock-btn.accent { background: #8B5CF6; }
+  .mint .mock-sentence { background: #fff; border: 2px solid #10B981; color: #111827; }
+  .mint .mock-sentence b { color: #8B5CF6; }
+  .mint .mock-chip { background: #10B981; color: #fff; }
+</style>
+</head>
+<body>
+<h1>Word Learning App — Palette Options</h1>
+<div class="grid">
+
+  <div class="palette-card">
+    <div class="palette-label">Option 1 — Forest (calm / library feel)</div>
+    <div class="mockup forest">
+      <div class="mock-header">
+        <span>👦 Logan</span>
+        <span class="mock-chip">Grade 5</span>
+      </div>
+      <div class="mock-word">REMARKABLE</div>
+      <div class="mock-pron">/rɪˈmɑːrkəbəl/</div>
+      <div class="mock-sentence">The sunset was <b>remarkable</b> tonight — the whole sky turned pink.</div>
+      <button class="mock-btn primary">📖 Show Definition</button>
+      <button class="mock-btn accent">💬 New Sentence</button>
+    </div>
+  </div>
+
+  <div class="palette-card">
+    <div class="palette-label">Option 2 — Ocean (fresh / bright)</div>
+    <div class="mockup ocean">
+      <div class="mock-header">
+        <span>👦 Logan</span>
+        <span class="mock-chip">Grade 5</span>
+      </div>
+      <div class="mock-word">REMARKABLE</div>
+      <div class="mock-pron">/rɪˈmɑːrkəbəl/</div>
+      <div class="mock-sentence">The sunset was <b>remarkable</b> tonight — the whole sky turned pink.</div>
+      <button class="mock-btn primary">📖 Show Definition</button>
+      <button class="mock-btn accent">💬 New Sentence</button>
+    </div>
+  </div>
+
+  <div class="palette-card">
+    <div class="palette-label">Option 3 — Sunset (warm / playful)</div>
+    <div class="mockup sunset">
+      <div class="mock-header">
+        <span>👦 Logan</span>
+        <span class="mock-chip">Grade 5</span>
+      </div>
+      <div class="mock-word">REMARKABLE</div>
+      <div class="mock-pron">/rɪˈmɑːrkəbəl/</div>
+      <div class="mock-sentence">The sunset was <b>remarkable</b> tonight — the whole sky turned pink.</div>
+      <button class="mock-btn primary">📖 Show Definition</button>
+      <button class="mock-btn accent">💬 New Sentence</button>
+    </div>
+  </div>
+
+  <div class="palette-card">
+    <div class="palette-label">Option 4 — Mint Lavender (modern / clean)</div>
+    <div class="mockup mint">
+      <div class="mock-header">
+        <span>👦 Logan</span>
+        <span class="mock-chip">Grade 5</span>
+      </div>
+      <div class="mock-word">REMARKABLE</div>
+      <div class="mock-pron">/rɪˈmɑːrkəbəl/</div>
+      <div class="mock-sentence">The sunset was <b>remarkable</b> tonight — the whole sky turned pink.</div>
+      <button class="mock-btn primary">📖 Show Definition</button>
+      <button class="mock-btn accent">💬 New Sentence</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -615,7 +615,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.8';
+const APP_VERSION = '3.9';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -2995,6 +2995,8 @@ function startMultiplayer(subject) {
   state.activeChild = firstPlayer.id;
   quizState = multiplayerState.quizStates[firstPlayer.id];
   renderChildTabs();
+  renderQuiz();
+  speak(quizState.currentQuestion.q);
 }
 
 function mpNextPlayer() {
