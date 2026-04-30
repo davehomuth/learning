@@ -364,7 +364,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.4";
+const VERSION = "1.5";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -474,6 +474,54 @@ const WORD_POOL = {
       "She clapped with a <b>loud</b> smack.",
       "Our puppy has a <b>loud</b> bark for such a small dog.",
       "The <b>loud</b> music made the whole room shake."
+    ]},
+    { w:"hot", d:"having a high temperature", sentences:[
+      "The soup was too <b>hot</b> to eat.",
+      "Sand on the beach can be very <b>hot</b> in summer.",
+      "He blew on the <b>hot</b> chocolate to cool it down.",
+      "The stove gets <b>hot</b>, so don't touch it.",
+      "A <b>hot</b> day calls for cold lemonade.",
+      "The <b>hot</b> bath felt nice after playing in the snow.",
+      "She wore a sun hat on the <b>hot</b> afternoon.",
+      "The pizza came out <b>hot</b> from the oven.",
+      "Don't grab the pan — it's still <b>hot</b>!",
+      "Deserts are famous for being very <b>hot</b>."
+    ]},
+    { w:"small", d:"little in size", sentences:[
+      "The <b>small</b> mouse hid behind the box.",
+      "She picked a <b>small</b> flower from the garden.",
+      "A <b>small</b> bird landed on the windowsill.",
+      "The kitten was <b>small</b> enough to fit in a cup.",
+      "He wrote his name in <b>small</b> letters.",
+      "The <b>small</b> boat bobbed on the lake.",
+      "A <b>small</b> piece of cake is plenty for me.",
+      "Her dog is too <b>small</b> to reach the table.",
+      "The <b>small</b> shell had pretty pink lines.",
+      "Even a <b>small</b> kindness can make a big difference."
+    ]},
+    { w:"kind", d:"caring and gentle to others", sentences:[
+      "It was <b>kind</b> of him to share his snack.",
+      "The <b>kind</b> teacher helped us tie our shoes.",
+      "Be <b>kind</b> to animals.",
+      "A <b>kind</b> word can cheer someone up.",
+      "She gave a <b>kind</b> smile to the new student.",
+      "The <b>kind</b> nurse made me feel safe.",
+      "Grandma is always so <b>kind</b> and patient.",
+      "It feels good to be <b>kind</b> to others.",
+      "He was <b>kind</b> enough to hold the door open.",
+      "A <b>kind</b> heart is the best kind of magic."
+    ]},
+    { w:"wet", d:"covered in water or other liquid", sentences:[
+      "His shoes got <b>wet</b> in the puddle.",
+      "The <b>wet</b> dog shook water all over the floor.",
+      "She dried her <b>wet</b> hair with a towel.",
+      "Don't sit on the <b>wet</b> bench — it just rained.",
+      "The <b>wet</b> paint made a sticky mark on his hand.",
+      "Frogs like <b>wet</b>, swampy places.",
+      "Be careful — the floor is <b>wet</b> and slippery.",
+      "After the swim her bathing suit was very <b>wet</b>.",
+      "The grass was <b>wet</b> with morning dew.",
+      "He left a trail of <b>wet</b> footprints behind him."
     ]}
   ],
   1: [
@@ -548,6 +596,54 @@ const WORD_POOL = {
       "My socks and slippers keep my feet <b>cozy</b>.",
       "The <b>cozy</b> little room glowed with soft light.",
       "We had hot cocoa in a <b>cozy</b> corner of the kitchen."
+    ]},
+    { w:"brave", d:"not afraid of hard or scary things", sentences:[
+      "The <b>brave</b> firefighter ran into the building.",
+      "She was <b>brave</b> when she got her shot at the doctor.",
+      "A <b>brave</b> knight stood guard at the gate.",
+      "He felt <b>brave</b> riding the big roller coaster.",
+      "The <b>brave</b> puppy faced the noisy vacuum.",
+      "Being <b>brave</b> doesn't mean you aren't scared.",
+      "She gave a <b>brave</b> smile before the speech.",
+      "The <b>brave</b> rescue team climbed up the cliff.",
+      "It takes a <b>brave</b> heart to try something new.",
+      "He was <b>brave</b> enough to admit his mistake."
+    ]},
+    { w:"friendly", d:"nice, easy to talk to", sentences:[
+      "The <b>friendly</b> neighbor waved hello.",
+      "Our dog is <b>friendly</b> with everyone.",
+      "She has a <b>friendly</b> way of greeting strangers.",
+      "The <b>friendly</b> cashier always remembers my name.",
+      "A <b>friendly</b> tone makes people feel welcome.",
+      "His <b>friendly</b> smile made the new kid feel calm.",
+      "We met a <b>friendly</b> family on our trip.",
+      "The <b>friendly</b> librarian helped me pick a book.",
+      "She gave a <b>friendly</b> wave from across the street.",
+      "Cats can be <b>friendly</b> too once they trust you."
+    ]},
+    { w:"silly", d:"funny in a goofy way", sentences:[
+      "He told a <b>silly</b> joke that made us snort.",
+      "She wore a <b>silly</b> hat to the party.",
+      "The puppy made a <b>silly</b> face while eating.",
+      "We sang <b>silly</b> songs in the car.",
+      "His <b>silly</b> dance got everyone laughing.",
+      "It's fun to be <b>silly</b> with your best friend.",
+      "She drew a <b>silly</b> cartoon of her cat.",
+      "The clown's <b>silly</b> tricks made the kids giggle.",
+      "I wrote a <b>silly</b> story about a flying pizza.",
+      "A <b>silly</b> grin spread across his face."
+    ]},
+    { w:"tired", d:"needing rest or sleep", sentences:[
+      "After soccer she was very <b>tired</b>.",
+      "The <b>tired</b> dog flopped down on the rug.",
+      "He was too <b>tired</b> to read another page.",
+      "Mom looked <b>tired</b> after the long drive.",
+      "Her <b>tired</b> eyes blinked slowly.",
+      "Even superheroes get <b>tired</b> sometimes.",
+      "The <b>tired</b> hikers sat down on a log.",
+      "I always feel <b>tired</b> on rainy mornings.",
+      "He yawned because he was <b>tired</b> from running.",
+      "A good night's sleep helps when you feel <b>tired</b>."
     ]}
   ],
   2: [
@@ -622,6 +718,54 @@ const WORD_POOL = {
       "Hot cocoa on a cold day is so <b>delicious</b>.",
       "He said the chicken was <b>delicious</b> and asked for more.",
       "The <b>delicious</b> mango was juicy and sweet."
+    ]},
+    { w:"enormous", d:"extremely big", sentences:[
+      "The <b>enormous</b> whale glided past the boat.",
+      "She baked an <b>enormous</b> cookie for the bake sale.",
+      "An <b>enormous</b> tree blocked the road after the storm.",
+      "The <b>enormous</b> stadium held thousands of fans.",
+      "He carried an <b>enormous</b> pumpkin to the porch.",
+      "The dinosaur left <b>enormous</b> footprints in the mud.",
+      "Their dog has an <b>enormous</b> appetite.",
+      "An <b>enormous</b> wave crashed onto the rocks.",
+      "She wore an <b>enormous</b> sun hat to the beach.",
+      "The library had an <b>enormous</b> collection of books."
+    ]},
+    { w:"peculiar", d:"strange or unusual", sentences:[
+      "The <b>peculiar</b> bird had purple feathers.",
+      "He noticed a <b>peculiar</b> smell in the kitchen.",
+      "It was <b>peculiar</b> that the door was locked.",
+      "She has a <b>peculiar</b> way of pronouncing my name.",
+      "The detective spotted something <b>peculiar</b> on the floor.",
+      "A <b>peculiar</b> sound came from the closet.",
+      "His <b>peculiar</b> hat made everyone turn to look.",
+      "The cat made a <b>peculiar</b> face at the new toy.",
+      "It was a <b>peculiar</b> day — all our clocks stopped.",
+      "She told a <b>peculiar</b> story about a talking fish."
+    ]},
+    { w:"generous", d:"happy to share or give to others", sentences:[
+      "Her <b>generous</b> grandma always sends extra cookies.",
+      "He made a <b>generous</b> donation to the food bank.",
+      "Be <b>generous</b> with your friends and they will be too.",
+      "The <b>generous</b> coach stayed late to help us practice.",
+      "She was <b>generous</b> with her stickers, sharing them all.",
+      "A <b>generous</b> tip thanked the hard-working server.",
+      "Their <b>generous</b> family invited us for dinner.",
+      "He gave a <b>generous</b> serving of mashed potatoes.",
+      "Being <b>generous</b> with kindness costs nothing.",
+      "The <b>generous</b> librarian lent me her favorite book."
+    ]},
+    { w:"fantastic", d:"really wonderful or amazing", sentences:[
+      "We had a <b>fantastic</b> time at the fair.",
+      "Her painting looks <b>fantastic</b> on the wall.",
+      "The team played a <b>fantastic</b> game last night.",
+      "It was a <b>fantastic</b> idea to build a fort.",
+      "He told a <b>fantastic</b> story about a dragon.",
+      "The view from the mountain was <b>fantastic</b>.",
+      "What a <b>fantastic</b> drawing — I love the colors!",
+      "The chef cooked a <b>fantastic</b> meal.",
+      "She did a <b>fantastic</b> job on her science project.",
+      "The fireworks show was simply <b>fantastic</b>."
     ]}
   ],
   3: [
@@ -696,6 +840,54 @@ const WORD_POOL = {
       "They worked as a crew to <b>accomplish</b> the mission.",
       "He wrote a list of what he wanted to <b>accomplish</b>.",
       "To <b>accomplish</b> something hard, take it one step at a time."
+    ]},
+    { w:"enthusiastic", d:"very excited and eager about something", sentences:[
+      "The <b>enthusiastic</b> crowd cheered for the home team.",
+      "She was <b>enthusiastic</b> about starting her new book.",
+      "He gave an <b>enthusiastic</b> wave when he saw us.",
+      "The puppy greeted everyone with an <b>enthusiastic</b> tail wag.",
+      "An <b>enthusiastic</b> reader can finish a series in a week.",
+      "The coach loves <b>enthusiastic</b> players.",
+      "Her <b>enthusiastic</b> answer told the teacher she was ready.",
+      "He's <b>enthusiastic</b> about the camping trip next month.",
+      "The choir gave an <b>enthusiastic</b> performance.",
+      "Being <b>enthusiastic</b> can make even chores feel fun."
+    ]},
+    { w:"hilarious", d:"extremely funny", sentences:[
+      "The comedy show was absolutely <b>hilarious</b>.",
+      "She told a <b>hilarious</b> story about her dog.",
+      "His <b>hilarious</b> impression of the principal cracked us up.",
+      "The book had a <b>hilarious</b> twist on the last page.",
+      "It was <b>hilarious</b> when the cat fell into the laundry basket.",
+      "The kids found the talking parrot <b>hilarious</b>.",
+      "We laughed all the way home — the movie was <b>hilarious</b>.",
+      "Her <b>hilarious</b> faces made the baby giggle.",
+      "He drew a <b>hilarious</b> comic about school lunch.",
+      "The <b>hilarious</b> mix-up turned a bad day around."
+    ]},
+    { w:"demolish", d:"to tear down completely", sentences:[
+      "Workers will <b>demolish</b> the old garage next week.",
+      "Don't <b>demolish</b> your sister's block tower.",
+      "A wrecking ball can <b>demolish</b> a building quickly.",
+      "He didn't mean to <b>demolish</b> the sandcastle.",
+      "The team plans to <b>demolish</b> the rusty fence today.",
+      "Storms can <b>demolish</b> trees in seconds.",
+      "She watched the crew <b>demolish</b> the old playground.",
+      "It only takes a moment to <b>demolish</b> what took hours to build.",
+      "They will <b>demolish</b> the wall to make a bigger room.",
+      "The dog tried to <b>demolish</b> the cardboard box."
+    ]},
+    { w:"observe", d:"to watch carefully", sentences:[
+      "Scientists <b>observe</b> animals in their natural homes.",
+      "Please <b>observe</b> how the chemicals change colors.",
+      "We went to the pond to <b>observe</b> the tadpoles grow.",
+      "He likes to <b>observe</b> birds with his binoculars.",
+      "Doctors <b>observe</b> patients to check how they heal.",
+      "The class will <b>observe</b> the eclipse with safe glasses.",
+      "If you <b>observe</b> closely, you'll see a tiny spider.",
+      "She paused to <b>observe</b> the painters at work.",
+      "Detectives <b>observe</b> every detail at a crime scene.",
+      "It's helpful to <b>observe</b> before you act."
     ]}
   ],
   4: [
@@ -770,6 +962,54 @@ const WORD_POOL = {
       "The team was <b>skeptical</b> of the wild rumor.",
       "He remained <b>skeptical</b> even after the demonstration.",
       "A <b>skeptical</b> reader asks, \"Is this really true?\""
+    ]},
+    { w:"dilemma", d:"a hard choice between two options", sentences:[
+      "She faced a <b>dilemma</b>: study or go to the party.",
+      "The puppy had a <b>dilemma</b> — chase the ball or chase the bird?",
+      "His <b>dilemma</b> was choosing between pizza and burgers.",
+      "Every leader meets a tough <b>dilemma</b> sometimes.",
+      "The story's hero solved a clever <b>dilemma</b>.",
+      "Sharing one cookie with two friends is a small <b>dilemma</b>.",
+      "She wrote about a moral <b>dilemma</b> in her essay.",
+      "We talked through the <b>dilemma</b> together.",
+      "The <b>dilemma</b> kept him awake thinking.",
+      "Sometimes there's no perfect answer to a <b>dilemma</b>."
+    ]},
+    { w:"plummet", d:"to drop quickly downward", sentences:[
+      "Temperatures will <b>plummet</b> overnight.",
+      "The skydiver felt himself <b>plummet</b> toward the field.",
+      "Stock prices can <b>plummet</b> in a single afternoon.",
+      "The eagle began to <b>plummet</b> toward its prey.",
+      "Her phone seemed to <b>plummet</b> in slow motion.",
+      "The roller coaster cars <b>plummet</b> down the first hill.",
+      "His grades did not <b>plummet</b> — they slowly improved.",
+      "Watching the leaves <b>plummet</b> told us autumn had arrived.",
+      "If you let go, the bucket will <b>plummet</b> into the well.",
+      "The diver's heart raced as she began to <b>plummet</b>."
+    ]},
+    { w:"articulate", d:"speaking clearly and well", sentences:[
+      "She gave an <b>articulate</b> answer in the debate.",
+      "He's young but very <b>articulate</b> for his age.",
+      "An <b>articulate</b> speaker keeps the audience listening.",
+      "The <b>articulate</b> letter explained the problem politely.",
+      "She tried to <b>articulate</b> her feelings to her friend.",
+      "Reading a lot helps you become more <b>articulate</b>.",
+      "The <b>articulate</b> witness described the scene precisely.",
+      "Even when nervous, he stayed calm and <b>articulate</b>.",
+      "Her <b>articulate</b> speech earned a standing ovation.",
+      "It can be hard to <b>articulate</b> a complicated idea."
+    ]},
+    { w:"nostalgic", d:"fondly remembering the past", sentences:[
+      "The old song made Grandpa <b>nostalgic</b>.",
+      "She felt <b>nostalgic</b> looking at her baby photos.",
+      "A <b>nostalgic</b> smell of fresh bread filled the kitchen.",
+      "He gets <b>nostalgic</b> every time he visits his old school.",
+      "The movie was <b>nostalgic</b> for fans of the original.",
+      "Her <b>nostalgic</b> letter brought back childhood summers.",
+      "Family albums are full of <b>nostalgic</b> moments.",
+      "The diner's neon sign made him feel <b>nostalgic</b>.",
+      "It's fun to be <b>nostalgic</b>, but also good to look ahead.",
+      "A <b>nostalgic</b> tune played on the radio."
     ]}
   ],
   5: [
@@ -844,6 +1084,54 @@ const WORD_POOL = {
       "A <b>resilient</b> goalie doesn't let one bad play ruin the game.",
       "The <b>resilient</b> scientist tried again after each failure.",
       "Being <b>resilient</b> means you keep getting up."
+    ]},
+    { w:"scrutinize", d:"to examine very closely", sentences:[
+      "The judges <b>scrutinize</b> every detail of the performance.",
+      "She paused to <b>scrutinize</b> the contract before signing.",
+      "Editors <b>scrutinize</b> manuscripts for tiny errors.",
+      "Don't <b>scrutinize</b> his every move — give him room.",
+      "The detective will <b>scrutinize</b> the photos for clues.",
+      "Border officers <b>scrutinize</b> passports carefully.",
+      "He likes to <b>scrutinize</b> recipes before he cooks.",
+      "Voters should <b>scrutinize</b> a candidate's record.",
+      "The teacher will <b>scrutinize</b> our experiment notes.",
+      "Under a microscope you can <b>scrutinize</b> a single cell."
+    ]},
+    { w:"lucrative", d:"making lots of money; profitable", sentences:[
+      "Software engineering can be a <b>lucrative</b> career.",
+      "Their bakery turned out to be surprisingly <b>lucrative</b>.",
+      "He found a <b>lucrative</b> way to recycle scrap metal.",
+      "Fishing tournaments offer <b>lucrative</b> prizes.",
+      "She turned her hobby into a <b>lucrative</b> business.",
+      "A <b>lucrative</b> contract was offered to the inventor.",
+      "Streaming has become a <b>lucrative</b> path for some musicians.",
+      "Even a small shop can be <b>lucrative</b> with the right idea.",
+      "The deal looked <b>lucrative</b> until the fees were added.",
+      "He chose a <b>lucrative</b> job over a fun one."
+    ]},
+    { w:"volatile", d:"changing easily and unpredictably", sentences:[
+      "The weather has been <b>volatile</b> this week.",
+      "Stocks can be <b>volatile</b> during big news events.",
+      "Some chemicals are <b>volatile</b> and evaporate quickly.",
+      "Their friendship was <b>volatile</b> — fine one day, frosty the next.",
+      "A <b>volatile</b> mood can make decisions tricky.",
+      "The market has had a <b>volatile</b> month.",
+      "Don't store <b>volatile</b> liquids near heat.",
+      "His temper was <b>volatile</b> when he was tired.",
+      "The election created a <b>volatile</b> political climate.",
+      "A <b>volatile</b> situation calls for careful steps."
+    ]},
+    { w:"audacious", d:"boldly daring; willing to take big risks", sentences:[
+      "Her <b>audacious</b> plan surprised the whole team.",
+      "It was an <b>audacious</b> jump from one rooftop to another.",
+      "The <b>audacious</b> thief left a note for the police.",
+      "He made an <b>audacious</b> claim that he could fix the rocket.",
+      "The <b>audacious</b> rescue saved the stranded climbers.",
+      "Her first novel had an <b>audacious</b> opening chapter.",
+      "An <b>audacious</b> plan needs careful preparation.",
+      "The <b>audacious</b> chef combined chocolate with chili peppers.",
+      "He was <b>audacious</b> enough to ask for a meeting with the CEO.",
+      "An <b>audacious</b> goal can inspire a team to greatness."
     ]}
   ]
 };
@@ -1307,11 +1595,14 @@ let state = {
   currentWord: null,     // { w, d, sentences[] }
   currentWordIsCustom: false,
   seenSentences: [],     // indices of sentences shown for currentWord in this session
+  sessionSeen: [],       // ordered list of words shown but NOT mastered this session
   listenMode: false,
   speaking: false,
   listenTimer: null,
   multiplayer: null,     // { players: [childId,...], idx: number } or null
 };
+
+const SESSION_COOLDOWN = 10; // a non-mastered word won't reappear until 10 cards later
 
 const LS = {
   lastChild:    "words_lastChild",
@@ -1425,23 +1716,29 @@ function subPoolForTier(arr, tier) {
 
 function buildActivePool(childId, decile) {
   // Use DADDY_POOL for Daddy, WORD_POOL for kids.
-  // Base = current grade & subtier. Review = previous subtier (within same grade, or last subtier of prev grade).
-  // Stretch = next subtier similarly. Archive-filtered.
+  // Base = current grade & subtier. Review/stretch = adjacent tiers.
+  // Falls back to the entire current grade and adjacent grades if the tier-narrow
+  // pool gets too thin (e.g. after several archives).
   const isDaddy = !!CHILDREN[childId].isDaddy;
   const POOL = isDaddy ? DADDY_POOL : WORD_POOL;
   const archive = new Set(getArchive(childId).map(s => s.toLowerCase()));
   const pool = [];
   const seenW = new Set();
 
-  const addSlice = (g, tier) => {
-    if (!POOL[g]) return;
-    const sub = subPoolForTier(POOL[g], tier);
-    for (const e of sub) {
+  const addEntries = (entries, g, tier) => {
+    for (const e of entries) {
       const wl = e.w.toLowerCase();
       if (archive.has(wl) || seenW.has(wl)) continue;
       seenW.add(wl);
       pool.push({ ...e, _grade: g, _tier: tier, custom: false });
     }
+  };
+  const addSlice = (g, tier) => {
+    if (!POOL[g]) return;
+    addEntries(subPoolForTier(POOL[g], tier), g, tier);
+  };
+  const addAll = (g) => {
+    if (POOL[g]) addEntries(POOL[g], g, "fallback");
   };
 
   const grade = decileToGrade(decile);
@@ -1449,14 +1746,23 @@ function buildActivePool(childId, decile) {
   const tierOrder = ["low", "mid", "high"];
   const tIdx = tierOrder.indexOf(tier);
 
-  // Base — current grade/tier
+  // 1) Tier-targeted (preferred — picks bias toward these via pickNextWord)
   addSlice(grade, tier);
-  // Review — previous tier
   if (tIdx > 0) addSlice(grade, tierOrder[tIdx - 1]);
   else if (grade > 0) addSlice(grade - 1, "high");
-  // Stretch — next tier
   if (tIdx < 2) addSlice(grade, tierOrder[tIdx + 1]);
   else if (POOL[grade + 1]) addSlice(grade + 1, "low");
+
+  // 2) Always broaden to entire current grade + adjacent grades, so the cooldown
+  //    window has room to breathe. These extra words are tagged "fallback" so
+  //    pickNextWord can still bias toward the tier-targeted picks.
+  addAll(grade);
+  if (grade > 0) addAll(grade - 1);
+  if (POOL[grade + 1]) addAll(grade + 1);
+  // 3) Last-resort: every grade in the pool
+  if (pool.length < 12) {
+    Object.keys(POOL).forEach(g => addAll(+g));
+  }
 
   // Custom study words
   const custom = getStudyWords(childId);
@@ -1478,10 +1784,19 @@ function buildActivePool(childId, decile) {
 function pickNextWord(childId, decile) {
   const pool = buildActivePool(childId, decile);
   if (pool.length === 0) return null;
+  // Session cooldown: words shown (but not mastered) in the last SESSION_COOLDOWN picks
+  const cooldown = new Set(state.sessionSeen.slice(-SESSION_COOLDOWN).map(s => s.toLowerCase()));
+  // Persisted cross-session anti-repeat (rolling 15)
   const recent = new Set(getRecentWords(childId).map(s => s.toLowerCase()));
-  let fresh = pool.filter(e => !recent.has(e.w.toLowerCase()));
-  if (fresh.length === 0) fresh = pool; // all seen recently, reset
-  const pick = fresh[Math.floor(Math.random() * fresh.length)];
+  let fresh = pool.filter(e => !cooldown.has(e.w.toLowerCase()) && !recent.has(e.w.toLowerCase()));
+  if (fresh.length === 0) fresh = pool.filter(e => !cooldown.has(e.w.toLowerCase()));
+  if (fresh.length === 0) fresh = pool; // pool tiny → must recycle
+
+  // Tier bias: prefer the tier-targeted entries 70% of the time
+  const preferred = fresh.filter(e => e._tier && e._tier !== "fallback");
+  const candidates = (preferred.length > 0 && Math.random() < 0.7) ? preferred : fresh;
+
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
   pushRecentWord(childId, pick.w);
   return pick;
 }
@@ -1532,6 +1847,8 @@ function selectChild(id) {
   state.multiplayer = null;
   state.childId = id;
   state.decile = getChildDecile(id);
+  state.sessionSeen = [];   // fresh session cooldown window
+  state.currentWord = null; // ensure first nextWord() call doesn't push prior session word
   lsSet(LS.lastChild, id);
   nextWord();
   if (state.listenMode) startListenMode();
@@ -1583,6 +1900,8 @@ function startMultiplayer() {
   state.multiplayer = { players, idx: 0 };
   state.childId = players[0];
   state.decile = getChildDecile(state.childId);
+  state.sessionSeen = [];   // fresh session cooldown window
+  state.currentWord = null;
   nextWord();
   if (state.listenMode) startListenMode();
   else showWordScreen();
@@ -1718,6 +2037,17 @@ function nextWord(opts) {
   stopSpeaking();
   if (!state.childId) return goProfile();
   const skipRotate = opts && opts.skipRotate;
+  // Record the OUTGOING word into sessionSeen if it wasn't mastered.
+  // (masterCurrentWord pushes to archive BEFORE calling nextWord, so checking
+  // archive membership is a reliable "was this the result of mastering?" test.)
+  if (state.currentWord && !skipRotate) {
+    const archived = new Set(getArchive(state.childId).map(s => s.toLowerCase()));
+    const wl = state.currentWord.w.toLowerCase();
+    if (!archived.has(wl)) {
+      state.sessionSeen.push(state.currentWord.w);
+      if (state.sessionSeen.length > 200) state.sessionSeen.shift();
+    }
+  }
   // Rotate to next player if in multiplayer mode (skip on very first call — state.currentWord is null)
   if (state.multiplayer && state.currentWord && !skipRotate) rotatePlayer();
   const pick = pickNextWord(state.childId, state.decile);
