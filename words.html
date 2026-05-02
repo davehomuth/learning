@@ -364,7 +364,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.5";
+const VERSION = "1.6";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -1667,16 +1667,20 @@ function getChildDecile(childId) {
     lsSet(LS.decile(childId), migrated);
     return migrated;
   }
-  // 3. Read from hub's english_distracted decile
+  // 3. Read from hub: use the HIGHER of english_focused / english_distracted
+  //    (distracted alone tends to give kids words that are too easy for vocabulary
+  //    practice — vocab benefits from stretching toward their peak level).
   try {
     const hub = JSON.parse(localStorage.getItem(LS.hubState) || "{}");
     const session = hub.sessions && hub.sessions[childId];
     if (session && session.levels) {
-      const d = session.levels.english_distracted !== undefined
-        ? session.levels.english_distracted
-        : (session.levels.english_focused !== undefined
-            ? session.levels.english_focused
-            : session.levels.english);
+      const lv = session.levels;
+      let d = null;
+      if (typeof lv.english_focused === "number") d = lv.english_focused;
+      if (typeof lv.english_distracted === "number") {
+        d = (d == null) ? lv.english_distracted : Math.max(d, lv.english_distracted);
+      }
+      if (d == null && typeof lv.english === "number") d = lv.english;
       if (typeof d === "number") return clampDecile(d);
     }
   } catch(e) {}
