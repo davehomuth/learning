@@ -615,7 +615,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.9';
+const APP_VERSION = '3.11';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -901,7 +901,7 @@ function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i-
 
 // ── MATH ──
 
-function genMath(level, distracted) {
+function _genMathRaw(level, distracted) {
   const grade = Math.floor(level / 10);
   const decile = level % 10;
 
@@ -913,6 +913,21 @@ function genMath(level, distracted) {
   if (grade === 5) return genMath5(decile, distracted);
   if (grade === 6) return genMath6(decile, distracted);
   return genMath7(decile, distracted);
+}
+
+// Answer-size cap: focused ≤ 100,000, distracted ≤ 5,000.
+// Re-rolls up to 25 times if the answer's leading numeric magnitude exceeds cap.
+function genMath(level, distracted) {
+  const cap = distracted ? 5000 : 100000;
+  let q;
+  for (let i = 0; i < 25; i++) {
+    q = _genMathRaw(level, distracted);
+    const m = String(q.a).match(/-?\d+(?:\.\d+)?/);
+    if (!m) return q; // non-numeric answer (e.g. "x = 5", "C-A-T") — accept
+    const n = Math.abs(parseFloat(m[0]));
+    if (n <= cap) return q;
+  }
+  return q; // fallback: return last roll even if over cap
 }
 
 // Distracted math = mental math only: small numbers, single-step, no need for paper
@@ -1122,6 +1137,9 @@ const SPELLING_2 = ['because','friend','school','people','great','thought','thro
 const SPELLING_3 = ['separate','necessary','probably','beginning','business','calendar','describe','favorite','library','sentence','surprise','tomorrow','weather','February','Wednesday','interesting','experiment','paragraph','knowledge','especially'];
 const SPELLING_4 = ['accommodate','occasionally','immediately','unfortunately','independent','environment','temperature','government','particular','restaurant','embarrass','disappoint','exaggerate','guarantee','privilege','conscience','discipline','maintenance','occurrence','professional'];
 const SPELLING_5 = ['abbreviation','acknowledgement','circumstances','correspondence','encyclopedia','extraordinary','miscellaneous','simultaneously','sophisticated','controversial','discrimination','characteristic','approximately','communication','investigation','philosophical','pronunciation','representative','transformation','vulnerability'];
+const SPELLING_6 = ['accommodate','acquiesce','belligerent','bureaucracy','camaraderie','conscientious','disappearance','disastrous','exhilarate','harassment','independent','liaison','maintenance','millennium','noticeable','occurrence','possession','precedent','privilege','questionnaire','rendezvous','reservoir','restaurant','rhythm','silhouette','souvenir','threshold','tournament','vacuum','weird'];
+const SPELLING_7 = ['acquaintance','annihilate','apocalypse','beleaguered','bourgeois','catastrophe','connoisseur','conscientiousness','consensus','definitely','exaggerate','exhilaration','fluorescent','genealogy','hierarchical','idiosyncratic','inoculate','irresistible','jeopardize','manoeuvre','minuscule','perseverance','perspicacious','recommendation','reminiscence','sacrilegious','supersede','surreptitious','unconscionable','vacillate'];
+const SPELLING_8 = ['acquiescence','anachronistic','antediluvian','bureaucratic','chiaroscuro','conscientiously','disproportionate','effervescence','exacerbation','indefatigable','inconsequential','indistinguishable','interrogative','irreconcilable','metamorphosis','onomatopoeia','perspicaciousness','phenomenological','pneumonoultramicroscopicsilicovolcanoconiosis','pseudonymous','quintessentially','renaissance','restaurateur','serendipitous','sesquipedalian','sociolinguistic','transcendental','unequivocally','vainglorious','xenophobic'];
 
 const VOCAB_3 = [
   {w:'enormous',d:'very large',s:'The enormous elephant blocked the path.'},
@@ -1176,6 +1194,61 @@ const VOCAB_5 = [
   {w:'compromise',d:'an agreement where both sides give something up',s:'They reached a compromise about bedtime.'},
   {w:'gratitude',d:'the feeling of being thankful',s:'She expressed her gratitude with a thank-you card.'},
   {w:'obstacle',d:'something in the way that must be overcome',s:'The fallen tree was an obstacle on the trail.'},
+];
+
+const VOCAB_6 = [
+  {w:'benevolent',d:'well-meaning and kindly',s:'The benevolent stranger paid for our dinner.'},
+  {w:'arduous',d:'difficult and tiring',s:'The arduous climb left us exhausted.'},
+  {w:'candid',d:'truthful and straightforward',s:'She gave a candid review of the film.'},
+  {w:'clandestine',d:'kept secret',s:'They had a clandestine meeting at midnight.'},
+  {w:'copious',d:'abundant in supply',s:'He took copious notes during the lecture.'},
+  {w:'eloquent',d:'fluent or persuasive in speaking',s:'Her eloquent speech moved the audience.'},
+  {w:'ephemeral',d:'lasting a very short time',s:'The beauty of the sunset was ephemeral.'},
+  {w:'fastidious',d:'very attentive to detail',s:'He is fastidious about his appearance.'},
+  {w:'frugal',d:'sparing with money',s:'Her frugal habits helped her save money.'},
+  {w:'gregarious',d:'fond of company; sociable',s:'The gregarious puppy loved meeting new people.'},
+  {w:'impeccable',d:'in accordance with the highest standards',s:'His manners were impeccable.'},
+  {w:'lucid',d:'expressed clearly; easy to understand',s:'She gave a lucid explanation of the problem.'},
+  {w:'mundane',d:'lacking interest or excitement',s:'He longed to escape his mundane routine.'},
+  {w:'obstinate',d:'stubbornly refusing to change',s:'The obstinate child refused to eat his vegetables.'},
+  {w:'pragmatic',d:'dealing with things sensibly and realistically',s:'We need a pragmatic approach to this problem.'},
+  {w:'resilient',d:'able to recover quickly from difficulties',s:'Children are remarkably resilient.'},
+];
+
+const VOCAB_7 = [
+  {w:'acrimonious',d:'angry and bitter',s:'The debate became acrimonious.'},
+  {w:'anomaly',d:'something that deviates from what is standard',s:'The data showed a strange anomaly.'},
+  {w:'austere',d:'severe or strict in manner',s:'The monk lived an austere life.'},
+  {w:'capricious',d:'given to sudden changes of mood',s:'The capricious weather ruined our picnic.'},
+  {w:'conundrum',d:'a confusing and difficult problem',s:'The detective faced a real conundrum.'},
+  {w:'enigmatic',d:'difficult to interpret; mysterious',s:'She gave an enigmatic smile.'},
+  {w:'exacerbate',d:'to make a problem worse',s:'Yelling will only exacerbate the situation.'},
+  {w:'indignant',d:'feeling angry at unfair treatment',s:'She was indignant at the false accusation.'},
+  {w:'magnanimous',d:'very generous or forgiving',s:'In victory, he was magnanimous.'},
+  {w:'nefarious',d:'wicked or criminal',s:'The villain had nefarious plans.'},
+  {w:'ostentatious',d:'designed to attract attention',s:'His ostentatious display of wealth was off-putting.'},
+  {w:'paradigm',d:'a typical example or pattern',s:'The discovery shifted the scientific paradigm.'},
+  {w:'quintessential',d:'representing the most perfect example',s:'She is the quintessential New Yorker.'},
+  {w:'vehement',d:'showing strong feeling',s:'He made a vehement denial of the charges.'},
+  {w:'laconic',d:'using very few words',s:'His laconic reply was just "no."'},
+];
+
+const VOCAB_8 = [
+  {w:'antithesis',d:'the direct opposite',s:'Cowardice is the antithesis of courage.'},
+  {w:'cacophony',d:'a harsh, discordant mixture of sounds',s:'The orchestra warmup was pure cacophony.'},
+  {w:'dichotomy',d:'a division between two opposed groups',s:'There is a dichotomy between theory and practice.'},
+  {w:'ebullient',d:'cheerful and full of energy',s:'She was ebullient after winning the prize.'},
+  {w:'equanimity',d:'mental calmness in difficult situations',s:'He accepted the news with equanimity.'},
+  {w:'fortuitous',d:'happening by chance, often luckily',s:'It was a fortuitous meeting.'},
+  {w:'idiosyncrasy',d:'a peculiar habit or quirk',s:'Every writer has their own idiosyncrasies.'},
+  {w:'juxtapose',d:'to place close together for contrast',s:'The artist juxtaposed light and dark images.'},
+  {w:'mellifluous',d:'sweet or musical sounding',s:'She had a mellifluous singing voice.'},
+  {w:'obfuscate',d:'to make obscure or unclear',s:'The lawyer tried to obfuscate the facts.'},
+  {w:'perfunctory',d:'done routinely with little care',s:'He gave a perfunctory nod and walked on.'},
+  {w:'ubiquitous',d:'present everywhere',s:'Smartphones have become ubiquitous.'},
+  {w:'vicissitude',d:'a change of circumstances, typically unwelcome',s:'The vicissitudes of life can be unpredictable.'},
+  {w:'recondite',d:'little known; obscure',s:'The professor discussed recondite topics.'},
+  {w:'sycophant',d:'a person who flatters to gain advantage',s:'The king was surrounded by sycophants.'},
 ];
 
 // ── NEW WORDS BANK (organized by grade level, ~20+ per grade for adaptive decile spread) ──
@@ -1846,7 +1919,10 @@ const PROC_SYNONYMS = {
   2: [['beautiful','gorgeous'],['angry','furious'],['tired','exhausted'],['brave','courageous'],['quiet','silent'],['strange','unusual'],['simple','easy'],['skinny','thin'],['wealthy','rich'],['reply','answer'],['destroy','wreck'],['fix','repair'],['discover','find'],['create','make'],['enormous','huge'],['frighten','scare'],['wonderful','amazing'],['correct','right'],['difficult','hard'],['powerful','strong']],
   3: [['enormous','immense'],['courage','bravery'],['peculiar','odd'],['generous','charitable'],['observe','watch'],['brilliant','dazzling'],['ancient','prehistoric'],['cautious','careful'],['fragile','delicate'],['triumph','victory'],['fierce','ferocious'],['miserable','wretched'],['scarce','rare'],['disguise','camouflage'],['eager','enthusiastic'],['vanish','disappear'],['preserve','protect'],['frequently','often'],['miniature','tiny'],['predict','forecast']],
   4: [['persistent','determined'],['reluctant','hesitant'],['significant','important'],['elaborate','detailed'],['abundant','plentiful'],['demonstrate','exhibit'],['investigate','examine'],['navigate','steer'],['flexible','adaptable'],['temporary','brief'],['valuable','precious'],['absurd','ridiculous'],['consequence','result'],['distract','divert'],['imitate','mimic'],['cautious','wary'],['thrive','flourish'],['summit','peak'],['furious','enraged'],['occupy','inhabit']],
-  5: [['ambiguous','vague'],['inevitable','unavoidable'],['meticulous','thorough'],['plausible','believable'],['unanimous','agreed'],['subtle','understated'],['contemplate','ponder'],['diligent','industrious'],['futile','pointless'],['hinder','obstruct'],['versatile','adaptable'],['compromise','negotiate'],['gratitude','thankfulness'],['obstacle','barrier'],['exquisite','magnificent'],['conspicuous','obvious'],['precise','exact'],['navigate','maneuver'],['peculiar','eccentric'],['vivid','striking']]
+  5: [['ambiguous','vague'],['inevitable','unavoidable'],['meticulous','thorough'],['plausible','believable'],['unanimous','agreed'],['subtle','understated'],['contemplate','ponder'],['diligent','industrious'],['futile','pointless'],['hinder','obstruct'],['versatile','adaptable'],['compromise','negotiate'],['gratitude','thankfulness'],['obstacle','barrier'],['exquisite','magnificent'],['conspicuous','obvious'],['precise','exact'],['navigate','maneuver'],['peculiar','eccentric'],['vivid','striking']],
+  6: [['benevolent','kindhearted'],['arduous','strenuous'],['candid','frank'],['clandestine','secretive'],['copious','abundant'],['eloquent','articulate'],['emulate','imitate'],['ephemeral','fleeting'],['fastidious','meticulous'],['frugal','thrifty'],['gregarious','sociable'],['impeccable','flawless'],['indifferent','apathetic'],['lucid','clear'],['mundane','ordinary'],['nostalgic','sentimental'],['obstinate','stubborn'],['pragmatic','practical'],['resilient','tough'],['scrutinize','inspect']],
+  7: [['acrimonious','bitter'],['anomaly','irregularity'],['austere','severe'],['capricious','impulsive'],['conundrum','dilemma'],['demure','reserved'],['eccentric','unconventional'],['enigmatic','mysterious'],['equivocate','evade'],['exacerbate','worsen'],['gregarious','outgoing'],['immutable','unchangeable'],['indignant','outraged'],['laconic','terse'],['magnanimous','generous'],['nefarious','wicked'],['ostentatious','flashy'],['paradigm','model'],['quintessential','typical'],['vehement','passionate']],
+  8: [['abnegate','renounce'],['anachronism','outdated'],['antithesis','opposite'],['cacophony','dissonance'],['demagogue','agitator'],['dichotomy','division'],['ebullient','exuberant'],['effervescent','bubbly'],['equanimity','composure'],['fortuitous','accidental'],['hegemony','dominance'],['idiosyncrasy','peculiarity'],['ignominious','disgraceful'],['inscrutable','impenetrable'],['juxtapose','contrast'],['mellifluous','melodious'],['obfuscate','confuse'],['perfunctory','careless'],['pulchritude','beauty'],['vicissitude','change']]
 };
 
 const PROC_ANTONYMS = {
@@ -1855,7 +1931,10 @@ const PROC_ANTONYMS = {
   2: [['quiet','loud'],['difficult','easy'],['early','late'],['soft','hard'],['weak','strong'],['kind','cruel'],['rough','smooth'],['brave','scared'],['empty','full'],['straight','curved'],['narrow','wide'],['thick','thin'],['polite','rude'],['accept','refuse'],['remember','forget'],['borrow','lend'],['arrive','depart'],['attack','defend'],['generous','stingy'],['ancient','modern']],
   3: [['enormous','tiny'],['ancient','modern'],['brave','cowardly'],['generous','selfish'],['gentle','rough'],['proud','humble'],['curious','indifferent'],['victory','defeat'],['create','destroy'],['increase','decrease'],['reward','punish'],['expand','shrink'],['appear','vanish'],['permanent','temporary'],['flexible','rigid'],['natural','artificial'],['simple','complex'],['public','private'],['common','rare'],['include','exclude']],
   4: [['persistent','quitting'],['reluctant','eager'],['significant','trivial'],['abundant','scarce'],['temporary','permanent'],['valuable','worthless'],['flexible','rigid'],['create','destroy'],['increase','decrease'],['reward','punishment'],['expand','contract'],['visible','invisible'],['maximum','minimum'],['interior','exterior'],['voluntary','mandatory'],['majority','minority'],['success','failure'],['wisdom','foolishness'],['loyalty','betrayal'],['admire','despise']],
-  5: [['ambiguous','clear'],['inevitable','avoidable'],['subtle','obvious'],['temporary','permanent'],['complex','simple'],['confident','insecure'],['abundant','scarce'],['transparent','opaque'],['constructive','destructive'],['optimistic','pessimistic'],['concrete','abstract'],['genuine','fake'],['beneficial','harmful'],['significant','insignificant'],['voluntary','compulsory'],['superior','inferior'],['prosperity','poverty'],['innovation','tradition'],['tolerance','intolerance'],['courage','cowardice']]
+  5: [['ambiguous','clear'],['inevitable','avoidable'],['subtle','obvious'],['temporary','permanent'],['complex','simple'],['confident','insecure'],['abundant','scarce'],['transparent','opaque'],['constructive','destructive'],['optimistic','pessimistic'],['concrete','abstract'],['genuine','fake'],['beneficial','harmful'],['significant','insignificant'],['voluntary','compulsory'],['superior','inferior'],['prosperity','poverty'],['innovation','tradition'],['tolerance','intolerance'],['courage','cowardice']],
+  6: [['benevolent','malevolent'],['candid','deceitful'],['frugal','wasteful'],['humble','arrogant'],['lucid','confusing'],['mundane','extraordinary'],['obstinate','flexible'],['pragmatic','idealistic'],['resilient','fragile'],['gregarious','reclusive'],['indifferent','enthusiastic'],['impeccable','flawed'],['nostalgic','forward-looking'],['scrutinize','overlook'],['cautious','reckless'],['enhance','diminish'],['endorse','oppose'],['fluctuate','stabilize'],['liberate','enslave'],['preserve','destroy']],
+  7: [['austere','luxurious'],['capricious','steady'],['demure','bold'],['eccentric','conventional'],['enigmatic','obvious'],['exacerbate','alleviate'],['immutable','changeable'],['laconic','verbose'],['magnanimous','petty'],['nefarious','virtuous'],['ostentatious','modest'],['vehement','indifferent'],['provincial','cosmopolitan'],['vindicate','accuse'],['expedite','delay'],['ratify','reject'],['lavish','meager'],['benign','malignant'],['orthodox','heretical'],['placid','turbulent']],
+  8: [['abate','intensify'],['acrimony','goodwill'],['ascetic','indulgent'],['banal','original'],['cogent','unconvincing'],['didactic','entertaining'],['ebullient','despondent'],['fortuitous','planned'],['ignominious','honorable'],['indolent','industrious'],['mendacious','truthful'],['obdurate','yielding'],['pernicious','beneficial'],['profligate','frugal'],['quixotic','realistic'],['recondite','obvious'],['sycophant','critic'],['taciturn','talkative'],['ubiquitous','rare'],['volatile','stable']]
 };
 
 const PROC_PAST_TENSE = {
@@ -1921,7 +2000,7 @@ const PROC_HOMOPHONES = [
 
 // Procedural question generators by type
 function genProceduralEnglish(grade, distracted) {
-  const g = Math.min(5, Math.max(0, grade));
+  const g = Math.min(8, Math.max(0, grade));
   const types = [];
 
   // Available question types based on grade
@@ -2000,7 +2079,10 @@ function genEnglish(level, distracted) {
       else if (grade === 1) wordPool = SIGHT_WORDS_1;
       else if (grade === 2) wordPool = SPELLING_2;
       else if (grade <= 4) wordPool = SPELLING_3;
-      else wordPool = SPELLING_4;
+      else if (grade === 5) wordPool = SPELLING_4;
+      else if (grade === 6) wordPool = SPELLING_5;
+      else if (grade === 7) wordPool = SPELLING_6;
+      else wordPool = SPELLING_7;
       const w = pick(wordPool);
       return { q: `Look at the screen — read this word: ${w.toUpperCase()}`, a: w };
     }
@@ -2052,10 +2134,31 @@ function genEnglish(level, distracted) {
     pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
     pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
     pool.push(...GRAMMAR_FIX[4]);
-  } else {
+  } else if (grade === 5) {
     const w = pick(decile < 5 ? SPELLING_4 : SPELLING_5);
     pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
     const v = pick(VOCAB_5);
+    pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
+    pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
+    pool.push(...(GRAMMAR_FIX[5] || GRAMMAR_FIX[4]));
+  } else if (grade === 6) {
+    const w = pick(decile < 5 ? SPELLING_5 : SPELLING_6);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    const v = pick(VOCAB_6);
+    pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
+    pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
+    pool.push(...(GRAMMAR_FIX[5] || GRAMMAR_FIX[4]));
+  } else if (grade === 7) {
+    const w = pick(decile < 5 ? SPELLING_6 : SPELLING_7);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    const v = pick(VOCAB_7);
+    pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
+    pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
+    pool.push(...(GRAMMAR_FIX[5] || GRAMMAR_FIX[4]));
+  } else {
+    const w = pick(decile < 5 ? SPELLING_7 : SPELLING_8);
+    pool.push({ q:`Spell the word: "${w}"`, a: w.toUpperCase() });
+    const v = pick(VOCAB_8);
     pool.push({ q:`What does "${v.w}" mean?`, a: v.d });
     pool.push({ q:`Use "${v.w}" in a sentence`, a: v.s });
     pool.push(...(GRAMMAR_FIX[5] || GRAMMAR_FIX[4]));
@@ -3376,7 +3479,7 @@ function showAnswer() {
 }
 
 function nudgeLevel(delta) {
-  const newLevel = Math.max(0, Math.min(79, quizState.currentLevel + delta));
+  const newLevel = Math.max(0, Math.min(99, quizState.currentLevel + delta));
   quizState.currentLevel = newLevel;
   if (quizState.isAll) {
     quizState.currentLevels[quizState.currentSubject] = newLevel;
@@ -3466,7 +3569,7 @@ function recordAnswer(result) {
       quizState.correctRun++;
       quizState.incorrectRun = 0;
       if (quizState.correctRun >= 3) {
-        quizState.currentLevel = Math.min(79, quizState.currentLevel + 1);
+        quizState.currentLevel = Math.min(99, quizState.currentLevel + 1);
         quizState.correctRun = 0;
       }
     } else if (result === 'difficulty') {
@@ -4033,7 +4136,32 @@ function importProgress(event) {
 //  INIT
 // ═══════════════════════════════════════════
 
+// Seed spelling/study word lists once per seed key.
+// Each entry runs once per device — won't re-add if user deletes words.
+function seedWords() {
+  const seeds = [
+    {
+      key: 'homuth_seed_logan_spelling_ight_ought_2026_05_02',
+      childId: 'logan',
+      list: 'spelling',
+      words: ['frighten','flight','brighter','flashlight','mighty','delight','tighten','nightly','sight','brought','ought','thought','fought','caught','daughter','taught','naughty','fault']
+    }
+  ];
+  for (const seed of seeds) {
+    if (localStorage.getItem(seed.key)) continue;
+    const existing = seed.list === 'spelling' ? getSpellingWords(seed.childId) : getStudyWords(seed.childId);
+    const merged = [...existing];
+    for (const w of seed.words) {
+      if (!merged.includes(w)) merged.push(w);
+    }
+    if (seed.list === 'spelling') saveSpellingWords(seed.childId, merged);
+    else saveStudyWords(seed.childId, merged);
+    try { localStorage.setItem(seed.key, '1'); } catch(e) {}
+  }
+}
+
 loadState();
+seedWords();
 updateToggleVisual();
 updateFeatureToggles();
 renderHome();
