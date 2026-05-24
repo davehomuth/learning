@@ -382,7 +382,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.7";
+const VERSION = "1.8";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -1150,6 +1150,298 @@ const WORD_POOL = {
       "The <b>audacious</b> chef combined chocolate with chili peppers.",
       "He was <b>audacious</b> enough to ask for a meeting with the CEO.",
       "An <b>audacious</b> goal can inspire a team to greatness."
+    ]},
+    { w:"elaborate", d:"full of detail; carefully developed", sentences:[
+      "He drew an <b>elaborate</b> map of the secret fort.",
+      "The wedding had an <b>elaborate</b> cake with three tiers.",
+      "Could you <b>elaborate</b> on what you mean?",
+      "Her <b>elaborate</b> hairstyle took an hour to braid.",
+      "The spy laid out an <b>elaborate</b> plan to enter the building.",
+      "The book had an <b>elaborate</b> map at the front.",
+      "He told an <b>elaborate</b> story about how he lost his homework.",
+      "The chef prepared an <b>elaborate</b> meal for the holiday.",
+      "Don't <b>elaborate</b> unless the teacher asks for more detail.",
+      "The artist created an <b>elaborate</b> mural across the wall."
+    ]},
+    { w:"vivid", d:"bright, lively, and clear in the mind", sentences:[
+      "She had a <b>vivid</b> dream about flying over the ocean.",
+      "The painting used <b>vivid</b> reds and yellows.",
+      "His <b>vivid</b> description made the scene feel real.",
+      "The garden was full of <b>vivid</b> tulips.",
+      "I have a <b>vivid</b> memory of my first day of school.",
+      "The author writes with a <b>vivid</b> imagination.",
+      "A <b>vivid</b> sunset turned the clouds gold and pink.",
+      "Her dress was a <b>vivid</b> shade of green.",
+      "The story's <b>vivid</b> details made it easy to picture.",
+      "He gave a <b>vivid</b> retelling of the soccer match."
+    ]},
+    { w:"anonymous", d:"with no known name or author", sentences:[
+      "An <b>anonymous</b> donor paid for the new playground.",
+      "The note was <b>anonymous</b>, but very kind.",
+      "Many ancient poems are <b>anonymous</b>.",
+      "She sent an <b>anonymous</b> tip to the police.",
+      "An <b>anonymous</b> reviewer praised the bakery online.",
+      "The award letter mentioned an <b>anonymous</b> nominator.",
+      "Some donors choose to stay <b>anonymous</b>.",
+      "An <b>anonymous</b> caller reported the lost dog.",
+      "The book's introduction was written by an <b>anonymous</b> scholar.",
+      "He left an <b>anonymous</b> bouquet on her doorstep."
+    ]},
+    { w:"ironic", d:"happening in a way opposite to what's expected", sentences:[
+      "It's <b>ironic</b> that the swim coach can't swim.",
+      "The <b>ironic</b> twist at the end caught everyone off guard.",
+      "She gave an <b>ironic</b> smile when she saw the broken umbrella in the rain.",
+      "It's <b>ironic</b> that the fire station burned down.",
+      "His <b>ironic</b> tone made it clear he wasn't serious.",
+      "It was <b>ironic</b> that the kid who hated reading became a librarian.",
+      "The story had an <b>ironic</b> ending no one saw coming.",
+      "It's <b>ironic</b> that the loudest player on the team is the quietest in class.",
+      "She made an <b>ironic</b> comment about how 'easy' the test would be.",
+      "There's something <b>ironic</b> about a chef who can't boil water."
+    ]},
+    { w:"inevitable", d:"sure to happen; can't be avoided", sentences:[
+      "After the long hike, blisters were <b>inevitable</b>.",
+      "An <b>inevitable</b> storm rolled in by evening.",
+      "Change is an <b>inevitable</b> part of life.",
+      "With four kittens at home, mess was <b>inevitable</b>.",
+      "The team's win felt <b>inevitable</b> by the third quarter.",
+      "Mistakes are <b>inevitable</b> when you're learning.",
+      "It was <b>inevitable</b> that the new song would be a hit.",
+      "An <b>inevitable</b> growl came from his empty stomach.",
+      "Once the comet was sighted, the news coverage was <b>inevitable</b>.",
+      "If you skip practice, falling behind is <b>inevitable</b>."
+    ]},
+    { w:"intricate", d:"having many small, complicated parts", sentences:[
+      "The <b>intricate</b> watch had dozens of tiny gears.",
+      "She wove an <b>intricate</b> pattern into the blanket.",
+      "The mystery had an <b>intricate</b> plot full of clues.",
+      "Spiders spin <b>intricate</b> webs between the branches.",
+      "His <b>intricate</b> drawing showed every brick of the castle.",
+      "An <b>intricate</b> dance routine takes weeks to learn.",
+      "The puzzle had an <b>intricate</b> design with hidden pieces.",
+      "Her <b>intricate</b> braid was the envy of the class.",
+      "The temple's <b>intricate</b> carvings told ancient stories.",
+      "Engineers had to design an <b>intricate</b> system of pipes."
+    ]},
+    { w:"predominant", d:"most common or most important", sentences:[
+      "Blue is the <b>predominant</b> color in his painting.",
+      "The <b>predominant</b> theme of the book is friendship.",
+      "Soccer is the <b>predominant</b> sport in our town.",
+      "Spanish is the <b>predominant</b> language in many countries.",
+      "Her <b>predominant</b> feeling after the win was relief.",
+      "Pine trees are <b>predominant</b> in this forest.",
+      "The <b>predominant</b> flavor in the soup was ginger.",
+      "Curiosity is a <b>predominant</b> trait among scientists.",
+      "Wind from the west was <b>predominant</b> all week.",
+      "Honesty is the <b>predominant</b> rule in our family."
+    ]},
+    { w:"conventional", d:"following the usual or accepted way", sentences:[
+      "She chose a <b>conventional</b> blue suit for the interview.",
+      "The recipe used a <b>conventional</b> oven, not a microwave.",
+      "Their house has a <b>conventional</b> front porch.",
+      "He gave a <b>conventional</b> answer instead of a creative one.",
+      "<b>Conventional</b> wisdom says to sleep eight hours.",
+      "She broke from <b>conventional</b> art styles with bold colors.",
+      "The team uses a <b>conventional</b> playbook with simple plays.",
+      "His clothes were <b>conventional</b>, but his ideas were wild.",
+      "The wedding followed a <b>conventional</b> ceremony.",
+      "Sometimes the <b>conventional</b> approach is the best one."
+    ]},
+    { w:"candid", d:"honest and direct, without hiding feelings", sentences:[
+      "She gave a <b>candid</b> answer about why she quit.",
+      "The <b>candid</b> photo caught him mid-laugh.",
+      "He was <b>candid</b> about how hard the year had been.",
+      "I appreciate your <b>candid</b> opinion.",
+      "The interview was a <b>candid</b> look at the singer's life.",
+      "She made a <b>candid</b> confession to her best friend.",
+      "His <b>candid</b> review helped the restaurant improve.",
+      "The teacher was <b>candid</b> about the upcoming test.",
+      "A <b>candid</b> conversation cleared up the misunderstanding.",
+      "Her <b>candid</b> writing style makes the blog feel personal."
+    ]},
+    { w:"profound", d:"very deep or thoughtful", sentences:[
+      "Her speech had a <b>profound</b> impact on the audience.",
+      "He had a <b>profound</b> respect for his grandfather's stories.",
+      "Losing a pet leaves a <b>profound</b> sadness.",
+      "The book contains some <b>profound</b> ideas about kindness.",
+      "Scientists made a <b>profound</b> discovery about the deep sea.",
+      "She felt a <b>profound</b> sense of peace by the lake.",
+      "His <b>profound</b> knowledge of birds amazed the class.",
+      "The film raised <b>profound</b> questions about friendship.",
+      "There was a <b>profound</b> silence after the final note.",
+      "A teacher's words can have a <b>profound</b> effect on a child."
+    ]},
+    { w:"paradox", d:"a statement or situation that seems to contradict itself", sentences:[
+      "It's a <b>paradox</b> that the more we learn, the more we realize we don't know.",
+      "Time travel stories are full of <b>paradox</b>.",
+      "The teacher posed a <b>paradox</b> for the class to debate.",
+      "Living simply in a rich country is a kind of <b>paradox</b>.",
+      "She loves the <b>paradox</b> of cozy snowy days and hot cocoa.",
+      "His character was a <b>paradox</b> — gentle yet fierce.",
+      "The <b>paradox</b> of choice means too many options can feel worse.",
+      "Quiet rebellion is an interesting <b>paradox</b>.",
+      "Philosophers have debated this <b>paradox</b> for centuries.",
+      "It's a <b>paradox</b> that practicing failure helps us succeed."
+    ]},
+    { w:"fluctuate", d:"to keep changing back and forth", sentences:[
+      "Temperatures <b>fluctuate</b> a lot in the spring.",
+      "Her grades <b>fluctuate</b> depending on how much sleep she gets.",
+      "Stock prices <b>fluctuate</b> all day long.",
+      "His mood can <b>fluctuate</b> when he's hungry.",
+      "The amount of water in the lake will <b>fluctuate</b> with rainfall.",
+      "Crowds at the museum <b>fluctuate</b> by season.",
+      "Battery levels <b>fluctuate</b> based on what apps are open.",
+      "Energy can <b>fluctuate</b> throughout the school day.",
+      "The store's prices <b>fluctuate</b> with the cost of supplies.",
+      "Weather forecasts often <b>fluctuate</b> as the storm gets closer."
+    ]}
+  ],
+  6: [
+    { w:"arbitrary", d:"based on a whim, not on a clear reason", sentences:[
+      "The teacher's choice seemed <b>arbitrary</b> to the class.",
+      "She picked an <b>arbitrary</b> number from one to a hundred.",
+      "The rules felt <b>arbitrary</b> until he understood the goal.",
+      "It's not <b>arbitrary</b> — there's a real pattern behind it.",
+      "An <b>arbitrary</b> deadline can be hard to take seriously.",
+      "He drew an <b>arbitrary</b> line down the middle of the page.",
+      "The judge's ruling was anything but <b>arbitrary</b>.",
+      "She made an <b>arbitrary</b> guess and got lucky.",
+      "An <b>arbitrary</b> decision can still turn out well.",
+      "The committee avoided <b>arbitrary</b> choices by using a scoring system."
+    ]},
+    { w:"mundane", d:"ordinary, dull, everyday", sentences:[
+      "Folding laundry is a <b>mundane</b> chore.",
+      "He found beauty in the <b>mundane</b> moments of life.",
+      "Most of his job is <b>mundane</b> paperwork.",
+      "Even the most <b>mundane</b> day can have a surprise.",
+      "She turned a <b>mundane</b> walk into an adventure.",
+      "Their morning routine is comfortably <b>mundane</b>.",
+      "A poet can find magic in the <b>mundane</b>.",
+      "Don't dismiss <b>mundane</b> tasks — they keep things running.",
+      "The hero's <b>mundane</b> day-job hides his secret identity.",
+      "A <b>mundane</b> chore became fun with music playing."
+    ]},
+    { w:"succinct", d:"short and clearly expressed", sentences:[
+      "Her <b>succinct</b> answer impressed the panel.",
+      "Try to keep your reply <b>succinct</b>.",
+      "The teacher praised his <b>succinct</b> summary.",
+      "A <b>succinct</b> email gets read faster.",
+      "She gave a <b>succinct</b> explanation in just two sentences.",
+      "Good headlines are <b>succinct</b> yet clear.",
+      "His <b>succinct</b> note left no room for confusion.",
+      "The lawyer's <b>succinct</b> closing argument was powerful.",
+      "Even complex ideas can be made <b>succinct</b> with practice.",
+      "A <b>succinct</b> apology is often more sincere than a long one."
+    ]},
+    { w:"tangible", d:"able to be touched; real and clear", sentences:[
+      "Her excitement was <b>tangible</b> in the air.",
+      "The team made <b>tangible</b> progress on the project.",
+      "A medal is a <b>tangible</b> reward for hard work.",
+      "There were <b>tangible</b> benefits to learning a new language.",
+      "He needed something <b>tangible</b>, not just promises.",
+      "Their friendship had a <b>tangible</b> warmth.",
+      "The change in the room was almost <b>tangible</b>.",
+      "Books make ideas <b>tangible</b> in a way the internet doesn't.",
+      "She wanted a <b>tangible</b> goal she could measure.",
+      "Trust is hard to define but very <b>tangible</b> when it's there."
+    ]},
+    { w:"prevalent", d:"widespread; common in a place or time", sentences:[
+      "Allergies are <b>prevalent</b> in the spring.",
+      "Cell phones are now <b>prevalent</b> everywhere.",
+      "Sunny weather is <b>prevalent</b> here in July.",
+      "The flu was <b>prevalent</b> in the school last winter.",
+      "Maple trees are <b>prevalent</b> in this part of the country.",
+      "Online learning has become <b>prevalent</b> in recent years.",
+      "Misinformation can be <b>prevalent</b> during big news events.",
+      "Coffee shops are <b>prevalent</b> in every neighborhood downtown.",
+      "Kindness should be the most <b>prevalent</b> habit in our community.",
+      "Tablets are <b>prevalent</b> in many classrooms now."
+    ]},
+    { w:"omniscient", d:"knowing everything", sentences:[
+      "The story's narrator is <b>omniscient</b> and sees every character's thoughts.",
+      "Even teachers aren't <b>omniscient</b> — they Google things too.",
+      "An <b>omniscient</b> point of view jumps from mind to mind.",
+      "No one is truly <b>omniscient</b>, no matter how smart.",
+      "The wise old wizard seemed nearly <b>omniscient</b>.",
+      "An <b>omniscient</b> narrator can tell readers what each character knows.",
+      "Some characters pretend to be <b>omniscient</b> for dramatic effect.",
+      "Search engines feel <b>omniscient</b> until you ask a tricky question.",
+      "Mythology often features an <b>omniscient</b> god or goddess.",
+      "Writing an <b>omniscient</b> narrator takes careful planning."
+    ]}
+  ],
+  7: [
+    { w:"didactic", d:"meant to teach or give a lesson", sentences:[
+      "The fable is a <b>didactic</b> story with a clear moral.",
+      "Some kids' books are too <b>didactic</b> to be fun.",
+      "Her lecture had a <b>didactic</b> tone.",
+      "The film's <b>didactic</b> message was about kindness.",
+      "<b>Didactic</b> poetry was popular in ancient times.",
+      "A good teacher knows when to be <b>didactic</b> and when to step back.",
+      "His <b>didactic</b> uncle turns every conversation into a lesson.",
+      "Not every story has to be <b>didactic</b> to be meaningful.",
+      "Museum exhibits walk a line between fun and <b>didactic</b>.",
+      "The author's <b>didactic</b> style suits a textbook better than a novel."
+    ]},
+    { w:"eclectic", d:"drawing ideas or things from many different sources", sentences:[
+      "Her music taste is <b>eclectic</b> — jazz, hip hop, and folk.",
+      "The café has an <b>eclectic</b> mix of chairs and tables.",
+      "His <b>eclectic</b> bookshelf includes cookbooks, comics, and history.",
+      "An <b>eclectic</b> wardrobe makes outfits feel fresh.",
+      "The restaurant's <b>eclectic</b> menu borrows from five cuisines.",
+      "She has an <b>eclectic</b> group of friends from all walks of life.",
+      "The festival featured an <b>eclectic</b> lineup of performers.",
+      "Their living room style is comfortably <b>eclectic</b>.",
+      "An <b>eclectic</b> playlist keeps a long drive interesting.",
+      "Designers often have <b>eclectic</b> inspiration boards."
+    ]},
+    { w:"ambivalent", d:"having mixed or uncertain feelings about something", sentences:[
+      "She felt <b>ambivalent</b> about moving to a new city.",
+      "He was <b>ambivalent</b> when offered the promotion.",
+      "Voters were <b>ambivalent</b> about both candidates.",
+      "I'm <b>ambivalent</b> about pineapple on pizza.",
+      "Her <b>ambivalent</b> shrug said she wasn't sure either.",
+      "Critics were <b>ambivalent</b> about the movie's ending.",
+      "An <b>ambivalent</b> answer often means more thought is needed.",
+      "Teens can be <b>ambivalent</b> about parental rules.",
+      "He was <b>ambivalent</b> about going to the party.",
+      "It's okay to feel <b>ambivalent</b> about big decisions."
+    ]},
+    { w:"fastidious", d:"picky and careful about details", sentences:[
+      "The chef is <b>fastidious</b> about ingredients.",
+      "His <b>fastidious</b> notes catch every error.",
+      "She was <b>fastidious</b> about keeping her desk tidy.",
+      "A <b>fastidious</b> editor improves any manuscript.",
+      "The watchmaker did <b>fastidious</b> work on each gear.",
+      "He's <b>fastidious</b> about brushing his teeth twice a day.",
+      "The artist is <b>fastidious</b> about color matching.",
+      "Her <b>fastidious</b> packing meant nothing was forgotten.",
+      "The lab requires <b>fastidious</b> attention to safety.",
+      "A <b>fastidious</b> reader spots typos that others miss."
+    ]},
+    { w:"insidious", d:"slowly and quietly causing harm", sentences:[
+      "The disease is <b>insidious</b> — symptoms appear only after years.",
+      "Misinformation spreads in <b>insidious</b> ways online.",
+      "An <b>insidious</b> leak can damage a house before anyone notices.",
+      "Their <b>insidious</b> habit of comparing themselves harmed their friendship.",
+      "Rust is an <b>insidious</b> enemy of any car.",
+      "Bullying is often <b>insidious</b>, not loud.",
+      "The villain's plan was <b>insidious</b> and slow-moving.",
+      "An <b>insidious</b> draft made the whole room cold by morning.",
+      "Doubt can be <b>insidious</b>, creeping in over time.",
+      "Health risks from <b>insidious</b> stress add up over years."
+    ]},
+    { w:"propensity", d:"a natural tendency toward something", sentences:[
+      "He has a <b>propensity</b> for telling long stories.",
+      "Her <b>propensity</b> for kindness made her a great friend.",
+      "Cats have a <b>propensity</b> to nap in sunbeams.",
+      "His <b>propensity</b> to procrastinate cost him a grade.",
+      "Some children show an early <b>propensity</b> for music.",
+      "Her <b>propensity</b> for honesty earned her trust.",
+      "There's a <b>propensity</b> in big cities for late dinners.",
+      "His <b>propensity</b> to overthink can be exhausting.",
+      "The puppy's <b>propensity</b> to chew everything ended a few socks.",
+      "She has a <b>propensity</b> for finding lost things."
     ]}
   ]
 };
@@ -1664,8 +1956,8 @@ function pushRecentWord(childId, w) {
   lsSet(LS.recentWords(childId), arr);
 }
 
-function clampDecile(d) { return Math.max(0, Math.min(59, d | 0)); }
-function decileToGrade(d) { return Math.max(0, Math.min(5, Math.floor(d / 10))); }
+function clampDecile(d) { return Math.max(0, Math.min(79, d | 0)); }
+function decileToGrade(d) { return Math.max(0, Math.min(7, Math.floor(d / 10))); }
 function subtierForDecile(d) {
   // within grade (d % 10): 0-3 = low, 4-6 = medium, 7-9 = high
   const r = d % 10;
@@ -2162,7 +2454,7 @@ function masterCurrentWord() {
   const threshold = isDaddy ? PROMOTE_THRESHOLD_DADDY : PROMOTE_THRESHOLD_KID;
   let at = getAtGrade(state.childId) + 1;
   if (at >= threshold) {
-    if (state.decile < 59) {
+    if (state.decile < 79) {
       state.decile = clampDecile(state.decile + 1);
       setChildDecile(state.childId, state.decile);
       at = 0;
