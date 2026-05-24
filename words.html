@@ -84,6 +84,12 @@
   .profile-btn .emoji { font-size: 42px; display: block; margin-bottom: 6px; }
   .profile-btn .name { font-size: 18px; font-weight: 700; color: var(--word); }
   .profile-btn .info { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+  .profile-btn .profile-adjust {
+    display: flex; justify-content: center; gap: 8px; margin-top: 8px;
+  }
+  .profile-btn .profile-adjust .adj-btn {
+    width: 24px; height: 24px; font-size: 11px;
+  }
 
   .toggle-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -348,6 +354,18 @@
     <button class="btn ghost small" onclick="goProfile()">← Back</button>
   </div>
 
+  <!-- EMPTY POOL SCREEN — all words at this level are mastered -->
+  <div class="screen" id="screen-empty">
+    <div class="card">
+      <h2 id="emptyTitle">⭐ All Mastered!</h2>
+      <p class="sub" id="emptyMsg">No words left at this level. Pick what to do next:</p>
+    </div>
+    <button class="btn primary" onclick="bumpAndRetry(1)">▲ Move up one decile</button>
+    <button class="btn primary" onclick="bumpAndRetry(10)">▲▲ Move up a full grade</button>
+    <button class="btn accent" onclick="bringBackMastered(5)">↩ Bring back 5 most-recent mastered</button>
+    <button class="btn ghost small" onclick="goProfile()">← Back to profile</button>
+  </div>
+
   <!-- REFRESH SENTENCES SCREEN -->
   <div class="screen" id="screen-refresh">
     <div class="card">
@@ -364,7 +382,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.6";
+const VERSION = "1.7";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -1833,12 +1851,26 @@ function renderProfileGrid() {
       <span class="emoji">${c.emoji}</span>
       <div class="name">${c.name}</div>
       <div class="info">${gradeLabel} · ⭐ ${mastered}</div>
+      <div class="profile-adjust">
+        <button class="adj-btn" onclick="bumpProfileDecile(event,'${id}',-1)" title="Easier words">▼</button>
+        <button class="adj-btn" onclick="bumpProfileDecile(event,'${id}',1)" title="Harder words">▲</button>
+      </div>
     `;
     grid.appendChild(btn);
   }
   // listen toggle state
   const toggleEl = document.getElementById("listenToggle");
   toggleEl.classList.toggle("on", !!state.listenMode);
+}
+
+function bumpProfileDecile(ev, childId, delta) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  const cur = getChildDecile(childId);
+  const next = clampDecile(cur + delta);
+  if (next === cur) return;
+  setChildDecile(childId, next);
+  setAtGrade(childId, 0);
+  renderProfileGrid();
 }
 
 function toggleListen() {
@@ -1855,6 +1887,8 @@ function selectChild(id) {
   state.currentWord = null; // ensure first nextWord() call doesn't push prior session word
   lsSet(LS.lastChild, id);
   nextWord();
+  // nextWord may have routed to the empty-pool screen — don't override that.
+  if (!state.currentWord) return;
   if (state.listenMode) startListenMode();
   else showWordScreen();
 }
@@ -1907,6 +1941,7 @@ function startMultiplayer() {
   state.sessionSeen = [];   // fresh session cooldown window
   state.currentWord = null;
   nextWord();
+  if (!state.currentWord) return; // nextWord routed to empty-pool screen
   if (state.listenMode) startListenMode();
   else showWordScreen();
 }
@@ -2056,8 +2091,7 @@ function nextWord(opts) {
   if (state.multiplayer && state.currentWord && !skipRotate) rotatePlayer();
   const pick = pickNextWord(state.childId, state.decile);
   if (!pick) {
-    alert("All words at this level are mastered! Great work. Tap ⭐ Mastered to bring some back into rotation, or a parent can bump to the next grade.");
-    goProfile();
+    showEmptyPoolScreen();
     return;
   }
   state.currentWord = pick;
@@ -2072,6 +2106,45 @@ function nextWord(opts) {
   }
   if (state.listenMode) startListenForWord();
   else showWordScreen();
+}
+
+// ═══════════════════════════════════════════
+//  EMPTY POOL — fallback when all words at this level are mastered
+// ═══════════════════════════════════════════
+function showEmptyPoolScreen() {
+  const c = state.childId ? CHILDREN[state.childId] : null;
+  const name = c ? c.name : "This profile";
+  const lvl = c ? decileLabel(state.childId, state.decile) : "this level";
+  const arcLen = c ? getArchive(state.childId).length : 0;
+  document.getElementById("emptyTitle").textContent = "⭐ " + name + " — All Mastered!";
+  document.getElementById("emptyMsg").textContent =
+    "No fresh words available at " + lvl + " (" + arcLen + " mastered overall). Pick what to do next:";
+  showScreen("screen-empty");
+}
+
+function bumpAndRetry(deltaDeciles) {
+  if (!state.childId) return goProfile();
+  const next = clampDecile((state.decile || 0) + deltaDeciles);
+  state.decile = next;
+  setChildDecile(state.childId, next);
+  setAtGrade(state.childId, 0);
+  // Refresh visible chips
+  const label = decileLabel(state.childId, next);
+  ["wordGrade","sentenceGrade","defGrade"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+  nextWord({ skipRotate: true });
+}
+
+function bringBackMastered(n) {
+  if (!state.childId) return goProfile();
+  const arc = getArchive(state.childId);
+  if (arc.length === 0) { alert("Mastered list is already empty."); return; }
+  const removeCount = Math.min(n, arc.length);
+  const kept = arc.slice(0, arc.length - removeCount);
+  setArchive(state.childId, kept);
+  nextWord({ skipRotate: true });
 }
 
 // ═══════════════════════════════════════════
