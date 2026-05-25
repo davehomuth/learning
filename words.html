@@ -382,7 +382,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "1.8";
+const VERSION = "1.9";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -1368,6 +1368,146 @@ const WORD_POOL = {
       "Search engines feel <b>omniscient</b> until you ask a tricky question.",
       "Mythology often features an <b>omniscient</b> god or goddess.",
       "Writing an <b>omniscient</b> narrator takes careful planning."
+    ]},
+    { w:"diligent", d:"hardworking and careful", sentences:[
+      "The <b>diligent</b> student rewrote her notes neatly.",
+      "<b>Diligent</b> practice turned him into a great violinist.",
+      "A <b>diligent</b> babysitter checks on the kids often.",
+      "Her <b>diligent</b> research filled three notebooks.",
+      "The <b>diligent</b> chef never leaves a dish half-done."
+    ]},
+    { w:"lucid", d:"clear and easy to understand", sentences:[
+      "The teacher's <b>lucid</b> explanation made everyone get it.",
+      "She wrote a <b>lucid</b> summary of the long article.",
+      "Even when sick, he gave a <b>lucid</b> answer.",
+      "A <b>lucid</b> argument doesn't need fancy words.",
+      "The <b>lucid</b> map made finding the trail easy."
+    ]},
+    { w:"quaint", d:"pleasantly old-fashioned", sentences:[
+      "We stayed in a <b>quaint</b> cottage by the river.",
+      "The <b>quaint</b> village had cobblestone streets.",
+      "Grandma's <b>quaint</b> teapot is shaped like a chicken.",
+      "There's a <b>quaint</b> little bookstore around the corner.",
+      "The town's <b>quaint</b> charm draws tourists every summer."
+    ]},
+    { w:"wary", d:"cautious about possible danger", sentences:[
+      "The cat was <b>wary</b> of the new puppy.",
+      "Be <b>wary</b> of strangers offering free phones.",
+      "Hikers should be <b>wary</b> of slippery rocks.",
+      "She gave a <b>wary</b> glance at the dark hallway.",
+      "<b>Wary</b> drivers slow down in heavy rain."
+    ]},
+    { w:"salient", d:"most noticeable or important", sentences:[
+      "The most <b>salient</b> point of his essay was about kindness.",
+      "The teacher highlighted the <b>salient</b> details.",
+      "<b>Salient</b> features of the painting include bold color.",
+      "Make sure your report mentions the <b>salient</b> facts.",
+      "The coach focused on the most <b>salient</b> mistakes in the video."
+    ]},
+    { w:"lethargic", d:"sluggish, lacking energy", sentences:[
+      "The dog felt <b>lethargic</b> after the long walk.",
+      "A hot afternoon left everyone <b>lethargic</b>.",
+      "I'm always <b>lethargic</b> before my morning tea.",
+      "The bear became <b>lethargic</b> as winter approached.",
+      "Skipping breakfast can make you <b>lethargic</b>."
+    ]},
+    { w:"tedious", d:"long, slow, and dull", sentences:[
+      "Sorting socks is a <b>tedious</b> chore.",
+      "The <b>tedious</b> meeting felt endless.",
+      "Copying numbers by hand is a <b>tedious</b> job.",
+      "Even a fun movie can feel <b>tedious</b> if it's too long.",
+      "The <b>tedious</b> drive across the prairie took twelve hours."
+    ]},
+    { w:"autonomous", d:"acting independently; self-governing", sentences:[
+      "<b>Autonomous</b> cars can steer themselves.",
+      "The robot is <b>autonomous</b> and doesn't need a controller.",
+      "She was an <b>autonomous</b> traveler at sixteen.",
+      "<b>Autonomous</b> drones can map a whole field.",
+      "An <b>autonomous</b> region makes its own laws."
+    ]},
+    { w:"validate", d:"to confirm as true or worthwhile", sentences:[
+      "The teacher asked her to <b>validate</b> her answer with evidence.",
+      "A kind word can <b>validate</b> someone's feelings.",
+      "Scientists must <b>validate</b> their results with tests.",
+      "Please <b>validate</b> your parking ticket at the desk.",
+      "It feels good when a friend <b>validates</b> your effort."
+    ]},
+    { w:"fervent", d:"passionate and intense", sentences:[
+      "She is a <b>fervent</b> supporter of animal shelters.",
+      "His <b>fervent</b> speech moved the audience to tears.",
+      "A <b>fervent</b> reader can finish a novel in a day.",
+      "The fans gave a <b>fervent</b> cheer at the goal.",
+      "Her <b>fervent</b> hope is to become an astronaut."
+    ]},
+    { w:"notorious", d:"famous for something bad", sentences:[
+      "The neighborhood was <b>notorious</b> for noisy cats.",
+      "That cookbook is <b>notorious</b> for vague directions.",
+      "The <b>notorious</b> pothole on Main Street swallows tires.",
+      "He's <b>notorious</b> for losing his keys.",
+      "The <b>notorious</b> villain was finally caught in chapter ten."
+    ]},
+    { w:"spontaneous", d:"done without planning", sentences:[
+      "They made a <b>spontaneous</b> trip to the beach.",
+      "Her <b>spontaneous</b> laugh filled the room.",
+      "A <b>spontaneous</b> dance broke out at the party.",
+      "His <b>spontaneous</b> kindness made my day.",
+      "<b>Spontaneous</b> ideas often become the best ones."
+    ]},
+    { w:"transient", d:"lasting only a short time", sentences:[
+      "The rainbow was <b>transient</b>, gone within a minute.",
+      "<b>Transient</b> birds rest here on their long journey.",
+      "Childhood seems <b>transient</b> when you look back.",
+      "A <b>transient</b> guest stayed only one night.",
+      "<b>Transient</b> emotions pass; lasting ones grow."
+    ]},
+    { w:"coherent", d:"logical and easy to follow", sentences:[
+      "She gave a <b>coherent</b> explanation of the problem.",
+      "The story had a <b>coherent</b> plot from start to end.",
+      "It's hard to be <b>coherent</b> when you're tired.",
+      "His <b>coherent</b> argument convinced the judges.",
+      "A <b>coherent</b> outline makes writing easier."
+    ]},
+    { w:"cynical", d:"believing people act mostly for selfish reasons", sentences:[
+      "He grew <b>cynical</b> after being lied to too many times.",
+      "Don't be <b>cynical</b> — some people really are kind.",
+      "Her <b>cynical</b> jokes hid a hopeful heart.",
+      "A <b>cynical</b> reviewer rarely loves anything.",
+      "Being <b>cynical</b> can keep you from trusting good news."
+    ]},
+    { w:"relentless", d:"never stopping or letting up", sentences:[
+      "The <b>relentless</b> rain flooded the basement.",
+      "Her <b>relentless</b> training paid off at the championship.",
+      "The puppy was <b>relentless</b> in begging for treats.",
+      "A <b>relentless</b> sun beat down on the desert.",
+      "He showed <b>relentless</b> focus during the test."
+    ]},
+    { w:"obstinate", d:"stubborn, refusing to change", sentences:[
+      "The <b>obstinate</b> mule refused to move.",
+      "She was <b>obstinate</b> about wearing the same hat every day.",
+      "His <b>obstinate</b> habits drove his roommates crazy.",
+      "An <b>obstinate</b> debater never admits defeat.",
+      "The <b>obstinate</b> rust wouldn't scrub off."
+    ]},
+    { w:"zealous", d:"eagerly devoted to something", sentences:[
+      "The <b>zealous</b> fan painted his face team colors.",
+      "<b>Zealous</b> volunteers showed up at dawn.",
+      "She is a <b>zealous</b> defender of the library.",
+      "His <b>zealous</b> coaching pushed the team to victory.",
+      "<b>Zealous</b> bird-watchers travel for rare sightings."
+    ]},
+    { w:"impeccable", d:"flawless, without fault", sentences:[
+      "The waiter's service was <b>impeccable</b>.",
+      "She has <b>impeccable</b> taste in music.",
+      "His <b>impeccable</b> handwriting looks like a font.",
+      "The chef's timing was <b>impeccable</b>.",
+      "An <b>impeccable</b> outfit can boost your confidence."
+    ]},
+    { w:"empirical", d:"based on observation or experiment", sentences:[
+      "Scientists rely on <b>empirical</b> evidence.",
+      "Her <b>empirical</b> study tracked twenty plants for a year.",
+      "<b>Empirical</b> data is more trustworthy than guesses.",
+      "The doctor used <b>empirical</b> tests, not hunches.",
+      "<b>Empirical</b> research takes patience and care."
     ]}
   ],
   7: [
@@ -1442,6 +1582,146 @@ const WORD_POOL = {
       "His <b>propensity</b> to overthink can be exhausting.",
       "The puppy's <b>propensity</b> to chew everything ended a few socks.",
       "She has a <b>propensity</b> for finding lost things."
+    ]},
+    { w:"dubious", d:"doubtful or uncertain", sentences:[
+      "The map was a <b>dubious</b> guide at best.",
+      "She gave a <b>dubious</b> look at the strange soup.",
+      "His <b>dubious</b> excuse didn't fool anyone.",
+      "The expert was <b>dubious</b> about the claim.",
+      "A <b>dubious</b> shortcut led them deeper into the woods."
+    ]},
+    { w:"inherent", d:"built-in; existing as a natural part", sentences:[
+      "There's an <b>inherent</b> risk in any adventure.",
+      "Kindness seems <b>inherent</b> in her personality.",
+      "<b>Inherent</b> talent still needs practice.",
+      "Every job has its <b>inherent</b> challenges.",
+      "A diamond's beauty is <b>inherent</b>, not added."
+    ]},
+    { w:"prolific", d:"producing a lot", sentences:[
+      "The <b>prolific</b> author writes a book each year.",
+      "Their garden is <b>prolific</b> in tomatoes.",
+      "A <b>prolific</b> scorer leads the league.",
+      "The chef is <b>prolific</b> at inventing recipes.",
+      "<b>Prolific</b> rainfall left the rivers swollen."
+    ]},
+    { w:"surreal", d:"strange and dreamlike", sentences:[
+      "The empty mall at midnight felt <b>surreal</b>.",
+      "It was <b>surreal</b> to meet her favorite author.",
+      "The fog gave the field a <b>surreal</b> glow.",
+      "Winning the lottery would be <b>surreal</b>.",
+      "His painting had a <b>surreal</b> melting clock."
+    ]},
+    { w:"enigmatic", d:"mysterious and puzzling", sentences:[
+      "Her <b>enigmatic</b> smile gave nothing away.",
+      "The <b>enigmatic</b> note was signed only with a star.",
+      "The detective faced an <b>enigmatic</b> case.",
+      "<b>Enigmatic</b> ruins still puzzle archaeologists.",
+      "He left an <b>enigmatic</b> voicemail with no name."
+    ]},
+    { w:"fortuitous", d:"happening by lucky chance", sentences:[
+      "Their meeting at the airport was <b>fortuitous</b>.",
+      "A <b>fortuitous</b> turn led them to the perfect view.",
+      "The discovery was <b>fortuitous</b>, not planned.",
+      "It was <b>fortuitous</b> that the umbrella was in the car.",
+      "A <b>fortuitous</b> headline caught his eye."
+    ]},
+    { w:"ostentatious", d:"showy in a way meant to impress", sentences:[
+      "The <b>ostentatious</b> mansion had gold doorknobs.",
+      "His <b>ostentatious</b> watch flashed in the sun.",
+      "<b>Ostentatious</b> displays of wealth can feel rude.",
+      "The car's <b>ostentatious</b> paint job blinded passersby.",
+      "She avoided <b>ostentatious</b> jewelry."
+    ]},
+    { w:"burgeoning", d:"growing rapidly", sentences:[
+      "The <b>burgeoning</b> garden needed a bigger trellis.",
+      "A <b>burgeoning</b> tech scene took over the old factory.",
+      "His <b>burgeoning</b> talent caught the coach's eye.",
+      "<b>Burgeoning</b> demand led to longer lines.",
+      "The town's <b>burgeoning</b> population strained the schools."
+    ]},
+    { w:"extrapolate", d:"to extend an idea beyond known facts", sentences:[
+      "Don't <b>extrapolate</b> too much from a single test.",
+      "From the data, scientists <b>extrapolate</b> future trends.",
+      "You can <b>extrapolate</b> a pattern from these numbers.",
+      "It's risky to <b>extrapolate</b> without enough evidence.",
+      "Maps <b>extrapolate</b> where the road continues."
+    ]},
+    { w:"pretentious", d:"trying to seem more important than one is", sentences:[
+      "His <b>pretentious</b> speech bored the audience.",
+      "The menu sounded <b>pretentious</b> with all its French words.",
+      "She avoids <b>pretentious</b> reviews and trusts her own taste.",
+      "A <b>pretentious</b> name can hide an ordinary product.",
+      "Don't be <b>pretentious</b>; speak simply."
+    ]},
+    { w:"vicarious", d:"experienced through someone else", sentences:[
+      "She felt <b>vicarious</b> joy watching her friend win.",
+      "<b>Vicarious</b> adventure is one reason we read novels.",
+      "Sports fans live <b>vicarious</b> victories every weekend.",
+      "His <b>vicarious</b> excitement showed in every cheer.",
+      "Travel shows offer a <b>vicarious</b> trip from the couch."
+    ]},
+    { w:"circuitous", d:"taking a long, indirect path", sentences:[
+      "The <b>circuitous</b> route added an hour to the drive.",
+      "His <b>circuitous</b> explanation lost the audience.",
+      "The river took a <b>circuitous</b> path through the valley.",
+      "A <b>circuitous</b> argument never quite reaches the point.",
+      "The trail was <b>circuitous</b> but beautiful."
+    ]},
+    { w:"exacerbate", d:"to make a bad situation worse", sentences:[
+      "Scratching can <b>exacerbate</b> a bug bite.",
+      "Yelling will only <b>exacerbate</b> the argument.",
+      "Skipping sleep can <b>exacerbate</b> stress.",
+      "The wind <b>exacerbated</b> the cold.",
+      "Late practice may <b>exacerbate</b> his sore knee."
+    ]},
+    { w:"acrimonious", d:"bitter and harsh", sentences:[
+      "Their <b>acrimonious</b> debate lasted hours.",
+      "The breakup was <b>acrimonious</b> and public.",
+      "<b>Acrimonious</b> emails are best left unsent.",
+      "The teams have an <b>acrimonious</b> rivalry.",
+      "She refused to join the <b>acrimonious</b> exchange."
+    ]},
+    { w:"galvanize", d:"to stir into sudden action", sentences:[
+      "The speech <b>galvanized</b> the crowd.",
+      "News of the flood <b>galvanized</b> the neighborhood.",
+      "A new coach can <b>galvanize</b> a struggling team.",
+      "The crisis <b>galvanized</b> volunteers from across town.",
+      "Her example <b>galvanized</b> classmates to start a club."
+    ]},
+    { w:"nefarious", d:"wicked and criminal", sentences:[
+      "The story's <b>nefarious</b> villain plotted in the shadows.",
+      "<b>Nefarious</b> schemes are common in spy novels.",
+      "The detective uncovered a <b>nefarious</b> plan.",
+      "A <b>nefarious</b> hacker stole the data.",
+      "Despite the <b>nefarious</b> rumors, the bakery turned out to be perfectly innocent."
+    ]},
+    { w:"wanton", d:"reckless and uncaring", sentences:[
+      "The <b>wanton</b> destruction shocked the town.",
+      "<b>Wanton</b> driving can hurt others.",
+      "<b>Wanton</b> spending emptied his savings.",
+      "The vandals' <b>wanton</b> damage made the news.",
+      "A <b>wanton</b> remark can ruin a friendship."
+    ]},
+    { w:"laconic", d:"using very few words", sentences:[
+      "His <b>laconic</b> reply was just \"fine.\"",
+      "The <b>laconic</b> note read: come home.",
+      "<b>Laconic</b> speakers can still be powerful.",
+      "She gave a <b>laconic</b> shrug and moved on.",
+      "The cowboy's <b>laconic</b> style fit the desert."
+    ]},
+    { w:"iconoclast", d:"a person who attacks established ideas", sentences:[
+      "The artist is an <b>iconoclast</b> who breaks every rule.",
+      "<b>Iconoclasts</b> often invent the next big thing.",
+      "An <b>iconoclast</b> author rewrote the genre.",
+      "Many scientists were <b>iconoclasts</b> in their day.",
+      "Her <b>iconoclast</b> teaching style inspired some and angered others."
+    ]},
+    { w:"quagmire", d:"a difficult, stuck situation", sentences:[
+      "The plan turned into a legal <b>quagmire</b>.",
+      "We waded out of a <b>quagmire</b> after the storm.",
+      "Their finances are in a <b>quagmire</b>.",
+      "Don't get lost in a <b>quagmire</b> of bad decisions.",
+      "The investigation became a <b>quagmire</b> of paperwork."
     ]}
   ]
 };
