@@ -615,7 +615,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.11';
+const APP_VERSION = '3.12';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -3282,6 +3282,14 @@ function nextQuestion() {
       showScreen('wordEntry');
       return;
     }
+    // Track how many times each word has been shown this session.
+    // 2nd+ appearance hides the Mastered button (must wait for fresh session).
+    if (!quizState.wordStudyCounts) quizState.wordStudyCounts = {};
+    const w = question._customWord;
+    if (w) {
+      quizState.wordStudyCounts[w] = (quizState.wordStudyCounts[w] || 0) + 1;
+      if (quizState.wordStudyCounts[w] > 1) question._wordStudyRepeat = true;
+    }
   } else if (quizState.isSpelling) {
     question = genSpelling(quizState.childId);
     if (!question) {
@@ -3427,11 +3435,13 @@ function renderQuiz() {
 
     // Build buttons
     let extraButtons = '';
-    // Word Study: add Remove from List and Mastered buttons
-    if (quizState.isWordStudy && quizState.currentQuestion._customWord) {
+    // Word Study: add Mastered button (only on first appearance this session; repeats already show the word again so they aren't truly mastered yet).
+    // The Mastered button is small to keep the main Correct/Difficulty/Incorrect row dominant.
+    if (quizState.isWordStudy && quizState.currentQuestion._customWord
+        && !quizState.currentQuestion._wordStudyRepeat
+        && !quizState.currentQuestion._fromRepeat) {
       const safeWord = quizState.currentQuestion._customWord.replace(/'/g, "\\'");
-      extraButtons += `<button class="btn" style="background:#7b1fa2;margin-top:8px;" onclick="removeWordFromQuiz('${safeWord}')">🗑 Remove from List</button>`;
-      extraButtons += `<button class="btn" style="background:#2e7d32;margin-top:8px;" onclick="masterWord('${safeWord}')">⭐ Mastered</button>`;
+      extraButtons += `<button class="btn" style="background:#2e7d32;margin-top:8px;font-size:0.75rem;padding:6px 12px;" onclick="masterWord('${safeWord}')">⭐ Mastered</button>`;
     }
     // Spelling: add Remove from List button
     if (quizState.isSpelling && quizState.currentQuestion._customWord) {
