@@ -591,7 +591,8 @@
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:var(--card);">
       <span style="font-weight:700;font-size:1rem;color:var(--text);">📝 Scratchpad</span>
       <div style="display:flex;gap:8px;">
-        <button onclick="clearScratchpad()" style="background:var(--accent);border:none;color:var(--text);padding:6px 14px;border-radius:8px;font-size:0.85rem;cursor:pointer;">Clear</button>
+        <button id="scratchpadEraserBtn" onclick="toggleScratchpadEraser()" style="background:var(--accent);border:none;color:var(--text);padding:6px 14px;border-radius:8px;font-size:0.85rem;cursor:pointer;">🩹 Eraser</button>
+        <button onclick="clearScratchpad()" style="background:var(--accent);border:none;color:var(--text);padding:6px 14px;border-radius:8px;font-size:0.85rem;cursor:pointer;">🗑 Clear All</button>
         <button onclick="toggleScratchpad()" style="background:var(--highlight);border:none;color:white;padding:6px 14px;border-radius:8px;font-size:0.85rem;cursor:pointer;">Close</button>
       </div>
     </div>
@@ -615,7 +616,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.12';
+const APP_VERSION = '3.13';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -3742,13 +3743,40 @@ function finishQuiz() {
 
 let scratchpadOpen = false;
 let scratchpadDrawing = false;
+let scratchpadEraser = false;
+
+function toggleScratchpadEraser() {
+  scratchpadEraser = !scratchpadEraser;
+  updateScratchpadCursor();
+  const btn = document.getElementById('scratchpadEraserBtn');
+  if (btn) {
+    if (scratchpadEraser) {
+      btn.style.background = 'var(--highlight)';
+      btn.style.color = 'white';
+      btn.textContent = '🩹 Eraser ON';
+    } else {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'var(--text)';
+      btn.textContent = '🩹 Eraser';
+    }
+  }
+}
+
+function updateScratchpadCursor() {
+  const c = document.getElementById('scratchpadCanvas');
+  if (!c) return;
+  c.style.cursor = scratchpadEraser ? 'cell' : 'crosshair';
+}
 
 function toggleScratchpad() {
   const overlay = document.getElementById('scratchpadOverlay');
   scratchpadOpen = !scratchpadOpen;
   overlay.style.display = scratchpadOpen ? 'flex' : 'none';
   if (scratchpadOpen) {
+    // Reset to pen mode each time the scratchpad opens.
+    if (scratchpadEraser) toggleScratchpadEraser();
     initScratchpad();
+    updateScratchpadCursor();
     // Show the current question at the top
     if (quizState && quizState.currentQuestion) {
       document.getElementById('scratchpadQuestionBar').textContent = quizState.currentQuestion.q;
@@ -3790,9 +3818,20 @@ function initScratchpad() {
     return { x: (touch.clientX - rect.left) * (c.width / rect.width), y: (touch.clientY - rect.top) * (c.height / rect.height) };
   }
 
+  function applyDrawMode() {
+    if (scratchpadEraser) {
+      cx.strokeStyle = 'white';
+      cx.lineWidth = 24;
+    } else {
+      cx.strokeStyle = '#333';
+      cx.lineWidth = 2;
+    }
+  }
+
   function startDraw(e) {
     e.preventDefault();
     scratchpadDrawing = true;
+    applyDrawMode();
     const pos = getPos(e);
     cx.beginPath();
     cx.moveTo(pos.x, pos.y);
@@ -3801,6 +3840,7 @@ function initScratchpad() {
   function draw(e) {
     e.preventDefault();
     if (!scratchpadDrawing) return;
+    applyDrawMode();
     const pos = getPos(e);
     cx.lineTo(pos.x, pos.y);
     cx.stroke();
