@@ -616,7 +616,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.13';
+const APP_VERSION = '3.14';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -2060,10 +2060,11 @@ function genEnglish(level, distracted) {
   const grade = Math.floor(level / 10);
   const decile = level % 10;
 
-  // Mix in custom words (~30% chance if any exist)
-  const customWords = state.activeChild ? getCustomWords(state.activeChild) : [];
-  if (customWords.length > 0 && Math.random() < 0.3) {
-    const w = pick(customWords);
+  // Mix in personal spelling-list words (~10% chance if any exist).
+  // Pulls from the Spelling list (not Word Study) — the question is "spell this", so the source list should match.
+  const spellingMix = state.activeChild ? getSpellingWords(state.activeChild) : [];
+  if (spellingMix.length > 0 && Math.random() < 0.10) {
+    const w = pick(spellingMix);
     if (distracted) {
       return { q: `Spell the word "${w}"`, a: w.toUpperCase() };
     } else {
