@@ -616,7 +616,7 @@
 //  AUTO-UPDATE CHECK
 // ═══════════════════════════════════════════
 
-const APP_VERSION = '3.15';
+const APP_VERSION = '3.17';
 
 (function checkForUpdate() {
   // Only check on GitHub Pages (not local file://)
@@ -1524,6 +1524,176 @@ function genNewWord(level) {
   return { q: `What does "${w.w}" mean?`, a: w.d, _sentence: w.s, _word: w.w, _newWord: w.w };
 }
 
+// Definitions and example sentences for the seeded study words.
+// Used by genWordStudy so the answer screen shows the meaning instead of "Check with Dad".
+// Keyed by lowercase word. Free to add to over time.
+const STUDY_WORD_DEFS = {
+  accomplish:{d:'to successfully do something',s:'I worked hard to accomplish my goal of reading 20 books.'},
+  combination:{d:'two or more things put together',s:'Peanut butter and jelly is a great combination.'},
+  crucial:{d:'extremely important',s:'Wearing a helmet is crucial when riding a bike.'},
+  duplicate:{d:'an exact copy',s:'I made a duplicate of my house key in case I lost mine.'},
+  emerge:{d:'to come out into view',s:'The sun began to emerge from behind the clouds.'},
+  independent:{d:'not needing help from others',s:'She is independent and can tie her own shoes.'},
+  overcome:{d:'to deal with and beat a problem',s:'He overcame his fear of swimming.'},
+  peculiar:{d:'strange or unusual',s:'There was a peculiar smell coming from the fridge.'},
+  perplex:{d:'to confuse someone',s:'The tricky puzzle began to perplex me.'},
+  sparse:{d:'not much; thinly spread out',s:'The garden had only sparse patches of grass.'},
+
+  beckon:{d:'to signal someone to come closer',s:'She beckoned me with a wave of her hand.'},
+  bestow:{d:'to give something as a gift or honor',s:'The king will bestow a medal on the brave knight.'},
+  challenge:{d:'a difficult task that tests you',s:'Climbing the mountain was a real challenge.'},
+  decrease:{d:'to become smaller or less',s:'The temperature began to decrease after sunset.'},
+  essential:{d:'completely necessary',s:'Water is essential for life.'},
+  gigantic:{d:'extremely large',s:'The dinosaur footprint was gigantic.'},
+  intently:{d:'with very focused attention',s:'He listened intently to the directions.'},
+  modest:{d:'not showing off; humble',s:'Even after winning, she stayed modest.'},
+  resemble:{d:'to look like something else',s:'Puppies often resemble their parents.'},
+  solemn:{d:'very serious',s:'The ceremony had a solemn mood.'},
+
+  accurate:{d:'exactly right; correct',s:'The clock keeps accurate time.'},
+  culture:{d:'the customs and beliefs of a group of people',s:'We learned about Japanese culture in school.'},
+  distract:{d:'to take attention away from something',s:'Loud noises distract me from reading.'},
+  frequent:{d:'happening often',s:'He is a frequent visitor to the library.'},
+  hesitate:{d:'to pause before doing something',s:"Don't hesitate to ask for help."},
+  infuriate:{d:'to make someone very angry',s:'It would infuriate Dad if we tracked mud inside.'},
+  population:{d:'the number of people or animals living somewhere',s:'The population of our town is small.'},
+  realistic:{d:'showing things as they really are; sensible',s:'Set a realistic goal you can actually reach.'},
+  resource:{d:'something useful that you can use',s:'Books are a great resource for learning.'},
+  thrive:{d:'to grow strong and do well',s:'Plants thrive in warm sunshine.'},
+
+  assure:{d:'to tell someone something is definitely true',s:'I assure you everything will be okay.'},
+  comprehend:{d:'to understand something fully',s:'It is hard to comprehend how far away stars are.'},
+  establish:{d:'to set up or start something firmly',s:'They will establish a new soccer team this fall.'},
+  exaggerate:{d:'to describe something as bigger than it really is',s:"Don't exaggerate — it was only a small puddle."},
+  ignorant:{d:'not knowing about something',s:'I was ignorant of the rules until she explained them.'},
+  immense:{d:'very, very large',s:'The ocean is immense.'},
+  ordeal:{d:'a very difficult or painful experience',s:'Waiting in line for hours was an ordeal.'},
+  strategy:{d:'a plan for reaching a goal',s:"Our team's strategy was to pass the ball quickly."},
+  summon:{d:'to call or send for someone',s:"The teacher will summon us when it's time."},
+  taunt:{d:'to tease someone in a mean way',s:"It's not kind to taunt your little brother."},
+
+  achievement:{d:'something important you have done',s:'Winning the spelling bee was a great achievement.'},
+  compose:{d:'to put together or create something',s:'She will compose a new song.'},
+  extraordinary:{d:'very unusual and impressive',s:'The magician did an extraordinary trick.'},
+  gape:{d:'to stare with your mouth open in surprise',s:'We could only gape at the giant rocket.'},
+  gleeful:{d:'full of joy; very happy',s:'The gleeful puppy ran in circles.'},
+  identify:{d:'to recognize what something is',s:'Can you identify this bird?'},
+  persuade:{d:'to convince someone to do something',s:'I tried to persuade my parents to get a dog.'},
+  predict:{d:'to say what will happen next',s:'Can you predict the weather tomorrow?'},
+  tolerate:{d:'to put up with something',s:'I can tolerate the cold for a short time.'},
+  vague:{d:'not clear or detailed',s:'His directions were too vague to follow.'},
+
+  blurt:{d:'to say something suddenly without thinking',s:"Don't blurt out the answer — let others guess."},
+  criticize:{d:'to say what is wrong about something',s:"It's easy to criticize, but harder to fix things yourself."},
+  flimsy:{d:'thin and easily broken; weak',s:'The flimsy paper umbrella tore in the wind.'},
+  fortunate:{d:'lucky',s:'We were fortunate to find shelter before the rain.'},
+  illuminate:{d:'to light something up',s:'The lamp will illuminate the dark hallway.'},
+  intend:{d:'to plan to do something',s:'I intend to finish my homework tonight.'},
+  mimic:{d:'to copy someone or something',s:'Parrots can mimic human voices.'},
+  ridicule:{d:'to make fun of someone in a mean way',s:"Don't ridicule others for being different."},
+  trait:{d:'a feature or quality someone has',s:'Kindness is one of her best traits.'},
+  utter:{d:'to say something out loud',s:"He didn't utter a single word."},
+
+  adjust:{d:'to change something so it fits better',s:'Please adjust the seat before driving.'},
+  approve:{d:'to agree that something is okay',s:'My teacher will approve our project idea.'},
+  conduct:{d:'to lead or carry out something',s:'The scientist will conduct an experiment.'},
+  conflict:{d:'a fight or strong disagreement',s:'There was a conflict between the two teams.'},
+  equivalent:{d:'equal in value or amount',s:'A dime is equivalent to ten pennies.'},
+  likely:{d:'probably going to happen',s:'It is likely to rain this afternoon.'},
+  neglect:{d:'to fail to take care of something',s:"Don't neglect to water the plants."},
+  seldom:{d:'not often; rarely',s:'We seldom eat dessert before dinner.'},
+  significant:{d:'very important or large',s:'There was a significant difference in their scores.'},
+  vital:{d:'extremely important',s:'Sleep is vital for your health.'},
+
+  claim:{d:'to say something is true, or to take ownership',s:'She did not claim to know the answer.'},
+  context:{d:'the situation around something that helps you understand it',s:'The context of the story made the joke funny.'},
+  debris:{d:'scattered pieces left after something is broken',s:'After the storm, debris covered the yard.'},
+  eerie:{d:'strange in a scary way',s:'The eerie silence in the empty house gave me chills.'},
+  graphic:{d:'a clear visual; or showing strong detail',s:'The graphic novel had bright illustrations.'},
+  investigate:{d:'to look into something carefully to find the truth',s:'The detective will investigate the case.'},
+  irregular:{d:'not normal or even',s:'The path was bumpy and irregular.'},
+  rustle:{d:'a soft crackling sound',s:'We heard a rustle of leaves in the wind.'},
+  scrawny:{d:'very thin and weak-looking',s:'The scrawny kitten needed food.'},
+  wage:{d:'pay for work, or to carry on a battle',s:'Knights wage war for their kingdoms.'},
+
+  affect:{d:'to cause a change in something',s:'Cold weather can affect your mood.'},
+  despair:{d:'complete loss of hope',s:'He felt despair after failing the test.'},
+  detect:{d:'to notice or discover something',s:'Dogs can detect smells we cannot.'},
+  external:{d:'outside; on the outer side',s:'The external walls of the house need paint.'},
+  gleam:{d:'a soft glow of light',s:'I saw a gleam of moonlight on the water.'},
+  internal:{d:'inside; on the inner side',s:'Internal organs are inside your body.'},
+  peril:{d:'serious danger',s:'The ship was in peril during the storm.'},
+  restrict:{d:'to limit something',s:'Please restrict your screen time to one hour.'},
+  secure:{d:'safe and protected; or to fasten tightly',s:'Make sure the door is secure before bed.'},
+  summary:{d:'a short version of something',s:'Give me a summary of the story in two sentences.'},
+
+  coax:{d:'to gently persuade someone',s:'She had to coax the cat out from under the bed.'},
+  enhance:{d:'to make better',s:'Adding spices can enhance the flavor of the soup.'},
+  exhibit:{d:'to show something publicly',s:'The museum will exhibit dinosaur bones.'},
+  familiar:{d:'well-known or easily recognized',s:'Her face looked familiar to me.'},
+  ferocious:{d:'fierce and dangerous',s:'The ferocious tiger growled in the jungle.'},
+  murky:{d:'dark and cloudy, hard to see through',s:'The pond water was too murky to see the bottom.'},
+  outcome:{d:'the final result of something',s:'We waited for the outcome of the game.'},
+  restrain:{d:'to hold back or control',s:'Please restrain the dog while guests come in.'},
+  sorrowful:{d:'very sad',s:'She gave a sorrowful smile after losing the race.'},
+  sympathy:{d:"caring about someone's troubles",s:'I felt sympathy for my friend when she was sick.'},
+
+  appropriate:{d:'right for the situation',s:'Wear appropriate clothes for the cold weather.'},
+  approximate:{d:'close to but not exact',s:'The approximate time is around three o’clock.'},
+  conclude:{d:'to bring something to an end, or to decide based on facts',s:'She will conclude the story tomorrow.'},
+  erupt:{d:'to burst out suddenly',s:'The volcano could erupt at any moment.'},
+  grim:{d:'very serious or gloomy',s:'He had a grim look on his face after the bad news.'},
+  imitate:{d:'to copy how someone acts or speaks',s:'Little kids often imitate their older siblings.'},
+  insist:{d:'to demand strongly',s:'I insist that you wear a coat today.'},
+  sneer:{d:'to show scorn with your face or voice',s:'He sneered at the silly idea.'},
+  tuft:{d:'a small bunch of hair or grass sticking up',s:"A tuft of feathers stood on the bird's head."},
+  unravel:{d:'to come apart, like a knot or sweater',s:'Her scarf began to unravel at the edge.'},
+
+  aggressive:{d:'ready to attack or argue',s:'The aggressive dog growled at us.'},
+  anxious:{d:'worried or nervous',s:'She was anxious about the big test.'},
+  bewildered:{d:'confused and unsure',s:'I was bewildered by the strange map.'},
+  generosity:{d:'the quality of giving freely',s:'Her generosity made everyone feel welcome.'},
+  insight:{d:'a clear understanding of something',s:'His insight helped solve the puzzle.'},
+  pitiful:{d:'causing a feeling of pity; sad-looking',s:'The pitiful puppy whined in the rain.'},
+  primary:{d:'most important; first',s:'Our primary goal is to be safe.'},
+  sincere:{d:'honest and truly meant',s:'She gave a sincere apology.'},
+  sluggish:{d:'slow-moving and tired',s:'I feel sluggish after a big lunch.'},
+  yearn:{d:'to want something very much',s:'He yearned to see his grandparents again.'},
+
+  cringe:{d:'to shrink back in fear or embarrassment',s:'I cringed at the bad joke.'},
+  dismay:{d:'a feeling of shock and disappointment',s:'To my dismay, the cookies were burnt.'},
+  evidence:{d:'facts that show something is true',s:'The wet umbrella was evidence that it had rained.'},
+  express:{d:'to show your thoughts or feelings',s:'She used art to express her ideas.'},
+  hoist:{d:'to lift something heavy',s:'Two people had to hoist the flag up the pole.'},
+  humiliate:{d:'to embarrass someone badly',s:"Please don't humiliate me in front of my friends."},
+  practical:{d:'useful and sensible',s:'Boots are practical for snowy days.'},
+  puny:{d:'small and weak',s:'The puny seedling barely poked out of the dirt.'},
+  seep:{d:'to leak slowly',s:'Water can seep through tiny cracks.'},
+  wistful:{d:'thinking with a touch of sadness',s:'She gave a wistful look at her old toys.'},
+
+  analyze:{d:'to study carefully to understand',s:'Scientists analyze data to find answers.'},
+  assume:{d:'to believe something is true without proof',s:"Don't assume you know the answer before reading the question."},
+  devour:{d:'to eat very hungrily',s:"He'll devour the pizza in seconds."},
+  envious:{d:'wanting what someone else has; jealous',s:'I was envious of his new bike.'},
+  influence:{d:'the power to affect others',s:'Friends can have a big influence on your choices.'},
+  prohibit:{d:'to forbid; not allow',s:'The signs prohibit running near the pool.'},
+  pry:{d:'to use force to lift or pull apart, or to be nosy',s:'We had to pry the lid off the jar.'},
+  recall:{d:'to remember something',s:'Can you recall what you ate for breakfast?'},
+  regret:{d:'to feel sorry about something you did',s:'I regret not studying for the quiz.'},
+  wring:{d:'to twist tightly to squeeze out water',s:'Please wring out the wet towel.'},
+
+  confide:{d:'to share a secret with someone you trust',s:'I confide my worries to my best friend.'},
+  dread:{d:'to feel great fear about something coming',s:'I dread the long car ride.'},
+  glimpse:{d:'a quick look',s:'I caught a glimpse of the deer before it ran away.'},
+  glisten:{d:'to shine with reflected light',s:"Raindrops glisten on the spider's web."},
+  isolate:{d:'to keep apart from others',s:'The sick patient was isolated so others would not get sick.'},
+  option:{d:'a choice',s:'You have the option to play outside or read.'},
+  passage:{d:'a short part of a book, or a hallway',s:'Read the passage carefully before answering.'},
+  smirk:{d:'a smug little smile',s:'He had a smirk after winning the argument.'},
+  vast:{d:'extremely large; huge',s:'The vast ocean stretched as far as I could see.'},
+  visual:{d:'relating to sight; what you can see',s:'A map is a visual tool for finding places.'}
+};
+
 function genWordStudy(childId) {
   const words = getStudyWords(childId);
   if (words.length === 0) return null;
@@ -1532,8 +1702,12 @@ function genWordStudy(childId) {
     // Cole/Mack: show word in big letters, they read it aloud
     return { q: w, a: w, _displayWord: w.toUpperCase(), _wordStudyBigWord: true, _customWord: w };
   }
-  // Logan: word study is about meaning
-  return { q: `What does "${w}" mean?`, a: `(Check with Dad for the meaning of "${w}")`, _customWord: w };
+  // Older kids: word study is about meaning. Use a stored definition if we have one.
+  const def = STUDY_WORD_DEFS[w.toLowerCase()];
+  if (def) {
+    return { q: `What does "${w}" mean?`, a: def.d, _sentence: def.s, _customWord: w };
+  }
+  return { q: `What does "${w}" mean?`, a: `(Check with a grown-up for the meaning of "${w}")`, _customWord: w };
 }
 
 function genSpelling(childId) {
@@ -3421,9 +3595,19 @@ function renderQuiz() {
       answerHTML = '<div style="font-size:3rem;font-weight:800;letter-spacing:3px;color:white;">' + quizState.currentQuestion.a.toUpperCase() + '</div>';
       answerHTML += '<div style="font-size:1.1rem;color:var(--text-dim);margin-top:16px;font-style:italic;font-weight:400;line-height:1.6;">"' + quizState.currentQuestion._wordFlashcardSentence + '"</div>';
     }
-    // New Words: show example sentence
-    if (quizState.isNewWords && quizState.currentQuestion._sentence) {
-      answerHTML += `<div style="font-size:0.9rem;color:var(--text-dim);margin-top:10px;font-style:italic;font-weight:400;">Example: "${quizState.currentQuestion._sentence}"</div>`;
+    // New Words / Word Study: example sentence is hidden behind a button — only revealed on click.
+    if ((quizState.isNewWords || quizState.isWordStudy) && quizState.currentQuestion._sentence) {
+      const safeSentence = quizState.currentQuestion._sentence
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      answerHTML += `
+        <div id="exampleSentenceWrap" style="margin-top:12px;">
+          <button id="exampleSentenceBtn" onclick="
+            this.style.display='none';
+            document.getElementById('exampleSentenceText').style.display='block';
+          " style="background:var(--accent);border:1px solid var(--text-dim);color:var(--text);padding:6px 14px;border-radius:8px;font-size:0.8rem;cursor:pointer;">📖 Show Example Sentence</button>
+          <div id="exampleSentenceText" style="display:none;font-size:0.9rem;color:var(--text-dim);margin-top:8px;font-style:italic;font-weight:400;">Example: "${safeSentence}"</div>
+        </div>`;
     }
     // ER Research: show article citation and context
     if (quizState.isResearch && quizState.currentQuestion._article) {
