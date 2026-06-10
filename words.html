@@ -66,6 +66,22 @@
   .btn.mastered-btn { margin-top: 18px; opacity: 0.85; max-width: 72%; margin-left: auto; margin-right: auto; display: block; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+  /* QUIZ */
+  .quiz-def {
+    background: var(--bg-alt); border-left: 4px solid var(--accent);
+    padding: 14px; border-radius: 10px; font-size: 17px; margin-bottom: 12px;
+  }
+  .quiz-opt {
+    display: block; width: 100%; margin-bottom: 10px; padding: 14px;
+    border-radius: 12px; border: 2px solid var(--border); background: var(--card);
+    color: var(--text); font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .quiz-opt.correct { border-color: #2e7d32; background: #1b5e20; color: #fff; }
+  .quiz-opt.wrong { border-color: var(--danger); background: #7f1d1d; color: #fff; }
+  .quiz-opt:disabled { opacity: 0.85; cursor: default; }
+  .quiz-feedback { text-align: center; font-weight: 700; margin: 10px 0; min-height: 22px; }
+  .streak-row { font-size: 13px; color: var(--accent); margin-top: 8px; text-align: center; font-weight: 600; }
+
   .row { display: flex; gap: 10px; }
   .row .btn { flex: 1; }
 
@@ -281,10 +297,35 @@
       <button class="btn accent" onclick="showSentence()">💬 Show in a Sentence</button>
       <div style="height:10px;"></div>
       <button class="btn primary" onclick="showDefinition()">📖 Show Definition</button>
+      <div style="height:10px;"></div>
+      <button class="btn ghost" onclick="startQuiz()">🧠 Quiz Me</button>
+      <div class="streak-row" id="streakRow"></div>
     </div>
     <div class="row">
       <button class="btn ghost small" onclick="goProfile()">← Back</button>
       <button class="btn ghost small" onclick="openMastered()">⭐ Mastered (<span id="masteredCount">0</span>)</button>
+    </div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div class="screen" id="screen-quiz">
+    <div class="card" style="padding:14px 16px;">
+      <div class="word-header">
+        <span id="quizChild">👦 Logan</span>
+        <span class="word-chip" id="quizGrade">Grade 5</span>
+      </div>
+    </div>
+    <div class="card">
+      <p class="sub" style="margin-bottom:6px;">Which word means…</p>
+      <div class="quiz-def" id="quizDef">definition</div>
+      <div id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <button class="btn success" id="quizMasterBtn" style="display:none;" onclick="masterQuizWord()">⭐ 3 in a row — Master it!</button>
+    </div>
+    <button class="btn primary" id="quizNextBtn" onclick="nextQuizQuestion()" style="display:none;">➡ Next Question</button>
+    <div class="row">
+      <button class="btn ghost small" onclick="exitQuiz()">← Back to Words</button>
+      <button class="btn ghost small" onclick="goProfile()">🏠 Home</button>
     </div>
   </div>
 
@@ -382,7 +423,7 @@
 // ═══════════════════════════════════════════
 //  VERSION / AUTO-UPDATE
 // ═══════════════════════════════════════════
-const VERSION = "2.1";
+const VERSION = "2.3";
 const VERSION_URL = "https://davehomuth.github.io/learning/version-words.txt";
 let _remoteVersion = null;
 
@@ -540,6 +581,286 @@ const WORD_POOL = {
       "After the swim her bathing suit was very <b>wet</b>.",
       "The grass was <b>wet</b> with morning dew.",
       "He left a trail of <b>wet</b> footprints behind him."
+    ]},
+    { w:"new", d:"just made or just arrived", sentences:[
+      "I got <b>new</b> shoes today.",
+      "The <b>new</b> puppy is so playful.",
+      "We have a <b>new</b> student in class.",
+      "Her <b>new</b> crayons are not broken yet.",
+      "A <b>new</b> day starts every morning."
+    ]},
+    { w:"old", d:"having lived or existed a long time", sentences:[
+      "My <b>old</b> teddy bear is missing one eye.",
+      "The <b>old</b> tree is taller than the house.",
+      "Grandpa has an <b>old</b> red truck.",
+      "These <b>old</b> boots still fit.",
+      "We read an <b>old</b> story from long ago."
+    ]},
+    { w:"dark", d:"with little or no light", sentences:[
+      "The room was <b>dark</b> at bedtime.",
+      "We saw stars in the <b>dark</b> sky.",
+      "The <b>dark</b> cave felt spooky.",
+      "Turn on the light — it's too <b>dark</b>.",
+      "The cat's fur is <b>dark</b> brown."
+    ]},
+    { w:"tall", d:"high from bottom to top", sentences:[
+      "The giraffe is very <b>tall</b>.",
+      "A <b>tall</b> tower stood in the city.",
+      "My brother is <b>tall</b> enough to reach the shelf.",
+      "The <b>tall</b> grass tickled our knees.",
+      "That <b>tall</b> slide is my favorite."
+    ]},
+    { w:"slow", d:"not fast", sentences:[
+      "The turtle is <b>slow</b> but steady.",
+      "We walked at a <b>slow</b> pace.",
+      "The <b>slow</b> train finally arrived.",
+      "Stir the soup with <b>slow</b> circles.",
+      "A <b>slow</b> snail crossed the path."
+    ]},
+    { w:"warm", d:"a little hot; cozy", sentences:[
+      "The <b>warm</b> blanket felt nice.",
+      "We drank <b>warm</b> milk before bed.",
+      "The sun made the sand <b>warm</b>.",
+      "Her <b>warm</b> mittens kept her hands happy.",
+      "A <b>warm</b> hug is the best."
+    ]},
+    { w:"dry", d:"not wet", sentences:[
+      "The towel is <b>dry</b> now.",
+      "Keep your socks <b>dry</b> in the rain.",
+      "The desert is hot and <b>dry</b>.",
+      "The paint is <b>dry</b>, so you can touch it.",
+      "My throat feels <b>dry</b> — I need water."
+    ]},
+    { w:"sad", d:"feeling unhappy", sentences:[
+      "He was <b>sad</b> when the game ended.",
+      "The <b>sad</b> puppy missed its owner.",
+      "She felt <b>sad</b> about the broken toy.",
+      "A hug helps when you're <b>sad</b>.",
+      "The movie had a <b>sad</b> part."
+    ]},
+    { w:"glad", d:"happy and pleased", sentences:[
+      "I'm <b>glad</b> you came to play.",
+      "She was <b>glad</b> the rain stopped.",
+      "We're <b>glad</b> it's pizza night.",
+      "He felt <b>glad</b> when he found his hat.",
+      "Mom was <b>glad</b> to see the clean room."
+    ]},
+    { w:"mad", d:"angry", sentences:[
+      "He was <b>mad</b> when his tower fell.",
+      "Don't stay <b>mad</b> at your friend.",
+      "The <b>mad</b> goose honked at us.",
+      "She gets <b>mad</b> when she loses.",
+      "Take a breath when you feel <b>mad</b>."
+    ]},
+    { w:"clean", d:"not dirty", sentences:[
+      "My hands are <b>clean</b> now.",
+      "The <b>clean</b> dishes go in the cupboard.",
+      "We keep our room <b>clean</b>.",
+      "The car looks <b>clean</b> after the wash.",
+      "Put on a <b>clean</b> shirt."
+    ]},
+    { w:"messy", d:"not tidy", sentences:[
+      "My desk is <b>messy</b> after art class.",
+      "The <b>messy</b> puppy spilled the water bowl.",
+      "Finger painting is fun but <b>messy</b>.",
+      "His hair was <b>messy</b> in the morning.",
+      "Let's clean this <b>messy</b> room."
+    ]},
+    { w:"full", d:"holding as much as it can", sentences:[
+      "The cup is <b>full</b> of juice.",
+      "My tummy is <b>full</b> after lunch.",
+      "The bus was <b>full</b> of kids.",
+      "The toy box is too <b>full</b> to close.",
+      "A <b>full</b> moon glowed in the sky."
+    ]},
+    { w:"empty", d:"with nothing inside", sentences:[
+      "The cookie jar is <b>empty</b>.",
+      "An <b>empty</b> box makes a great fort.",
+      "The playground was <b>empty</b> in the rain.",
+      "My cup is <b>empty</b> — more water, please.",
+      "The bird's nest was <b>empty</b> in fall."
+    ]},
+    { w:"quiet", d:"making little or no noise", sentences:[
+      "Be <b>quiet</b> — the baby is sleeping.",
+      "The library is a <b>quiet</b> place.",
+      "A <b>quiet</b> mouse tiptoed by.",
+      "The house was <b>quiet</b> at night.",
+      "We played a <b>quiet</b> game of cards."
+    ]},
+    { w:"sticky", d:"that things stick to", sentences:[
+      "My fingers are <b>sticky</b> from the candy.",
+      "The <b>sticky</b> tape held the picture up.",
+      "Honey is sweet and <b>sticky</b>.",
+      "The floor was <b>sticky</b> where juice spilled.",
+      "A <b>sticky</b> note marked the page."
+    ]},
+    { w:"shiny", d:"bright and reflecting light", sentences:[
+      "The <b>shiny</b> coin sparkled in the sun.",
+      "Her <b>shiny</b> shoes were brand new.",
+      "The car was <b>shiny</b> after the wash.",
+      "A <b>shiny</b> apple sat on the desk.",
+      "The fish had <b>shiny</b> scales."
+    ]},
+    { w:"bumpy", d:"full of bumps; not smooth", sentences:[
+      "The <b>bumpy</b> road shook the car.",
+      "A toad has <b>bumpy</b> skin.",
+      "The wagon ride was <b>bumpy</b> and fun.",
+      "We biked down a <b>bumpy</b> trail.",
+      "The <b>bumpy</b> pickle made me giggle."
+    ]},
+    { w:"fuzzy", d:"covered with soft hair", sentences:[
+      "The <b>fuzzy</b> caterpillar crawled by.",
+      "My <b>fuzzy</b> slippers keep my toes warm.",
+      "The peach has <b>fuzzy</b> skin.",
+      "A <b>fuzzy</b> chick hatched from the egg.",
+      "Her <b>fuzzy</b> sweater is so soft."
+    ]},
+    { w:"sleepy", d:"ready to sleep", sentences:[
+      "The <b>sleepy</b> kitten yawned.",
+      "I get <b>sleepy</b> after a big dinner.",
+      "The <b>sleepy</b> town was quiet at night.",
+      "Her <b>sleepy</b> eyes kept closing.",
+      "The baby was <b>sleepy</b> after the bath."
+    ]},
+    { w:"hungry", d:"wanting food", sentences:[
+      "The <b>hungry</b> birds ate all the seeds.",
+      "I'm <b>hungry</b> — when is lunch?",
+      "A <b>hungry</b> bear looks for berries.",
+      "The <b>hungry</b> baby cried for milk.",
+      "We were <b>hungry</b> after swimming."
+    ]},
+    { w:"strong", d:"having a lot of power", sentences:[
+      "The <b>strong</b> ox pulled the cart.",
+      "Dad is <b>strong</b> enough to lift the box.",
+      "A <b>strong</b> wind blew the leaves.",
+      "Eating well helps you grow <b>strong</b>.",
+      "The <b>strong</b> rope held the swing."
+    ]},
+    { w:"windy", d:"with lots of wind", sentences:[
+      "It was too <b>windy</b> for the umbrella.",
+      "The <b>windy</b> day was great for kites.",
+      "Hold your hat on a <b>windy</b> walk.",
+      "The <b>windy</b> hill made the flags dance.",
+      "Leaves swirl around on <b>windy</b> days."
+    ]},
+    { w:"muddy", d:"covered in mud", sentences:[
+      "My boots got <b>muddy</b> in the yard.",
+      "The <b>muddy</b> dog needs a bath.",
+      "We made <b>muddy</b> footprints on the porch.",
+      "The <b>muddy</b> path squished under our feet.",
+      "Pigs love a <b>muddy</b> puddle."
+    ]},
+    { w:"itchy", d:"making you want to scratch", sentences:[
+      "The wool sweater is <b>itchy</b>.",
+      "A bug bite can be very <b>itchy</b>.",
+      "My nose feels <b>itchy</b> from the flowers.",
+      "The <b>itchy</b> tag bothered her neck.",
+      "Dry skin gets <b>itchy</b> in winter."
+    ]},
+    { w:"crunchy", d:"making a crackling sound when eaten", sentences:[
+      "The <b>crunchy</b> apple was delicious.",
+      "I love <b>crunchy</b> crackers with soup.",
+      "The <b>crunchy</b> leaves snapped under our shoes.",
+      "Carrots are <b>crunchy</b> and sweet.",
+      "The <b>crunchy</b> cereal woke up my mouth."
+    ]},
+    { w:"juicy", d:"full of juice", sentences:[
+      "The <b>juicy</b> orange dripped everywhere.",
+      "A <b>juicy</b> watermelon is perfect in summer.",
+      "She bit into a <b>juicy</b> peach.",
+      "The <b>juicy</b> berries stained my fingers.",
+      "This is the <b>juiciest</b> apple ever."
+    ]},
+    { w:"slippery", d:"hard to hold or stand on", sentences:[
+      "The icy steps were <b>slippery</b>.",
+      "A wet fish is very <b>slippery</b>.",
+      "Careful — the floor is <b>slippery</b>.",
+      "The <b>slippery</b> soap jumped out of my hands.",
+      "The slide was extra <b>slippery</b> today."
+    ]},
+    { w:"heavy", d:"weighing a lot", sentences:[
+      "The <b>heavy</b> box needs two people.",
+      "My backpack is <b>heavy</b> with books.",
+      "The <b>heavy</b> rain filled the buckets.",
+      "An elephant is a <b>heavy</b> animal.",
+      "The door was too <b>heavy</b> to push."
+    ]},
+    { w:"round", d:"shaped like a circle or ball", sentences:[
+      "The <b>round</b> ball rolled away.",
+      "A <b>round</b> moon rose over the hill.",
+      "Pizza is <b>round</b> and yummy.",
+      "She drew a <b>round</b> sun in the corner.",
+      "The <b>round</b> wheels spun fast."
+    ]},
+    { w:"sharp", d:"having an edge that can cut", sentences:[
+      "The knife is <b>sharp</b> — let a grown-up use it.",
+      "A cactus has <b>sharp</b> points.",
+      "The <b>sharp</b> pencil drew a thin line.",
+      "Watch out for <b>sharp</b> rocks at the beach.",
+      "The kitten's claws are tiny but <b>sharp</b>."
+    ]},
+    { w:"wiggly", d:"moving back and forth", sentences:[
+      "The <b>wiggly</b> worm dug into the dirt.",
+      "My loose tooth is <b>wiggly</b>.",
+      "The <b>wiggly</b> puppy wouldn't sit still.",
+      "Jelly is <b>wiggly</b> on the plate.",
+      "Her <b>wiggly</b> dance made everyone laugh."
+    ]},
+    { w:"grumpy", d:"in a bad mood", sentences:[
+      "The <b>grumpy</b> cat hid under the bed.",
+      "He's <b>grumpy</b> before breakfast.",
+      "A nap fixed her <b>grumpy</b> mood.",
+      "The <b>grumpy</b> troll lived under the bridge.",
+      "Even <b>grumpy</b> days end with bedtime stories."
+    ]},
+    { w:"jump", d:"to push off the ground into the air", sentences:[
+      "I can <b>jump</b> over the puddle.",
+      "Frogs <b>jump</b> very far.",
+      "Let's <b>jump</b> on the trampoline.",
+      "The cat can <b>jump</b> onto the table.",
+      "<b>Jump</b> as high as you can!"
+    ]},
+    { w:"climb", d:"to go up using hands and feet", sentences:[
+      "We <b>climb</b> the ladder to the slide.",
+      "The squirrel can <b>climb</b> the tree fast.",
+      "Don't <b>climb</b> on the counter.",
+      "Goats <b>climb</b> steep rocks.",
+      "She loves to <b>climb</b> at the playground."
+    ]},
+    { w:"splash", d:"to throw water around", sentences:[
+      "The duck made a big <b>splash</b>.",
+      "We <b>splash</b> in the puddles after rain.",
+      "Don't <b>splash</b> water out of the tub.",
+      "The whale's tail made a huge <b>splash</b>.",
+      "A cannonball makes the biggest <b>splash</b>."
+    ]},
+    { w:"giggle", d:"to laugh in a silly way", sentences:[
+      "The joke made her <b>giggle</b>.",
+      "We <b>giggle</b> at the puppy's tricks.",
+      "A <b>giggle</b> escaped during quiet time.",
+      "The babies <b>giggle</b> at peekaboo.",
+      "His funny face made me <b>giggle</b>."
+    ]},
+    { w:"hug", d:"to hold someone in your arms", sentences:[
+      "I <b>hug</b> my teddy at night.",
+      "Grandma gives the best <b>hug</b>s.",
+      "A <b>hug</b> can make a sad friend smile.",
+      "The koala gave the tree a <b>hug</b>.",
+      "Group <b>hug</b> before the game!"
+    ]},
+    { w:"clap", d:"to hit your hands together", sentences:[
+      "We <b>clap</b> when the song ends.",
+      "<b>Clap</b> along with the music.",
+      "The crowd began to <b>clap</b> and cheer.",
+      "She taught the baby to <b>clap</b>.",
+      "One big <b>clap</b> of thunder shook the house."
+    ]},
+    { w:"squeak", d:"a small high sound", sentences:[
+      "The mouse gave a tiny <b>squeak</b>.",
+      "My new shoes <b>squeak</b> on the floor.",
+      "The old door makes a <b>squeak</b>.",
+      "The toy duck <b>squeak</b>s when you squeeze it.",
+      "A <b>squeak</b> came from under the couch."
     ]}
   ],
   1: [
@@ -662,6 +983,286 @@ const WORD_POOL = {
       "I always feel <b>tired</b> on rainy mornings.",
       "He yawned because he was <b>tired</b> from running.",
       "A good night's sleep helps when you feel <b>tired</b>."
+    ]},
+    { w:"cheerful", d:"happy and bright", sentences:[
+      "Her <b>cheerful</b> hello made my morning.",
+      "The <b>cheerful</b> robin sang from the fence.",
+      "He whistled a <b>cheerful</b> tune.",
+      "The room looked <b>cheerful</b> with yellow walls.",
+      "A <b>cheerful</b> helper makes chores fun."
+    ]},
+    { w:"sneaky", d:"doing things quietly and secretly", sentences:[
+      "The <b>sneaky</b> cat stole a piece of chicken.",
+      "He made a <b>sneaky</b> move in the game.",
+      "The <b>sneaky</b> raccoon opened the bin at night.",
+      "Her <b>sneaky</b> smile meant a surprise was coming.",
+      "No <b>sneaky</b> snacks before dinner!"
+    ]},
+    { w:"speedy", d:"very fast", sentences:[
+      "The <b>speedy</b> rabbit won the race.",
+      "We made a <b>speedy</b> trip to the store.",
+      "His <b>speedy</b> bike zoomed down the hill.",
+      "A <b>speedy</b> reply came in one minute.",
+      "The <b>speedy</b> cheetah is the fastest runner."
+    ]},
+    { w:"sparkle", d:"to shine with little flashes of light", sentences:[
+      "The snow began to <b>sparkle</b> in the sun.",
+      "Her ring has a bright <b>sparkle</b>.",
+      "Fireworks <b>sparkle</b> in the night sky.",
+      "The lake seemed to <b>sparkle</b> at noon.",
+      "Glitter makes everything <b>sparkle</b>."
+    ]},
+    { w:"grin", d:"a big happy smile", sentences:[
+      "He wore a huge <b>grin</b> after the win.",
+      "Her <b>grin</b> showed her missing tooth.",
+      "The clown's <b>grin</b> made the kids laugh.",
+      "I couldn't hide my <b>grin</b> at the surprise.",
+      "A friendly <b>grin</b> says hello without words."
+    ]},
+    { w:"frown", d:"an unhappy look with a turned-down mouth", sentences:[
+      "A <b>frown</b> crossed his face at the news.",
+      "Turn that <b>frown</b> upside down!",
+      "She tried not to <b>frown</b> at the broccoli.",
+      "His <b>frown</b> melted when the puppy ran in.",
+      "The teacher's <b>frown</b> meant quiet down."
+    ]},
+    { w:"stomp", d:"to step down hard and loud", sentences:[
+      "He <b>stomp</b>ed the snow off his boots.",
+      "Don't <b>stomp</b> up the stairs.",
+      "The dancers <b>stomp</b> to the beat.",
+      "She gave an angry <b>stomp</b> and crossed her arms.",
+      "The dinosaur's <b>stomp</b> shook the ground."
+    ]},
+    { w:"wander", d:"to walk around without a plan", sentences:[
+      "We like to <b>wander</b> through the park.",
+      "The goat began to <b>wander</b> from the field.",
+      "Don't <b>wander</b> off in the store.",
+      "Her mind started to <b>wander</b> during the movie.",
+      "The kitten <b>wander</b>ed into the garage."
+    ]},
+    { w:"snuggle", d:"to cuddle up close and warm", sentences:[
+      "The puppies <b>snuggle</b> together to sleep.",
+      "I <b>snuggle</b> under the blanket on cold nights.",
+      "She loves to <b>snuggle</b> with her stuffed bunny.",
+      "The kittens <b>snuggle</b> next to their mom.",
+      "We <b>snuggle</b> up for story time."
+    ]},
+    { w:"drowsy", d:"sleepy and slow", sentences:[
+      "The warm car made me <b>drowsy</b>.",
+      "The <b>drowsy</b> bear headed to its den.",
+      "She felt <b>drowsy</b> after the big meal.",
+      "His <b>drowsy</b> eyes blinked slowly.",
+      "Rainy afternoons make everyone <b>drowsy</b>."
+    ]},
+    { w:"chilly", d:"a little cold", sentences:[
+      "The <b>chilly</b> morning needed a jacket.",
+      "It gets <b>chilly</b> when the sun goes down.",
+      "The <b>chilly</b> wind nipped at our ears.",
+      "Bring a sweater for the <b>chilly</b> evening.",
+      "The water was too <b>chilly</b> for swimming."
+    ]},
+    { w:"breezy", d:"with a light wind", sentences:[
+      "The <b>breezy</b> day was perfect for kites.",
+      "It was <b>breezy</b> on the hilltop.",
+      "Her <b>breezy</b> scarf fluttered behind her.",
+      "The <b>breezy</b> porch kept us cool.",
+      "A <b>breezy</b> afternoon dried the laundry fast."
+    ]},
+    { w:"gloomy", d:"dark and a little sad", sentences:[
+      "The <b>gloomy</b> sky promised rain.",
+      "The cave was <b>gloomy</b> inside.",
+      "He felt <b>gloomy</b> when the trip was canceled.",
+      "A lamp brightened the <b>gloomy</b> corner.",
+      "Even <b>gloomy</b> days can end with rainbows."
+    ]},
+    { w:"foggy", d:"full of fog; hard to see through", sentences:[
+      "The <b>foggy</b> morning hid the houses.",
+      "Drive slowly on <b>foggy</b> roads.",
+      "The <b>foggy</b> harbor sounded its horn.",
+      "My glasses got <b>foggy</b> from the soup.",
+      "The bridge vanished in the <b>foggy</b> air."
+    ]},
+    { w:"soggy", d:"wet and soft", sentences:[
+      "My cereal got <b>soggy</b> in the milk.",
+      "The <b>soggy</b> ground squished underfoot.",
+      "His <b>soggy</b> mittens went on the heater.",
+      "The <b>soggy</b> cardboard box fell apart.",
+      "Rain made the field too <b>soggy</b> for soccer."
+    ]},
+    { w:"crisp", d:"firm and fresh; cool and dry", sentences:[
+      "The <b>crisp</b> apple snapped when I bit it.",
+      "A <b>crisp</b> fall morning is great for hiking.",
+      "The <b>crisp</b> paper folded neatly.",
+      "She likes her toast extra <b>crisp</b>.",
+      "The <b>crisp</b> air smelled like leaves."
+    ]},
+    { w:"plump", d:"nicely round and full", sentences:[
+      "The <b>plump</b> tomatoes were ready to pick.",
+      "A <b>plump</b> robin hopped across the lawn.",
+      "The <b>plump</b> pillows made the bed comfy.",
+      "<b>Plump</b> blueberries filled the basket.",
+      "The hamster's <b>plump</b> cheeks were full of seeds."
+    ]},
+    { w:"swift", d:"moving very fast", sentences:[
+      "The <b>swift</b> river carried the leaf away.",
+      "A <b>swift</b> fox crossed the meadow.",
+      "Her <b>swift</b> answer surprised the teacher.",
+      "The <b>swift</b> runner finished first.",
+      "With one <b>swift</b> move, the goalie caught the ball."
+    ]},
+    { w:"timid", d:"shy and easily scared", sentences:[
+      "The <b>timid</b> deer stayed near the trees.",
+      "He gave a <b>timid</b> knock on the door.",
+      "The <b>timid</b> kitten hid from visitors.",
+      "Her <b>timid</b> voice grew braver each day.",
+      "Even <b>timid</b> kids can be great leaders."
+    ]},
+    { w:"eager", d:"excited and ready to do something", sentences:[
+      "The <b>eager</b> puppy waited by the leash.",
+      "She was <b>eager</b> to open her presents.",
+      "<b>Eager</b> hands shot up to answer.",
+      "He's <b>eager</b> for the first day of camp.",
+      "The <b>eager</b> readers lined up for the new book."
+    ]},
+    { w:"honest", d:"telling the truth", sentences:[
+      "Be <b>honest</b> about who broke the cup.",
+      "An <b>honest</b> answer is always best.",
+      "The <b>honest</b> boy returned the wallet.",
+      "I'll be <b>honest</b> — I don't like peas.",
+      "<b>Honest</b> friends tell you the truth kindly."
+    ]},
+    { w:"polite", d:"having good manners", sentences:[
+      "The <b>polite</b> girl said please and thank you.",
+      "It's <b>polite</b> to hold the door.",
+      "He gave a <b>polite</b> wave to the neighbor.",
+      "<b>Polite</b> words make people smile.",
+      "Being <b>polite</b> costs nothing."
+    ]},
+    { w:"rude", d:"having bad manners", sentences:[
+      "It's <b>rude</b> to interrupt.",
+      "The <b>rude</b> reply hurt her feelings.",
+      "Don't be <b>rude</b> — wait your turn.",
+      "Pointing can be <b>rude</b>.",
+      "He said sorry for being <b>rude</b>."
+    ]},
+    { w:"fancy", d:"special and decorated", sentences:[
+      "She wore a <b>fancy</b> dress to the party.",
+      "The <b>fancy</b> cake had three layers.",
+      "We ate at a <b>fancy</b> restaurant.",
+      "His <b>fancy</b> handwriting had loops and swirls.",
+      "The hotel lobby was very <b>fancy</b>."
+    ]},
+    { w:"plain", d:"simple, not decorated", sentences:[
+      "I like <b>plain</b> yogurt with honey.",
+      "The <b>plain</b> white walls needed art.",
+      "He wore a <b>plain</b> blue shirt.",
+      "A <b>plain</b> bagel is still delicious.",
+      "The box was <b>plain</b>, but the gift inside was great."
+    ]},
+    { w:"narrow", d:"not wide", sentences:[
+      "The <b>narrow</b> path wound through the trees.",
+      "We squeezed through the <b>narrow</b> gate.",
+      "The <b>narrow</b> bridge fits one car at a time.",
+      "A <b>narrow</b> stream trickled by the tent.",
+      "The hallway is too <b>narrow</b> for the couch."
+    ]},
+    { w:"crooked", d:"bent, not straight", sentences:[
+      "The <b>crooked</b> tree leaned over the fence.",
+      "His <b>crooked</b> drawing still looked great.",
+      "The <b>crooked</b> path zigzagged uphill.",
+      "She straightened the <b>crooked</b> picture frame.",
+      "The witch's hat was tall and <b>crooked</b>."
+    ]},
+    { w:"straight", d:"without bends or curves", sentences:[
+      "Draw a <b>straight</b> line with the ruler.",
+      "The road runs <b>straight</b> for miles.",
+      "Sit up <b>straight</b> at the table.",
+      "Her <b>straight</b> hair reached her shoulders.",
+      "Go <b>straight</b>, then turn left at the park."
+    ]},
+    { w:"rough", d:"not smooth; bumpy", sentences:[
+      "The <b>rough</b> bark scratched my hand.",
+      "Sandpaper feels <b>rough</b>.",
+      "The sea was <b>rough</b> during the storm.",
+      "His <b>rough</b> sketch became a great painting.",
+      "The <b>rough</b> road needs fixing."
+    ]},
+    { w:"tidy", d:"neat and in order", sentences:[
+      "Her desk is always <b>tidy</b>.",
+      "We keep the toy shelf <b>tidy</b>.",
+      "A <b>tidy</b> room is easy to play in.",
+      "He made his bed nice and <b>tidy</b>.",
+      "Let's <b>tidy</b> up before dinner."
+    ]},
+    { w:"scatter", d:"to throw things in all directions", sentences:[
+      "The wind began to <b>scatter</b> the leaves.",
+      "Don't <b>scatter</b> your blocks everywhere.",
+      "We <b>scatter</b> seeds for the birds.",
+      "The pigeons <b>scatter</b> when the dog runs up.",
+      "Crumbs <b>scatter</b>ed across the table."
+    ]},
+    { w:"gather", d:"to bring together", sentences:[
+      "We <b>gather</b> shells at the beach.",
+      "The family <b>gather</b>s for Sunday dinner.",
+      "Squirrels <b>gather</b> nuts for winter.",
+      "Please <b>gather</b> your things before the bell.",
+      "The class <b>gather</b>ed around the science table."
+    ]},
+    { w:"stretch", d:"to make longer by pulling", sentences:[
+      "We <b>stretch</b> before the race.",
+      "The cat gave a long <b>stretch</b>.",
+      "<b>Stretch</b> your arms up high.",
+      "The rubber band can <b>stretch</b> far.",
+      "The road seems to <b>stretch</b> forever."
+    ]},
+    { w:"yawn", d:"to open your mouth wide when sleepy", sentences:[
+      "A big <b>yawn</b> means bedtime.",
+      "The lion's <b>yawn</b> showed huge teeth.",
+      "I always <b>yawn</b> in the morning.",
+      "Her <b>yawn</b> made me <b>yawn</b> too.",
+      "He tried to hide his <b>yawn</b> in class."
+    ]},
+    { w:"blink", d:"to close and open your eyes quickly", sentences:[
+      "Don't <b>blink</b> — you'll miss the trick.",
+      "The bright light made me <b>blink</b>.",
+      "Stars seem to <b>blink</b> in the sky.",
+      "The cat won our <b>blink</b>ing contest.",
+      "I didn't <b>blink</b> during the whole movie."
+    ]},
+    { w:"sniff", d:"to smell with short breaths", sentences:[
+      "The dog gave the bag a <b>sniff</b>.",
+      "I <b>sniff</b>ed the flowers in the garden.",
+      "One <b>sniff</b> told us cookies were baking.",
+      "The bunny's nose <b>sniff</b>s the air.",
+      "He <b>sniff</b>ed and reached for a tissue."
+    ]},
+    { w:"wobble", d:"to move side to side unsteadily", sentences:[
+      "The table began to <b>wobble</b>.",
+      "Baby goats <b>wobble</b> when they walk.",
+      "My loose tooth makes my smile <b>wobble</b>.",
+      "The jelly <b>wobble</b>d on the spoon.",
+      "Her bike <b>wobble</b>d, but she didn't fall."
+    ]},
+    { w:"dangle", d:"to hang and swing loosely", sentences:[
+      "The keys <b>dangle</b> from his pocket.",
+      "Monkeys <b>dangle</b> from the branches.",
+      "Her earrings <b>dangle</b> when she dances.",
+      "The spider <b>dangle</b>d from a thin thread.",
+      "Don't <b>dangle</b> your feet off the dock — fish might nibble!"
+    ]},
+    { w:"drip", d:"to fall in small drops", sentences:[
+      "Water began to <b>drip</b> from the faucet.",
+      "The ice cream started to <b>drip</b> down the cone.",
+      "Rain <b>drip</b>s off the umbrella.",
+      "The wet towel left a <b>drip</b> trail.",
+      "I heard a <b>drip</b> from the leaky roof."
+    ]},
+    { w:"glow", d:"to give off soft light", sentences:[
+      "Fireflies <b>glow</b> at night.",
+      "The night-light gives a soft <b>glow</b>.",
+      "Her face had a happy <b>glow</b>.",
+      "The campfire's <b>glow</b> kept us warm.",
+      "Glow sticks <b>glow</b> brightest in the dark."
     ]}
   ],
   2: [
@@ -1858,6 +2459,286 @@ const WORD_POOL = {
       "She paused to <b>observe</b> the painters at work.",
       "Detectives <b>observe</b> every detail at a crime scene.",
       "It's helpful to <b>observe</b> before you act."
+    ]},
+    { w:"ability", d:"the skill or power to do something", sentences:[
+      "She has the <b>ability</b> to read very fast.",
+      "Practice improves your <b>ability</b> in any sport.",
+      "Owls have the <b>ability</b> to see at night.",
+      "His <b>ability</b> to stay calm helped the team.",
+      "Everyone has a special <b>ability</b>."
+    ]},
+    { w:"absorb", d:"to soak up", sentences:[
+      "The sponge will <b>absorb</b> the spilled milk.",
+      "Plants <b>absorb</b> water through their roots.",
+      "Dark colors <b>absorb</b> more heat from the sun.",
+      "The towel <b>absorb</b>ed the rain from my hair.",
+      "It takes time to <b>absorb</b> a new idea."
+    ]},
+    { w:"advantage", d:"something that helps you do better", sentences:[
+      "Being tall is an <b>advantage</b> in basketball.",
+      "Practicing early gave her an <b>advantage</b>.",
+      "The home team has an <b>advantage</b> with their fans.",
+      "Knowing two languages is a big <b>advantage</b>.",
+      "Take <b>advantage</b> of the sunny day and play outside."
+    ]},
+    { w:"ambition", d:"a strong wish to achieve something", sentences:[
+      "Her <b>ambition</b> is to become a vet.",
+      "His <b>ambition</b> pushed him to practice daily.",
+      "The young chef's <b>ambition</b> was her own bakery.",
+      "<b>Ambition</b> plus hard work gets results.",
+      "It takes <b>ambition</b> to climb a mountain."
+    ]},
+    { w:"appreciate", d:"to be thankful for", sentences:[
+      "I <b>appreciate</b> your help with the project.",
+      "She <b>appreciate</b>s a quiet morning.",
+      "We <b>appreciate</b> everything Grandma does.",
+      "He learned to <b>appreciate</b> vegetables.",
+      "Take a moment to <b>appreciate</b> the sunset."
+    ]},
+    { w:"arrange", d:"to put in a certain order", sentences:[
+      "<b>Arrange</b> the books from tallest to shortest.",
+      "She <b>arrange</b>d the flowers in a vase.",
+      "Let's <b>arrange</b> a playdate for Saturday.",
+      "He <b>arrange</b>d his cards by color.",
+      "The chairs were <b>arrange</b>d in a circle."
+    ]},
+    { w:"attitude", d:"the way you think and feel about things", sentences:[
+      "A positive <b>attitude</b> makes hard work easier.",
+      "Her can-do <b>attitude</b> inspired the team.",
+      "His <b>attitude</b> changed after the pep talk.",
+      "Bring a good <b>attitude</b> to practice.",
+      "<b>Attitude</b> matters more than talent some days."
+    ]},
+    { w:"avoid", d:"to stay away from", sentences:[
+      "<b>Avoid</b> the wet paint on the bench.",
+      "We left early to <b>avoid</b> traffic.",
+      "She <b>avoid</b>s peanuts because of allergies.",
+      "<b>Avoid</b> the puddle unless you want wet socks.",
+      "He tried to <b>avoid</b> spoilers for the movie."
+    ]},
+    { w:"blossom", d:"a flower; to grow and develop well", sentences:[
+      "The apple <b>blossom</b>s smell sweet.",
+      "Her confidence began to <b>blossom</b> this year.",
+      "Cherry <b>blossom</b>s turn the park pink.",
+      "The friendship <b>blossom</b>ed over the summer.",
+      "Each <b>blossom</b> becomes a tiny apple."
+    ]},
+    { w:"boast", d:"to brag about yourself", sentences:[
+      "Don't <b>boast</b> about winning.",
+      "He likes to <b>boast</b> about his high score.",
+      "She never <b>boast</b>s, even though she's talented.",
+      "The rooster seemed to <b>boast</b> with every crow.",
+      "It's better to share than to <b>boast</b>."
+    ]},
+    { w:"capture", d:"to catch or take hold of", sentences:[
+      "The net helped us <b>capture</b> the escaped hamster.",
+      "The photo <b>capture</b>d the perfect moment.",
+      "Police worked to <b>capture</b> the runaway parrot.",
+      "The story <b>capture</b>d my imagination.",
+      "We tried to <b>capture</b> the sunset in a painting."
+    ]},
+    { w:"celebrate", d:"to do something fun for a special event", sentences:[
+      "We <b>celebrate</b> birthdays with cake.",
+      "The team <b>celebrate</b>d the big win.",
+      "Let's <b>celebrate</b> the last day of school.",
+      "They <b>celebrate</b> the holiday with fireworks.",
+      "We <b>celebrate</b> small wins too."
+    ]},
+    { w:"climate", d:"the usual weather of a place", sentences:[
+      "The desert has a hot, dry <b>climate</b>.",
+      "Polar bears live in a cold <b>climate</b>.",
+      "The island's <b>climate</b> is warm all year.",
+      "Plants must fit their <b>climate</b> to thrive.",
+      "Scientists study how the <b>climate</b> changes."
+    ]},
+    { w:"compare", d:"to look at how things are alike or different", sentences:[
+      "<b>Compare</b> the two drawings and spot the differences.",
+      "We <b>compare</b>d prices before buying.",
+      "<b>Compare</b> your answer with a partner.",
+      "Don't <b>compare</b> yourself to others too much.",
+      "The chart <b>compare</b>s cats and dogs."
+    ]},
+    { w:"complain", d:"to say you are unhappy about something", sentences:[
+      "He started to <b>complain</b> about the cold soup.",
+      "Don't <b>complain</b> — help fix it instead.",
+      "She didn't <b>complain</b> once during the long hike.",
+      "The neighbors <b>complain</b>ed about the noise.",
+      "It's okay to <b>complain</b>, then move on."
+    ]},
+    { w:"conceal", d:"to hide", sentences:[
+      "The squirrel tried to <b>conceal</b> its acorns.",
+      "She couldn't <b>conceal</b> her excitement.",
+      "The door was <b>conceal</b>ed behind the bookshelf.",
+      "Camouflage helps animals <b>conceal</b> themselves.",
+      "He tried to <b>conceal</b> the surprise party plans."
+    ]},
+    { w:"courage", d:"bravery when things are scary", sentences:[
+      "It took <b>courage</b> to speak in front of the class.",
+      "The firefighter showed great <b>courage</b>.",
+      "<b>Courage</b> means trying even when you're afraid.",
+      "She found the <b>courage</b> to say sorry.",
+      "Small acts of <b>courage</b> add up."
+    ]},
+    { w:"create", d:"to make something new", sentences:[
+      "Let's <b>create</b> a comic book together.",
+      "The chef <b>create</b>d a new recipe.",
+      "Artists <b>create</b> with paint, clay, and more.",
+      "We <b>create</b>d a secret handshake.",
+      "You can <b>create</b> anything with imagination."
+    ]},
+    { w:"declare", d:"to say firmly and openly", sentences:[
+      "She <b>declare</b>d that recess was the best part of school.",
+      "The judges <b>declare</b>d a tie.",
+      "I <b>declare</b> this fort officially open!",
+      "He <b>declare</b>d his plan to read fifty books.",
+      "The mayor <b>declare</b>d a snow day."
+    ]},
+    { w:"defend", d:"to protect from harm", sentences:[
+      "The goalie's job is to <b>defend</b> the net.",
+      "Mother bears <b>defend</b> their cubs.",
+      "He spoke up to <b>defend</b> his friend.",
+      "The castle walls <b>defend</b> the town.",
+      "She <b>defend</b>ed her idea with good reasons."
+    ]},
+    { w:"delicate", d:"easily broken; needing gentle care", sentences:[
+      "The <b>delicate</b> butterfly wing is paper-thin.",
+      "Handle the <b>delicate</b> ornament carefully.",
+      "A spider web is strong but looks <b>delicate</b>.",
+      "The <b>delicate</b> teacup belonged to Great-Grandma.",
+      "Baby birds are <b>delicate</b> and need care."
+    ]},
+    { w:"describe", d:"to tell what something is like", sentences:[
+      "<b>Describe</b> your favorite place to visit.",
+      "She <b>describe</b>d the dragon in detail.",
+      "Can you <b>describe</b> what the thief looked like?",
+      "The menu <b>describe</b>s every dish.",
+      "Use five senses to <b>describe</b> the beach."
+    ]},
+    { w:"deserve", d:"to have earned something", sentences:[
+      "You <b>deserve</b> a break after all that work.",
+      "The team <b>deserve</b>d the trophy.",
+      "Every pet <b>deserve</b>s a loving home.",
+      "She <b>deserve</b>s credit for the idea.",
+      "Hard workers <b>deserve</b> kind words."
+    ]},
+    { w:"disaster", d:"something very bad that happens", sentences:[
+      "The flood was a <b>disaster</b> for the town.",
+      "My first pancake was a <b>disaster</b>.",
+      "Fire drills prepare us for a <b>disaster</b>.",
+      "The picnic turned into a <b>disaster</b> when ants arrived.",
+      "Teams help rebuild after a natural <b>disaster</b>."
+    ]},
+    { w:"drift", d:"to float along slowly", sentences:[
+      "The raft began to <b>drift</b> down the river.",
+      "Snow <b>drift</b>ed against the fence.",
+      "Clouds <b>drift</b> across the summer sky.",
+      "Her thoughts <b>drift</b>ed during the long talk.",
+      "The balloon <b>drift</b>ed out of reach."
+    ]},
+    { w:"effort", d:"hard work and energy", sentences:[
+      "Great <b>effort</b> beats lucky guesses.",
+      "She put real <b>effort</b> into her project.",
+      "It takes <b>effort</b> to learn an instrument.",
+      "The team's <b>effort</b> showed in the score.",
+      "Every big goal starts with small <b>effort</b>s."
+    ]},
+    { w:"examine", d:"to look at closely", sentences:[
+      "The doctor will <b>examine</b> your ears.",
+      "We <b>examine</b>d the leaf under a magnifying glass.",
+      "<b>Examine</b> the map before choosing a trail.",
+      "The jeweler <b>examine</b>d the ring carefully.",
+      "Detectives <b>examine</b> clues for fingerprints."
+    ]},
+    { w:"expand", d:"to grow larger", sentences:[
+      "Balloons <b>expand</b> when you blow into them.",
+      "The bakery plans to <b>expand</b> next year.",
+      "Metal can <b>expand</b> in the heat.",
+      "Reading helps <b>expand</b> your vocabulary.",
+      "The puddle <b>expand</b>ed as the rain fell."
+    ]},
+    { w:"explore", d:"to travel and discover new things", sentences:[
+      "We <b>explore</b>d the tide pools at the beach.",
+      "Astronauts <b>explore</b> space.",
+      "Let's <b>explore</b> the new park.",
+      "The kitten <b>explore</b>d every corner of the house.",
+      "Scientists <b>explore</b> the deep ocean."
+    ]},
+    { w:"fragile", d:"easily broken", sentences:[
+      "The box was marked <b>fragile</b>.",
+      "Eggs are <b>fragile</b>, so carry them gently.",
+      "The <b>fragile</b> vase survived the move.",
+      "Ice on the pond is too <b>fragile</b> to walk on.",
+      "A bird's egg is beautiful and <b>fragile</b>."
+    ]},
+    { w:"furious", d:"extremely angry", sentences:[
+      "He was <b>furious</b> when his sandcastle was stomped.",
+      "The <b>furious</b> storm bent the trees.",
+      "She was <b>furious</b> about the unfair rule.",
+      "The coach was <b>furious</b> at the missed call.",
+      "Take deep breaths when you feel <b>furious</b>."
+    ]},
+    { w:"glance", d:"a quick look", sentences:[
+      "She gave a quick <b>glance</b> at the clock.",
+      "One <b>glance</b> told him the cookies were gone.",
+      "He <b>glance</b>d out the window at the rain.",
+      "A <b>glance</b> between friends can say a lot.",
+      "I only had time for a <b>glance</b> at the headline."
+    ]},
+    { w:"grasp", d:"to grab firmly; to understand", sentences:[
+      "<b>Grasp</b> the rope with both hands.",
+      "The baby <b>grasp</b>ed my finger tightly.",
+      "It took a minute to <b>grasp</b> the rules.",
+      "He <b>grasp</b>ed the handle and pulled.",
+      "She quickly <b>grasp</b>ed the new math idea."
+    ]},
+    { w:"habit", d:"something you do regularly", sentences:[
+      "Brushing teeth is a healthy <b>habit</b>.",
+      "He has a <b>habit</b> of humming while he works.",
+      "Good <b>habit</b>s start small.",
+      "Biting your nails is a tough <b>habit</b> to break.",
+      "Reading before bed is my favorite <b>habit</b>."
+    ]},
+    { w:"horizon", d:"the line where the sky meets the land or sea", sentences:[
+      "The sun sank below the <b>horizon</b>.",
+      "A ship appeared on the <b>horizon</b>.",
+      "The <b>horizon</b> glowed orange at dawn.",
+      "From the hill, the <b>horizon</b> seemed endless.",
+      "Storm clouds gathered on the <b>horizon</b>."
+    ]},
+    { w:"imagine", d:"to picture in your mind", sentences:[
+      "<b>Imagine</b> a castle made of candy.",
+      "Can you <b>imagine</b> life without phones?",
+      "She likes to <b>imagine</b> new worlds for her stories.",
+      "<b>Imagine</b> how the new puppy will feel.",
+      "Close your eyes and <b>imagine</b> the beach."
+    ]},
+    { w:"journey", d:"a long trip", sentences:[
+      "The <b>journey</b> to the mountains took two days.",
+      "Salmon make an amazing <b>journey</b> upstream.",
+      "Every big <b>journey</b> starts with one step.",
+      "The book follows a hobbit's long <b>journey</b>.",
+      "Pack snacks for the <b>journey</b>."
+    ]},
+    { w:"marvel", d:"to be filled with wonder; an amazing thing", sentences:[
+      "We <b>marvel</b>ed at the fireworks.",
+      "The bridge is a <b>marvel</b> of engineering.",
+      "She <b>marvel</b>ed at how fast the plants grew.",
+      "Visitors <b>marvel</b> at the giant sequoias.",
+      "It's a <b>marvel</b> that bees find their way home."
+    ]},
+    { w:"mischief", d:"playful trouble-making", sentences:[
+      "The kitten's eyes sparkled with <b>mischief</b>.",
+      "The twins were up to some <b>mischief</b>.",
+      "A little <b>mischief</b> kept the sleepover fun.",
+      "The puppy's <b>mischief</b> left socks everywhere.",
+      "His grin hinted at <b>mischief</b>."
+    ]},
+    { w:"vanish", d:"to disappear suddenly", sentences:[
+      "The magician made the coin <b>vanish</b>.",
+      "The cookies <b>vanish</b>ed in minutes.",
+      "Fog made the road <b>vanish</b> ahead.",
+      "The deer <b>vanish</b>ed into the trees.",
+      "My worries <b>vanish</b> when I read."
     ]}
   ],
   4: [
@@ -1980,6 +2861,286 @@ const WORD_POOL = {
       "The diner's neon sign made him feel <b>nostalgic</b>.",
       "It's fun to be <b>nostalgic</b>, but also good to look ahead.",
       "A <b>nostalgic</b> tune played on the radio."
+    ]},
+    { w:"abundant", d:"existing in large amounts", sentences:[
+      "Berries were <b>abundant</b> along the trail.",
+      "The garden gave an <b>abundant</b> harvest.",
+      "Fish are <b>abundant</b> in this lake.",
+      "She has <b>abundant</b> energy in the morning.",
+      "<b>Abundant</b> rain filled every reservoir."
+    ]},
+    { w:"adapt", d:"to change to fit new conditions", sentences:[
+      "Camels <b>adapt</b> well to desert life.",
+      "It took a week to <b>adapt</b> to the new school.",
+      "Plants <b>adapt</b> to the amount of light they get.",
+      "The recipe is easy to <b>adapt</b> for more guests.",
+      "Good players <b>adapt</b> when the game changes."
+    ]},
+    { w:"anticipate", d:"to expect and prepare for", sentences:[
+      "We <b>anticipate</b> a big crowd at the fair.",
+      "She could <b>anticipate</b> her opponent's next move.",
+      "<b>Anticipate</b> traffic and leave early.",
+      "The chef <b>anticipate</b>d a busy night.",
+      "I <b>anticipate</b> the sequel will be even better."
+    ]},
+    { w:"apparent", d:"easy to see or understand", sentences:[
+      "Her talent was <b>apparent</b> from the first note.",
+      "It became <b>apparent</b> that the dog ate the muffin.",
+      "The reason for the delay was not <b>apparent</b>.",
+      "His relief was <b>apparent</b> when the test ended.",
+      "The path's end was <b>apparent</b> from the hilltop."
+    ]},
+    { w:"astonish", d:"to surprise greatly", sentences:[
+      "The magician's final trick will <b>astonish</b> you.",
+      "Her speed continues to <b>astonish</b> the coaches.",
+      "The view from the summit <b>astonish</b>ed us all.",
+      "It <b>astonish</b>es me how fast plants grow.",
+      "The tiny ant can <b>astonish</b> with its strength."
+    ]},
+    { w:"attempt", d:"to try", sentences:[
+      "His first <b>attempt</b> at juggling failed happily.",
+      "She will <b>attempt</b> a new dive today.",
+      "The climbers <b>attempt</b>ed the peak at dawn.",
+      "Every <b>attempt</b> teaches you something.",
+      "I'll <b>attempt</b> the puzzle one more time."
+    ]},
+    { w:"baffle", d:"to completely confuse", sentences:[
+      "The riddle continued to <b>baffle</b> the experts.",
+      "Magic tricks <b>baffle</b> me every time.",
+      "The missing sock <b>baffle</b>d the whole family.",
+      "Her disappearing act <b>baffle</b>d the audience.",
+      "The strange lights <b>baffle</b>d the scientists."
+    ]},
+    { w:"barren", d:"unable to grow plants; empty", sentences:[
+      "The <b>barren</b> field needed better soil.",
+      "The moon's surface is <b>barren</b> and gray.",
+      "A <b>barren</b> winter garden waits for spring.",
+      "The desert isn't truly <b>barren</b> — life hides there.",
+      "The shelf looked <b>barren</b> after the move."
+    ]},
+    { w:"calculate", d:"to figure out using math", sentences:[
+      "<b>Calculate</b> the total cost of the snacks.",
+      "She can <b>calculate</b> tips in her head.",
+      "We <b>calculate</b>d how long the trip would take.",
+      "The computer <b>calculate</b>s the rocket's path.",
+      "<b>Calculate</b> twice, cut once."
+    ]},
+    { w:"cautious", d:"careful to avoid danger", sentences:[
+      "Be <b>cautious</b> on the icy steps.",
+      "The <b>cautious</b> deer checked twice before crossing.",
+      "A <b>cautious</b> driver slows near schools.",
+      "She was <b>cautious</b> with the hot pan.",
+      "It pays to be <b>cautious</b> with strangers online."
+    ]},
+    { w:"coincidence", d:"two things happening together by chance", sentences:[
+      "What a <b>coincidence</b> — we wore the same shirt!",
+      "Meeting at the airport was pure <b>coincidence</b>.",
+      "It's no <b>coincidence</b> that practice improves play.",
+      "By <b>coincidence</b>, both teams chose blue.",
+      "The twins' birthday twins was a funny <b>coincidence</b>."
+    ]},
+    { w:"commotion", d:"noisy confusion", sentences:[
+      "A <b>commotion</b> in the hall turned every head.",
+      "The escaped hamster caused a <b>commotion</b>.",
+      "We heard a <b>commotion</b> in the kitchen.",
+      "The parade brought happy <b>commotion</b> downtown.",
+      "What's all this <b>commotion</b> about?"
+    ]},
+    { w:"compete", d:"to try to win against others", sentences:[
+      "Six teams will <b>compete</b> for the cup.",
+      "She loves to <b>compete</b> in spelling bees.",
+      "Plants <b>compete</b> for sunlight.",
+      "We <b>compete</b> hard but stay friends.",
+      "He'll <b>compete</b> in the science fair."
+    ]},
+    { w:"confess", d:"to admit you did something", sentences:[
+      "He had to <b>confess</b> he broke the vase.",
+      "I <b>confess</b> I ate the last cookie.",
+      "She <b>confess</b>ed that she forgot her lines.",
+      "It feels better to <b>confess</b> than to hide it.",
+      "The puppy's guilty face <b>confess</b>ed everything."
+    ]},
+    { w:"conquer", d:"to defeat or overcome", sentences:[
+      "She worked to <b>conquer</b> her fear of water.",
+      "The army tried to <b>conquer</b> the castle.",
+      "You can <b>conquer</b> bad habits with patience.",
+      "The climbers hoped to <b>conquer</b> the peak.",
+      "He <b>conquer</b>ed the video game in a week."
+    ]},
+    { w:"considerate", d:"thinking of other people's feelings", sentences:[
+      "It was <b>considerate</b> to save her a seat.",
+      "A <b>considerate</b> neighbor shovels the shared walk.",
+      "Be <b>considerate</b> and keep the music low.",
+      "The <b>considerate</b> host offered everyone water.",
+      "<b>Considerate</b> words cost nothing."
+    ]},
+    { w:"contribute", d:"to give or add to something", sentences:[
+      "Everyone can <b>contribute</b> an idea.",
+      "She <b>contribute</b>d cookies to the bake sale.",
+      "Bees <b>contribute</b> to the garden by pollinating.",
+      "He <b>contribute</b>s to the team with hustle.",
+      "Small donations <b>contribute</b> to big change."
+    ]},
+    { w:"convince", d:"to make someone believe or agree", sentences:[
+      "She tried to <b>convince</b> Dad to get a dog.",
+      "The evidence <b>convince</b>d the jury.",
+      "It took an hour to <b>convince</b> him to try sushi.",
+      "His smile <b>convince</b>d me everything was fine.",
+      "Good arguments <b>convince</b> better than loud ones."
+    ]},
+    { w:"cunning", d:"clever at tricking others", sentences:[
+      "The <b>cunning</b> fox waited by the henhouse.",
+      "Her <b>cunning</b> plan fooled everyone.",
+      "The villain was <b>cunning</b> but careless.",
+      "A <b>cunning</b> move won him the chess match.",
+      "Ravens are surprisingly <b>cunning</b> birds."
+    ]},
+    { w:"dedicate", d:"to give your time and effort to something", sentences:[
+      "She <b>dedicate</b>s an hour a day to violin.",
+      "The coach <b>dedicate</b>d his summer to the team.",
+      "He <b>dedicate</b>d the book to his grandmother.",
+      "They <b>dedicate</b>d the new park on Saturday.",
+      "<b>Dedicate</b> yourself to what you love."
+    ]},
+    { w:"dense", d:"thick; packed closely together", sentences:[
+      "The <b>dense</b> forest blocked the sunlight.",
+      "<b>Dense</b> fog hid the bridge.",
+      "The bread was <b>dense</b> but tasty.",
+      "A <b>dense</b> crowd filled the square.",
+      "The book's <b>dense</b> chapters took time to read."
+    ]},
+    { w:"dependable", d:"reliable; can be counted on", sentences:[
+      "A <b>dependable</b> friend shows up on time.",
+      "The old truck is slow but <b>dependable</b>.",
+      "She's the most <b>dependable</b> player on the team.",
+      "We need a <b>dependable</b> alarm clock.",
+      "<b>Dependable</b> people keep their promises."
+    ]},
+    { w:"dignity", d:"calm self-respect", sentences:[
+      "She accepted the loss with <b>dignity</b>.",
+      "The old dog carried himself with <b>dignity</b>.",
+      "Treat everyone with <b>dignity</b>.",
+      "He kept his <b>dignity</b> despite the teasing.",
+      "The ceremony was full of quiet <b>dignity</b>."
+    ]},
+    { w:"dismal", d:"gloomy and depressing", sentences:[
+      "The <b>dismal</b> weather canceled the picnic.",
+      "Their season started with a <b>dismal</b> record.",
+      "The <b>dismal</b> basement needed brighter lights.",
+      "A <b>dismal</b> sky hung over the harbor.",
+      "Don't let one <b>dismal</b> day ruin the week."
+    ]},
+    { w:"distinct", d:"clearly different or noticeable", sentences:[
+      "Each zebra has a <b>distinct</b> stripe pattern.",
+      "The twins have <b>distinct</b> personalities.",
+      "I heard a <b>distinct</b> knock at the door.",
+      "The soup had a <b>distinct</b> lemon flavor.",
+      "Her voice is <b>distinct</b> in the choir."
+    ]},
+    { w:"dwell", d:"to live in a place; to keep thinking about", sentences:[
+      "Owls <b>dwell</b> in the old barn.",
+      "Don't <b>dwell</b> on small mistakes.",
+      "Hobbits <b>dwell</b> in cozy hillside homes.",
+      "Fish that <b>dwell</b> in caves are often blind.",
+      "She tries not to <b>dwell</b> on the past."
+    ]},
+    { w:"elegant", d:"graceful and stylish", sentences:[
+      "The swan glided in an <b>elegant</b> curve.",
+      "Her <b>elegant</b> dress shimmered at the gala.",
+      "The proof was simple and <b>elegant</b>.",
+      "An <b>elegant</b> solution avoids extra steps.",
+      "The ballroom looked <b>elegant</b> in candlelight."
+    ]},
+    { w:"encounter", d:"to meet unexpectedly", sentences:[
+      "We <b>encounter</b>ed a deer on the trail.",
+      "Her first <b>encounter</b> with snow was magical.",
+      "The divers <b>encounter</b>ed a curious seal.",
+      "You may <b>encounter</b> new words in this book.",
+      "An <b>encounter</b> with kindness can change a day."
+    ]},
+    { w:"endure", d:"to put up with something hard for a long time", sentences:[
+      "Runners <b>endure</b> months of training.",
+      "The cactus can <b>endure</b> long droughts.",
+      "She <b>endure</b>d the itchy costume for the play.",
+      "Old bridges <b>endure</b> decades of weather.",
+      "True friendships <b>endure</b> hard times."
+    ]},
+    { w:"exhaust", d:"to make very tired; to use up", sentences:[
+      "The long swim will <b>exhaust</b> you.",
+      "Don't <b>exhaust</b> the glue before the project's done.",
+      "The puppies <b>exhaust</b>ed themselves playing.",
+      "The hike <b>exhaust</b>ed even the coach.",
+      "We <b>exhaust</b>ed every idea before asking for help."
+    ]},
+    { w:"frantic", d:"wild with worry or hurry", sentences:[
+      "There was a <b>frantic</b> search for the car keys.",
+      "The <b>frantic</b> squirrel buried nuts before the storm.",
+      "She made a <b>frantic</b> dash for the bus.",
+      "<b>Frantic</b> waving caught the lifeguard's eye.",
+      "The kitchen got <b>frantic</b> before the dinner rush."
+    ]},
+    { w:"genuine", d:"real and sincere", sentences:[
+      "Her <b>genuine</b> smile put everyone at ease.",
+      "The coin turned out to be <b>genuine</b> gold.",
+      "He showed <b>genuine</b> interest in my story.",
+      "A <b>genuine</b> apology names what went wrong.",
+      "The signature was <b>genuine</b>, the expert said."
+    ]},
+    { w:"hazard", d:"a danger", sentences:[
+      "Ice on the steps is a winter <b>hazard</b>.",
+      "Loose rocks are a <b>hazard</b> on this trail.",
+      "Wet floors are a slipping <b>hazard</b>.",
+      "The lifeguard watched for every <b>hazard</b>.",
+      "Bright vests reduce <b>hazard</b>s for bikers."
+    ]},
+    { w:"hostile", d:"unfriendly and aggressive", sentences:[
+      "The <b>hostile</b> goose guarded the pond.",
+      "A <b>hostile</b> crowd booed the referee.",
+      "The desert is a <b>hostile</b> place at noon.",
+      "His <b>hostile</b> tone ended the conversation.",
+      "Wolves can be <b>hostile</b> to strangers in their territory."
+    ]},
+    { w:"humble", d:"not bragging; modest", sentences:[
+      "The champion stayed <b>humble</b> after the win.",
+      "She gave a <b>humble</b> thank-you speech.",
+      "The chef's <b>humble</b> beginnings started in a food truck.",
+      "Stay <b>humble</b> and keep learning.",
+      "Their <b>humble</b> cottage was full of laughter."
+    ]},
+    { w:"jubilant", d:"extremely joyful", sentences:[
+      "The <b>jubilant</b> fans stormed the field.",
+      "She was <b>jubilant</b> when the letter arrived.",
+      "A <b>jubilant</b> cheer rose from the stands.",
+      "The <b>jubilant</b> puppy zoomed around the yard.",
+      "Graduation day felt <b>jubilant</b> for everyone."
+    ]},
+    { w:"keen", d:"sharp; very interested", sentences:[
+      "Hawks have <b>keen</b> eyesight.",
+      "She has a <b>keen</b> interest in fossils.",
+      "His <b>keen</b> hearing caught the faint whistle.",
+      "A <b>keen</b> observer notices small changes.",
+      "The student was <b>keen</b> to start the experiment."
+    ]},
+    { w:"navigate", d:"to find the way", sentences:[
+      "Sailors <b>navigate</b> by the stars.",
+      "The app helps us <b>navigate</b> downtown.",
+      "She can <b>navigate</b> the library blindfolded.",
+      "Geese <b>navigate</b> thousands of miles south.",
+      "He learned to <b>navigate</b> the new school quickly."
+    ]},
+    { w:"obstacle", d:"something that blocks your way", sentences:[
+      "The fallen tree was an <b>obstacle</b> on the path.",
+      "She treats every <b>obstacle</b> as a puzzle.",
+      "The course had ropes, walls, and other <b>obstacle</b>s.",
+      "Fear is often the biggest <b>obstacle</b>.",
+      "They cleared each <b>obstacle</b> one by one."
+    ]},
+    { w:"urgent", d:"needing attention right away", sentences:[
+      "The <b>urgent</b> message said to call home.",
+      "An <b>urgent</b> repair closed the bridge.",
+      "Her <b>urgent</b> tone made us hurry.",
+      "The hospital handles <b>urgent</b> cases first.",
+      "Mark the <b>urgent</b> tasks at the top of the list."
     ]}
   ],
   5: [
@@ -2642,7 +3803,7 @@ const WORD_POOL = {
     { w:"utter", d:"to say; complete", sentences:[
       "She didn't <b>utter</b> a single word.",
       "That speech was an <b>utter</b> success.",
-      "He uttered a quiet \"thank you.\"",
+      "He <b>uttered</b> a quiet \"thank you.\"",
       "The room fell into <b>utter</b> silence.",
       "Their plan was an <b>utter</b> mess."
     ]},
@@ -3173,7 +4334,7 @@ const WORD_POOL = {
     ]},
     { w:"wring", d:"to twist tightly", sentences:[
       "Please <b>wring</b> out the wet towel.",
-      "He wrung his hands while waiting for the news.",
+      "He <b>wrung</b> his hands while waiting for the news.",
       "<b>Wring</b> the clothes before hanging them up.",
       "Wind seemed to <b>wring</b> the tree branches.",
       "She paused to <b>wring</b> water from her hair."
@@ -4126,6 +5287,94 @@ const DADDY_POOL = {
       "A <b>sesquipedalian</b> opening paragraph scares readers off.",
       "She cultivated a <b>sesquipedalian</b> style in her literary essays."
     ]}
+  ],
+  6: [
+    { w:"perfunctory", d:"done quickly without real care or interest", sentences:[
+      "He gave the chart a <b>perfunctory</b> glance before the consult.",
+      "Her <b>perfunctory</b> apology convinced no one.",
+      "A <b>perfunctory</b> handshake ended the tense meeting.",
+      "The inspection was <b>perfunctory</b> at best.",
+      "Don't settle for a <b>perfunctory</b> review of the data."
+    ]},
+    { w:"lugubrious", d:"exaggeratedly sad or gloomy", sentences:[
+      "The basset hound wore its usual <b>lugubrious</b> expression.",
+      "His <b>lugubrious</b> sigh filled the waiting room.",
+      "The film's <b>lugubrious</b> soundtrack made everyone weepy.",
+      "She recited the poem in a <b>lugubrious</b> tone.",
+      "A <b>lugubrious</b> fog settled over the harbor town."
+    ]},
+    { w:"pellucid", d:"transparently clear, easy to understand", sentences:[
+      "Her <b>pellucid</b> explanation made the diagnosis obvious.",
+      "The mountain stream was <b>pellucid</b> to the bottom.",
+      "He admired the author's <b>pellucid</b> prose.",
+      "A <b>pellucid</b> argument needs no decoration.",
+      "The morning air was <b>pellucid</b> after the storm."
+    ]},
+    { w:"recondite", d:"obscure and known by few", sentences:[
+      "The journal article was full of <b>recondite</b> terminology.",
+      "His hobby is collecting <b>recondite</b> medical trivia.",
+      "The professor's <b>recondite</b> lecture lost half the room.",
+      "She has a gift for making <b>recondite</b> topics accessible.",
+      "The footnotes led to ever more <b>recondite</b> sources."
+    ]},
+    { w:"sycophant", d:"a person who flatters powerful people for gain", sentences:[
+      "The new manager surrounded himself with <b>sycophant</b>s.",
+      "A <b>sycophant</b> agrees with everything the boss says.",
+      "She valued honest critics over <b>sycophant</b>s.",
+      "The king's court was crowded with <b>sycophant</b>s.",
+      "Don't mistake a <b>sycophant</b>'s praise for friendship."
+    ]},
+    { w:"anodyne", d:"inoffensive and bland; something that soothes", sentences:[
+      "The politician gave an <b>anodyne</b> answer that said nothing.",
+      "Elevator music is deliberately <b>anodyne</b>.",
+      "Her <b>anodyne</b> remarks avoided the real controversy.",
+      "The committee issued an <b>anodyne</b> statement.",
+      "He found gardening an <b>anodyne</b> for stressful shifts."
+    ]}
+  ],
+  7: [
+    { w:"apotheosis", d:"the highest or most perfect example of something", sentences:[
+      "The trauma bay save was the <b>apotheosis</b> of teamwork.",
+      "Critics called the novel the <b>apotheosis</b> of the genre.",
+      "This dessert is the <b>apotheosis</b> of chocolate.",
+      "Her final performance was the <b>apotheosis</b> of her career.",
+      "The cathedral is the <b>apotheosis</b> of Gothic design."
+    ]},
+    { w:"ineluctable", d:"impossible to avoid or escape", sentences:[
+      "Aging is an <b>ineluctable</b> part of life.",
+      "The evidence pointed to one <b>ineluctable</b> conclusion.",
+      "He felt the <b>ineluctable</b> pull of his hometown.",
+      "Deadlines have an <b>ineluctable</b> way of arriving.",
+      "The tragedy unfolded with <b>ineluctable</b> logic."
+    ]},
+    { w:"panegyric", d:"a speech or text of elaborate praise", sentences:[
+      "The retirement dinner featured a lengthy <b>panegyric</b>.",
+      "Her review read more like a <b>panegyric</b> than a critique.",
+      "The ancient orator delivered a <b>panegyric</b> to the fallen general.",
+      "He blushed through the <b>panegyric</b> in his honor.",
+      "The biography avoids <b>panegyric</b> and shows real flaws."
+    ]},
+    { w:"legerdemain", d:"sleight of hand; clever trickery", sentences:[
+      "The magician's <b>legerdemain</b> fooled the front row entirely.",
+      "The accountant's <b>legerdemain</b> hid the missing funds.",
+      "With verbal <b>legerdemain</b> he dodged every question.",
+      "Card tricks demand years of practiced <b>legerdemain</b>.",
+      "The contract's fine print was pure legal <b>legerdemain</b>."
+    ]},
+    { w:"susurrus", d:"a soft whispering or rustling sound", sentences:[
+      "A <b>susurrus</b> of leaves drifted through the open window.",
+      "The library's <b>susurrus</b> of turning pages was soothing.",
+      "A <b>susurrus</b> of gossip moved through the gala.",
+      "The ventilator's gentle <b>susurrus</b> filled the room.",
+      "He fell asleep to the <b>susurrus</b> of distant waves."
+    ]},
+    { w:"defenestration", d:"the act of throwing someone or something out a window", sentences:[
+      "The <b>defenestration</b> of Prague helped start a war in 1618.",
+      "The old laptop met a dramatic <b>defenestration</b> after the crash.",
+      "History exams love to ask about the famous <b>defenestration</b>.",
+      "The comedy ended with the <b>defenestration</b> of a rubber chicken.",
+      "His metaphorical <b>defenestration</b> from the board was swift."
+    ]}
   ]
 };
 
@@ -4156,12 +5405,18 @@ const LS = {
   sentenceSeen: (c) => "words_sentSeen_" + c,    // { word: [seenIdxArr] }
   archive:      (c) => "homuth_archive_" + c,    // SHARED with hub
   studyWords:   (c) => "homuth_words_" + c,      // SHARED with hub
-  hubState:     "homuth_learning",               // read-only
+  hubState:     "homuth_learning",               // vocab decile + mastered count written back
   recentWords:  (c) => "words_recent_" + c,      // [recent word strings for anti-repeat]
+  quizStats:    (c) => "words_quiz_" + c,        // { word: { r: rightStreak, w: wrongCount } }
+  masteredAt:   (c) => "words_masteredAt_" + c,  // { word: timestamp } for spaced review
+  streak:       (c) => "words_streak_" + c,      // { day, count, streak, lastGoalDay }
 };
 
 const PROMOTE_THRESHOLD_KID   = 10;  // kids move up 1 decile per 10 mastered
 const PROMOTE_THRESHOLD_DADDY = 15;  // Daddy moves up 1 decile per 15 mastered
+const REVIEW_AFTER_DAYS = 30;        // mastered words resurface for review after this many days
+const DAILY_GOAL = 5;                // words per day for the streak
+const QUIZ_MASTER_AT = 3;            // quiz right-streak that suggests mastering
 
 // ═══════════════════════════════════════════
 //  PERSISTENCE HELPERS
@@ -4187,6 +5442,51 @@ function pushRecentWord(childId, w) {
   arr.push(w);
   while (arr.length > 15) arr.shift();
   lsSet(LS.recentWords(childId), arr);
+}
+
+// ── Spaced review timestamps ──
+function getMasteredAt(childId) { return lsGet(LS.masteredAt(childId), {}); }
+function touchMasteredAt(childId, w) {
+  const m = getMasteredAt(childId);
+  m[(w || "").toLowerCase()] = Date.now();
+  lsSet(LS.masteredAt(childId), m);
+}
+
+// ── Daily streak ──
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function getStreak(childId) { return lsGet(LS.streak(childId), { day: "", count: 0, streak: 0, lastGoalDay: "" }); }
+function recordWordSeen(childId) {
+  const s = getStreak(childId);
+  const today = todayStr();
+  if (s.day !== today) { s.day = today; s.count = 0; }
+  s.count++;
+  if (s.count === DAILY_GOAL && s.lastGoalDay !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    s.streak = (s.lastGoalDay === yesterday) ? s.streak + 1 : 1;
+    s.lastGoalDay = today;
+  }
+  lsSet(LS.streak(childId), s);
+}
+function streakHtml(childId) {
+  const s = getStreak(childId);
+  const count = s.day === todayStr() ? s.count : 0;
+  const fire = s.streak > 0 ? "🔥 " + s.streak + " day" + (s.streak === 1 ? "" : "s") + " · " : "";
+  return fire + "Today: " + Math.min(count, DAILY_GOAL) + "/" + DAILY_GOAL + (count >= DAILY_GOAL ? " ✓" : "");
+}
+
+// ── Hub write-back: share vocab progress with the Learning Hub ──
+function writeHubVocab(childId) {
+  try {
+    const raw = localStorage.getItem(LS.hubState);
+    if (!raw) return;
+    const hub = JSON.parse(raw);
+    if (!hub.sessions || !hub.sessions[childId]) return;
+    const session = hub.sessions[childId];
+    if (!session.levels) session.levels = {};
+    session.levels.vocab = getChildDecile(childId);
+    session.vocabMastered = getArchive(childId).length;
+    localStorage.setItem(LS.hubState, JSON.stringify(hub));
+  } catch(e) {}
 }
 
 function clampDecile(d) { return Math.max(0, Math.min(79, d | 0)); }
@@ -4231,7 +5531,7 @@ function getChildDecile(childId) {
   const dg = (CHILDREN[childId].defaultGrade || 0);
   return clampDecile(dg * 10 + 5);
 }
-function setChildDecile(childId, d) { lsSet(LS.decile(childId), clampDecile(d)); }
+function setChildDecile(childId, d) { lsSet(LS.decile(childId), clampDecile(d)); writeHubVocab(childId); }
 function getAtGrade(childId) { return lsGet(LS.atGrade(childId), 0); }
 function setAtGrade(childId, n) { lsSet(LS.atGrade(childId), n); }
 
@@ -4325,6 +5625,27 @@ function buildActivePool(childId, decile) {
       pool.push({ w: wl, d: "(No stored definition — tap Refresh to request one.)", sentences: [], _grade: grade, _tier: tier, custom: true });
     }
   }
+
+  // Spaced review: resurface up to 2 mastered words not seen in REVIEW_AFTER_DAYS.
+  // Archived words without a timestamp get seeded with "now" so nothing floods
+  // back the first time this feature runs.
+  const mAt = getMasteredAt(childId);
+  const cutoff = Date.now() - REVIEW_AFTER_DAYS * 86400000;
+  let seeded = false;
+  const due = [];
+  for (const a of getArchive(childId)) {
+    const wl = (a || "").toLowerCase();
+    if (mAt[wl] === undefined) { mAt[wl] = Date.now(); seeded = true; continue; }
+    if (mAt[wl] < cutoff && !seenW.has(wl)) {
+      const hit = findPoolEntry(wl);
+      if (hit) due.push({ ...hit.entry, _grade: hit.grade, _tier: "review", custom: false, review: true });
+    }
+  }
+  if (seeded) lsSet(LS.masteredAt(childId), mAt);
+  for (const e of due.slice(0, 2)) {
+    seenW.add(e.w.toLowerCase());
+    pool.push(e);
+  }
   return pool;
 }
 
@@ -4369,13 +5690,15 @@ function renderProfileGrid() {
     const d = getChildDecile(id);
     const mastered = getArchive(id).length;
     const gradeLabel = decileLabel(id, d);
+    const st = getStreak(id);
+    const fire = st.streak > 0 ? " · 🔥" + st.streak : "";
     const btn = document.createElement("div");
     btn.className = "profile-btn";
     btn.onclick = () => selectChild(id);
     btn.innerHTML = `
       <span class="emoji">${c.emoji}</span>
       <div class="name">${c.name}</div>
-      <div class="info">${gradeLabel} · ⭐ ${mastered}</div>
+      <div class="info">${gradeLabel} · ⭐ ${mastered}${fire}</div>
       <div class="profile-adjust">
         <button class="adj-btn" onclick="bumpProfileDecile(event,'${id}',-1)" title="Easier words">▼</button>
         <button class="adj-btn" onclick="bumpProfileDecile(event,'${id}',1)" title="Harder words">▲</button>
@@ -4531,6 +5854,8 @@ function showWordScreen() {
   document.getElementById("wordGrade").textContent = decileLabel(state.childId, state.decile);
   document.getElementById("bigWord").textContent = state.currentWord.w.toUpperCase();
   document.getElementById("masteredCount").textContent = getArchive(state.childId).length;
+  const sr = document.getElementById("streakRow");
+  if (sr) sr.textContent = streakHtml(state.childId) + (state.currentWord.review ? " · ⭐ Review word" : "");
   updateTurnBanners();
   showScreen("screen-word");
 }
@@ -4611,6 +5936,8 @@ function nextWord(opts) {
       state.sessionSeen.push(state.currentWord.w);
       if (state.sessionSeen.length > 200) state.sessionSeen.shift();
     }
+    // A review word that's moved past gets its timer reset (waits another 30 days)
+    if (state.currentWord.review) touchMasteredAt(state.childId, wl);
   }
   // Rotate to next player if in multiplayer mode (skip on very first call — state.currentWord is null)
   if (state.multiplayer && state.currentWord && !skipRotate) rotatePlayer();
@@ -4622,6 +5949,7 @@ function nextWord(opts) {
   state.currentWord = pick;
   state.currentWordIsCustom = !!pick.custom;
   state.seenSentences = [];
+  recordWordSeen(state.childId);
   // Preload previously-seen indices for long-term memory (still within sentence count)
   const seenMap = getSeenMap(state.childId);
   const prior = seenMap[pick.w.toLowerCase()] || [];
@@ -4631,6 +5959,104 @@ function nextWord(opts) {
   }
   if (state.listenMode) startListenForWord();
   else showWordScreen();
+}
+
+// ═══════════════════════════════════════════
+//  QUIZ MODE — active recall: definition → pick the word
+// ═══════════════════════════════════════════
+let quiz = null; // { entry, options[], correctIdx, answered }
+
+function shuffleArr(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildQuizQuestion() {
+  const pool = buildActivePool(state.childId, state.decile).filter(e => !e.custom && e.d);
+  if (pool.length < 4) return null;
+  const target = pool[Math.floor(Math.random() * pool.length)];
+  const others = shuffleArr(pool.filter(e => e.w !== target.w)).slice(0, 3);
+  const options = shuffleArr([target.w, ...others.map(e => e.w)]);
+  return { entry: target, options, correctIdx: options.indexOf(target.w), answered: false };
+}
+
+function startQuiz() {
+  if (!state.childId) return goProfile();
+  stopSpeaking();
+  nextQuizQuestion();
+}
+
+function nextQuizQuestion() {
+  quiz = buildQuizQuestion();
+  if (!quiz) {
+    alert("Quiz needs at least 4 words in rotation. Bring back some mastered words or adjust the level.");
+    return;
+  }
+  const c = CHILDREN[state.childId];
+  document.getElementById("quizChild").textContent = c.emoji + " " + c.name;
+  document.getElementById("quizGrade").textContent = decileLabel(state.childId, state.decile);
+  document.getElementById("quizDef").textContent = quiz.entry.d;
+  document.getElementById("quizFeedback").textContent = "";
+  document.getElementById("quizMasterBtn").style.display = "none";
+  document.getElementById("quizNextBtn").style.display = "none";
+  document.getElementById("quizOptions").innerHTML = quiz.options.map((w, i) =>
+    `<button class="quiz-opt" id="quizOpt-${i}" onclick="answerQuiz(${i})">${escapeHtml(w)}</button>`
+  ).join("");
+  showScreen("screen-quiz");
+}
+
+function answerQuiz(i) {
+  if (!quiz || quiz.answered) return;
+  quiz.answered = true;
+  const correct = i === quiz.correctIdx;
+  const wl = quiz.entry.w.toLowerCase();
+  const stats = lsGet(LS.quizStats(state.childId), {});
+  const st = stats[wl] || { r: 0, w: 0 };
+  if (correct) st.r++;
+  else { st.r = 0; st.w++; }
+  stats[wl] = st;
+  lsSet(LS.quizStats(state.childId), stats);
+
+  quiz.options.forEach((w, idx) => {
+    const btn = document.getElementById("quizOpt-" + idx);
+    btn.disabled = true;
+    if (idx === quiz.correctIdx) btn.classList.add("correct");
+    else if (idx === i) btn.classList.add("wrong");
+  });
+
+  const fb = document.getElementById("quizFeedback");
+  if (correct) {
+    fb.textContent = "✅ Right! (" + st.r + " in a row)";
+    recordWordSeen(state.childId);
+    const archived = getArchive(state.childId).map(s => s.toLowerCase());
+    if (st.r >= QUIZ_MASTER_AT && !archived.includes(wl)) {
+      document.getElementById("quizMasterBtn").style.display = "block";
+    }
+  } else {
+    fb.textContent = "❌ It was \"" + quiz.entry.w + "\"";
+  }
+  document.getElementById("quizNextBtn").style.display = "block";
+}
+
+function masterQuizWord() {
+  if (!quiz) return;
+  const wl = quiz.entry.w.toLowerCase();
+  const arc = getArchive(state.childId);
+  if (!arc.includes(wl)) arc.push(wl);
+  setArchive(state.childId, arc);
+  touchMasteredAt(state.childId, wl);
+  writeHubVocab(state.childId);
+  document.getElementById("quizMasterBtn").style.display = "none";
+  document.getElementById("quizFeedback").textContent = "⭐ \"" + quiz.entry.w + "\" mastered!";
+}
+
+function exitQuiz() {
+  quiz = null;
+  if (state.currentWord) showWordScreen();
+  else goProfile();
 }
 
 // ═══════════════════════════════════════════
@@ -4681,6 +6107,8 @@ function masterCurrentWord() {
   const arc = getArchive(state.childId);
   if (!arc.includes(w)) arc.push(w);
   setArchive(state.childId, arc);
+  touchMasteredAt(state.childId, w);
+  writeHubVocab(state.childId);
   // Promotion logic: count mastered at current decile, bump +1 decile when threshold hit.
   // Kids: 10 mastered → +1 decile. Daddy: 15 mastered → +1 decile.
   const isDaddy = !!CHILDREN[state.childId].isDaddy;
