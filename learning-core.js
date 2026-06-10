@@ -222,7 +222,7 @@ const WORD_FLASHCARD_SENTENCES = {
 function genWordFlashcard(childId) {
   const active = getActiveWordFlashcards(childId);
   if (active.length === 0) return null;
-  const w = pick(active);
+  const w = pickWord('wf_' + childId, active);
   const sentence = WORD_FLASHCARD_SENTENCES[w] || `I can read the word "${w}".`;
   return { q: w, a: w, _wordFlashcardBigWord: true, _wordFlashcardSentence: sentence, _wordFlashcard: w };
 }
@@ -1754,7 +1754,7 @@ function genEnglish(level, distracted) {
   // Pulls from the Spelling list (not Word Study) — the question is "spell this", so the source list should match.
   const spellingMix = state.activeChild ? getSpellingWords(state.activeChild) : [];
   if (spellingMix.length > 0 && Math.random() < 0.10) {
-    const w = pick(spellingMix);
+    const w = pickWord('spelling_' + state.activeChild, spellingMix);
     if (distracted) {
       return { q: `Spell the word "${w}"`, a: w.toUpperCase() };
     } else {
@@ -2140,6 +2140,14 @@ function showScreen(name) {
     case 'home':
       document.getElementById('homeScreen').classList.add('active');
       break;
+    case 'addChild':
+      document.getElementById('addChildScreen').classList.add('active');
+      setTimeout(() => { const el = document.getElementById('childNameInput'); if (el) el.focus(); }, 50);
+      break;
+    case 'dashboard':
+      document.getElementById('dashboardScreen').classList.add('active');
+      renderDashboard();
+      break;
     case 'subject':
       document.getElementById('subjectScreen').classList.add('active');
       renderSubjectScreen();
@@ -2180,38 +2188,61 @@ function selectChild(id) {
 function renderHome() {
   const container = document.getElementById('homeCards');
   container.innerHTML = '';
-  for (const [id, child] of Object.entries(CHILDREN)) {
+  const childIds = Object.keys(CHILDREN);
+
+  // Generic variant with no children yet: jump straight to the add form
+  if (IS_GENERIC && childIds.length === 0) {
+    showScreen('addChild');
+    return;
+  }
+
+  for (const id of childIds) {
+    const child = CHILDREN[id];
     const card = document.createElement('button');
     card.type = 'button';
-    card.className = `home-card ${child.color}`;
+    card.className = 'home-card';
+    card.style.borderColor = childColor(child);
+    card.innerHTML =
+      (IS_GENERIC ? '<button class="delete-btn" onclick="event.stopPropagation(); deleteChild(\'' + id + '\');">🗑️</button>' : '') +
+      '<div class="emoji">' + child.emoji + '</div>' +
+      '<div class="name">' + escapeHTML(child.name) + '</div>' +
+      '<div class="info">' + escapeHTML(child.info) + '</div>';
     card.addEventListener('click', () => selectChild(id));
-    card.innerHTML = `
-      <div class="emoji">${child.emoji}</div>
-      <div class="name">${child.name}</div>
-      <div class="info">${child.info}</div>
-    `;
     container.appendChild(card);
   }
-  // Multiplayer card
-  const mpCard = document.createElement('button');
-  mpCard.type = 'button';
-  mpCard.className = 'home-card multiplayer';
-  mpCard.addEventListener('click', () => showScreen('multiplayerSetup'));
-  mpCard.innerHTML = `
-    <div class="emoji">🎮</div>
-    <div class="name">Multiplayer</div>
-    <div class="info">Multiple kids at once</div>
-  `;
-  container.appendChild(mpCard);
+
+  // Add Child card (generic variant only)
+  if (IS_GENERIC) {
+    const addCard = document.createElement('button');
+    addCard.type = 'button';
+    addCard.className = 'home-card add-card';
+    addCard.innerHTML = '<div class="emoji">➕</div><div class="name">Add Child</div><div class="info">Add a new learner</div>';
+    addCard.addEventListener('click', () => showScreen('addChild'));
+    container.appendChild(addCard);
+  }
+
+  // Multiplayer card (needs 2+ non-adult kids)
+  const mpEligible = childIds.filter(id => !isAdultChild(id));
+  if (mpEligible.length >= 2) {
+    const mpCard = document.createElement('button');
+    mpCard.type = 'button';
+    mpCard.className = 'home-card multiplayer';
+    mpCard.addEventListener('click', () => showScreen('multiplayerSetup'));
+    mpCard.innerHTML = '<div class="emoji">🎮</div><div class="name">Multiplayer</div><div class="info">Multiple kids at once</div>';
+    container.appendChild(mpCard);
+  }
 }
 
 function renderChildTabs() {
   const container = document.getElementById('childTabs');
+  if (!container) return;
   container.innerHTML = '';
   for (const [id, child] of Object.entries(CHILDREN)) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `child-tab ${state.activeChild === id && !state.multiplayerActive ? `active-${child.color}` : ''}`;
+    const isActive = state.activeChild === id && !state.multiplayerActive;
+    btn.className = 'child-tab' + (isActive ? ' active' : '');
+    btn.style.borderColor = isActive ? childColor(child) : '';
     btn.textContent = child.name;
     btn.addEventListener('click', () => {
       state.multiplayerActive = false;
@@ -2245,9 +2276,10 @@ function renderSubjectScreen() {
   grid.innerHTML = '';
   const session = getSession(state.activeChild);
 
-  // Daddy gets ER-specific subjects only
-  if (state.activeChild === 'daddy') {
-    for (const subj of ADULT_SUBJECTS) {
+  // Adult learners (e.g. Daddy) get their own subject list only
+  if (isAdultChild(state.activeChild)) {
+    const adultSubjIds = child.subjects || [];
+    for (const subj of ADULT_SUBJECTS.filter(s => adultSubjIds.includes(s.id))) {
       const lvl = session.levels[subj.id] || 30;
       const tier = lvl < 20 ? 'Intern' : lvl < 40 ? 'Resident' : lvl < 50 ? 'Attending' : 'Expert';
       const btn = document.createElement('div');
@@ -2260,7 +2292,7 @@ function renderSubjectScreen() {
       btn.onclick = () => startQuiz(subj.id);
       grid.appendChild(btn);
     }
-    // Hide word entry button for daddy
+    // Hide word entry button for adult learners
     const weBtn = document.querySelector('#subjectScreen .mt-20 .btn-primary');
     if (weBtn) weBtn.style.display = 'none';
     return;
@@ -2270,8 +2302,8 @@ function renderSubjectScreen() {
     if (weBtn2) weBtn2.style.display = '';
   }
 
-  // No science for Cole or Mackenzie
-  const noScience = (state.activeChild === 'cole' || state.activeChild === 'mackenzie');
+  // No science for very young kids (JK/SK + Grade 1)
+  const noScience = childGrade(state.activeChild) <= 1;
   const availableSubjects = noScience ? SUBJECTS.filter(s => s.id !== 'science') : SUBJECTS;
 
   for (const subj of availableSubjects) {
@@ -2313,8 +2345,9 @@ function renderSubjectScreen() {
         continue;
       }
     } else if (subj.id === 'wordFlashcards') {
-      // Only show for Cole
-      if (state.activeChild !== 'cole') { continue; }
+      // Sight-word flashcards: per-child flag (family preset) or beginning readers (generic)
+      const c = CHILDREN[state.activeChild];
+      if (!(c && (c.wordFlashcards || (IS_GENERIC && (c.grade || 0) <= 2)))) { continue; }
       const active = getActiveWordFlashcards(state.activeChild);
       const mastered = getWordFlashcardsMastered(state.activeChild);
       btn.innerHTML = `
@@ -2688,7 +2721,10 @@ function escapeHTML(str) {
 function genCustomFlashcard(childId) {
   const cards = getCustomFlashcards(childId);
   if (cards.length === 0) return null;
-  const c = pick(cards);
+  // Cards are objects; anti-repeat by question text via a temp word list
+  const qTexts = cards.map(c => c.q);
+  const qPicked = pickWord('flashcards_' + childId, qTexts);
+  const c = cards.find(card => card.q === qPicked) || cards[0];
   return { q: c.q, a: c.a, _isCustomFlashcard: true };
 }
 
@@ -2715,20 +2751,27 @@ let multiplayerState = {
 
 function renderMultiplayerSetup() {
   const container = document.getElementById('mpPlayerList');
-  const kids = ['logan', 'cole', 'mackenzie']; // No daddy in multiplayer
+  const kids = Object.keys(CHILDREN).filter(id => !isAdultChild(id)); // adults sit out multiplayer
+  if (kids.length < 2) {
+    container.innerHTML = '<p style="text-align:center;color:var(--text-dim);">Add at least 2 children to use multiplayer.</p>';
+    document.getElementById('mpSubjectButtons').innerHTML = '';
+    return;
+  }
   container.innerHTML = kids.map(id => {
     const child = CHILDREN[id];
+    const colorHex = childColor(child);
     const checked = multiplayerState.players.some(p => p.id === id);
     const isLite = multiplayerState.players.find(p => p.id === id)?.lite || false;
+    const liteEligible = (child.grade || 0) <= 1; // easier mode toggle for the littles
     return `
-      <div style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;background:var(--card);border-radius:12px;border:2px solid var(--${child.color});">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;background:var(--card);border-radius:12px;border:2px solid ${colorHex};">
         <input type="checkbox" id="mp_${id}" ${checked ? 'checked' : ''} onchange="toggleMPPlayer('${id}')"
-          style="width:24px;height:24px;cursor:pointer;accent-color:var(--${child.color});">
+          style="width:24px;height:24px;cursor:pointer;accent-color:${colorHex};">
         <label for="mp_${id}" style="flex:1;cursor:pointer;font-size:1.2rem;font-weight:600;">
-          ${child.emoji} ${child.name}
-          <span style="font-size:0.8rem;color:var(--text-dim);font-weight:400;margin-left:6px;">${child.info}</span>
+          ${child.emoji} ${escapeHTML(child.name)}
+          <span style="font-size:0.8rem;color:var(--text-dim);font-weight:400;margin-left:6px;">${escapeHTML(child.info)}</span>
         </label>
-        ${id === 'mackenzie' ? `
+        ${liteEligible ? `
           <label style="font-size:0.75rem;color:var(--yellow);cursor:pointer;display:flex;align-items:center;gap:4px;">
             <input type="checkbox" id="mp_lite_${id}" ${isLite ? 'checked' : ''} onchange="toggleMPLite('${id}')"
               style="width:18px;height:18px;cursor:pointer;accent-color:var(--yellow);">
@@ -2844,16 +2887,18 @@ function saveQuizState() {
 const CORE_SUBJECTS = ['math', 'english', 'science'];
 
 function getChildSubjects(childId) {
-  if (childId === 'daddy') return ['erQuestions', 'newResearch'];
-  if (childId === 'cole' || childId === 'mackenzie') return ['math', 'english'];
+  const child = CHILDREN[childId];
+  if (child && child.adult) return child.subjects || [];
+  // Younger kids (JK/SK + Grade 1) skip science
+  if (childGrade(childId) <= 1) return ['math', 'english'];
   return CORE_SUBJECTS;
 }
 
 function startQuiz(subject) {
   const childId = state.activeChild;
   const session = getSession(childId);
-  // Ensure newWords level exists (not for daddy)
-  if (childId !== 'daddy' && !session.levels.newWords) session.levels.newWords = session.levels.english;
+  // Ensure newWords level exists (kids only)
+  if (!isAdultChild(childId) && !session.levels.newWords) session.levels.newWords = session.levels.english;
   const isAll = subject === 'all';
   const isWordStudy = subject === 'wordStudy';
   const isNewWords = subject === 'newWords';
@@ -2938,10 +2983,11 @@ function nextQuestion() {
   quizState.questionNum++;
   const distracted = state.distracted;
 
-  // Rotate subject in "all" mode
+  // Rotate subject in "all" mode.
+  // When science is available it's weighted to ~15% (it's a fixed question bank,
+  // so heavy rotation would burn through it); math/english split the rest.
   if (quizState.isAll) {
-    // Logan gets science ~15% of the time; others rotate equally
-    if (quizState.childId === 'logan' && quizState.childSubjects.includes('science')) {
+    if (quizState.childSubjects.includes('science')) {
       const r = Math.random();
       if (r < 0.15) {
         quizState.currentSubject = 'science';
