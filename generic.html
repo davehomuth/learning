@@ -541,8 +541,54 @@
   <div class="subject-grid" id="subjectGrid"></div>
   <div class="mt-20" style="display:flex;gap:10px;flex-wrap:wrap;">
     <button class="btn btn-back" onclick="showScreen('home')">Back</button>
+    <button class="btn" style="background:#6a1b9a;" onclick="startQuizMe()">🧠 Quiz Me</button>
     <button class="btn btn-primary" onclick="showScreen('wordEntry')">✏️ Word Entry</button>
     <button class="btn" style="background:#1565c0;" onclick="showScreen('flashcardEntry')">🃏 Flashcard Entry</button>
+  </div>
+</div>
+
+<!-- ── Quiz Me Screen (self-serve multiple choice) ── -->
+<div class="screen" id="quizMeScreen">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <h2 class="section-title">🧠 Quiz Me</h2>
+    <span class="quiz-meta" id="quizMeWho"></span>
+  </div>
+  <p style="color:var(--text-dim);font-size:0.9rem;margin-top:4px;">Which word means…</p>
+  <div class="question-card" style="min-height:auto;padding:28px 22px;">
+    <div id="quizMeDef" style="font-size:1.4rem;font-weight:600;line-height:1.4;"></div>
+  </div>
+  <div id="quizMeOptions" style="margin-top:16px;"></div>
+  <div id="quizMeFeedback" style="text-align:center;font-size:1.1rem;font-weight:600;margin-top:10px;min-height:24px;"></div>
+  <button class="btn btn-correct" id="quizMeMasterBtn" style="display:none;width:100%;margin-top:8px;" onclick="masterQuizMeWord()">⭐ 3 in a row — Master it!</button>
+  <div style="display:flex;gap:10px;margin-top:14px;">
+    <button class="btn btn-back" onclick="exitQuizMe()">Done</button>
+    <button class="btn btn-primary" id="quizMeNextBtn" style="display:none;flex:1;" onclick="nextQuizMeQuestion()">➡ Next Question</button>
+  </div>
+</div>
+
+<!-- ── Add/Subtract Helper Screen (make-a-ten strategy) ── -->
+<div class="screen" id="makeTenScreen">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <h2 class="section-title">➕ Add / Subtract Helper</h2>
+    <span class="quiz-meta" id="makeTenWho"></span>
+  </div>
+  <p style="color:var(--text-dim);font-size:0.9rem;margin-top:4px;" id="makeTenHint">Let's make a ten!</p>
+  <div class="question-card" style="min-height:auto;padding:24px;text-align:center;">
+    <div id="makeTenProblem" style="font-size:2.4rem;font-weight:800;letter-spacing:2px;"></div>
+    <div id="makeTenAnswerReveal" style="font-size:1.6rem;color:var(--green);font-weight:700;min-height:28px;margin-top:6px;"></div>
+  </div>
+  <div id="makeTenAnswerArea" style="display:none;margin-top:14px;">
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="makeTenInput" inputmode="numeric" placeholder="Your answer" onkeydown="if(event.key==='Enter')submitMakeTen()" style="flex:1;padding:14px;font-size:1.3rem;border-radius:10px;border:1px solid var(--accent);background:var(--bg);color:var(--text);text-align:center;">
+      <button class="btn btn-primary" onclick="submitMakeTen()">Check</button>
+    </div>
+  </div>
+  <div id="makeTenLine" style="margin-top:24px;"></div>
+  <div id="makeTenSteps" style="margin-top:18px;font-size:1.15rem;line-height:1.7;min-height:60px;"></div>
+  <div id="makeTenFeedback" style="text-align:center;font-size:1.1rem;font-weight:600;margin-top:8px;min-height:24px;"></div>
+  <div style="display:flex;gap:10px;margin-top:16px;">
+    <button class="btn btn-back" onclick="exitMakeTen()">Done</button>
+    <button class="btn btn-primary" id="makeTenNextBtn" style="display:none;flex:1;" onclick="nextMakeTen()">➡ Next</button>
   </div>
 </div>
 
@@ -663,7 +709,7 @@
 <script>
 window.APP_CONFIG = {
   variant: 'generic',
-  version: '4.0',
+  version: '4.1',
   versionFile: 'version-generic.txt',
   storagePrefix: 'generic_',
   children: null,   // dynamic: managed via Add Child / Delete
@@ -674,6 +720,6 @@ window.APP_CONFIG = {
   aiEndpoint: ''
 };
 </script>
-<script src="learning-core.js?v=4.0"></script>
+<script src="learning-core.js?v=4.1"></script>
 </body>
 </html>

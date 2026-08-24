@@ -143,6 +143,7 @@ function deleteChild(id) {
 const SUBJECTS = [
   { id: 'all',     name: 'All Subjects', icon: '🎯' },
   { id: 'math',    name: 'Math',    icon: '🔢' },
+  { id: 'makeTen', name: 'Add/Subtract Helper', icon: '➕' },
   { id: 'english', name: 'English', icon: '📖' },
   { id: 'science', name: 'Science', icon: '🔬' },
   { id: 'wordStudy', name: 'Word Study', icon: '✏️' },
@@ -329,6 +330,8 @@ function saveState() {
     localStorage.setItem(PREFIX + 'learning_backup', data);
     localStorage.setItem(PREFIX + 'learning_backup_time', new Date().toISOString());
   } catch(e) {}
+  // Push to cloud sync if enabled (debounced; no-op when not configured)
+  if (typeof syncPushDebounced === 'function') syncPushDebounced();
 }
 
 function loadState() {
@@ -2170,6 +2173,12 @@ function showScreen(name) {
       document.getElementById('multiplayerSetupScreen').classList.add('active');
       renderMultiplayerSetup();
       break;
+    case 'quizMe':
+      document.getElementById('quizMeScreen').classList.add('active');
+      break;
+    case 'makeTen':
+      document.getElementById('makeTenScreen').classList.add('active');
+      break;
   }
 }
 
@@ -2363,6 +2372,21 @@ function renderSubjectScreen() {
         grid.appendChild(btn);
         continue;
       }
+    } else if (subj.id === 'makeTen') {
+      // Make-a-ten add/subtract helper: per-child flag (family preset) or young grades (JK–Grade 1)
+      const c = CHILDREN[state.activeChild];
+      if (!(c && (c.makeTenHelper || (childGrade(state.activeChild) <= 1)))) { continue; }
+      const lvl = makeTenLevel(state.activeChild);
+      const phase = lvl >= MAKETEN_ANSWERFIRST_LEVEL ? 'Try it, then see how' : 'Watch how it works';
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Adding &amp; subtracting by making a ten</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">${phase}</div>
+      `;
+      btn.onclick = () => startMakeTen();
+      grid.appendChild(btn);
+      continue;
     } else if (subj.id === 'newWords') {
       const fLvl = session.levels.newWords_focused || session.levels.newWords || session.levels.english;
       const dLvl = session.levels.newWords_distracted || session.levels.newWords || session.levels.english;
@@ -2881,6 +2905,12 @@ function saveQuizState() {
     if (!session.history[quizState.subject]) session.history[quizState.subject] = [];
     session.history[quizState.subject] = quizState.results;
   }
+  // Dashboard progress log
+  if (quizState.isAll) {
+    for (const s of quizState.childSubjects) logProgress(quizState.childId, s, quizState.currentLevels[s]);
+  } else if (!quizState.isWordStudy && !quizState.isSpelling && !quizState.isWordFlashcards && !quizState.isCustom) {
+    logProgress(quizState.childId, quizState.subject, quizState.currentLevel);
+  }
   saveState();
 }
 
@@ -3103,8 +3133,8 @@ function renderQuiz() {
   else currentSubjName = (SUBJECTS.find(s => s.id === quizState.subject) || {name: quizState.subject}).name;
   const distracted = state.distracted;
 
-  const isDaddy = quizState.childId === 'daddy';
-  const levelLabel = isDaddy
+  const adult = isAdultChild(quizState.childId);
+  const levelLabel = adult
     ? (() => { const l = quizState.currentLevel; return l < 20 ? 'Intern' : l < 40 ? 'Resident' : l < 50 ? 'Attending' : 'Expert'; })() + ` (${quizState.currentLevel})`
     : `Grade ${grade}.${decile}`;
 
@@ -3126,7 +3156,7 @@ function renderQuiz() {
   const mpBanner = document.getElementById('mpBanner');
   if (isMP) {
     mpBanner.style.display = '';
-    mpBanner.style.border = `3px solid var(--${child.color})`;
+    mpBanner.style.border = `3px solid ${childColor(child)}`;
     mpBanner.textContent = `${child.emoji} ${child.name}'s Turn!`;
   } else {
     mpBanner.style.display = 'none';
@@ -3624,8 +3654,10 @@ function updateScratchpadBtn() {
   if (!btn || !quizState) { if (btn) btn.style.display = 'none'; return; }
   // Show for Logan on math questions (or any math in All Subjects)
   const isMath = quizState.currentSubject === 'math' || quizState.subject === 'math';
-  const isLoganOrAll = quizState.childId === 'logan';
-  btn.style.display = (isLoganOrAll && isMath) ? 'block' : 'none';
+  // Scratchpad: per-child flag (family preset) or any kid grade 3+ (younger kids do mental math only)
+  const spChild = CHILDREN[quizState.childId];
+  const spEnabled = spChild && (spChild.scratchpad || (IS_GENERIC && (spChild.grade || 0) >= 3));
+  btn.style.display = (spEnabled && isMath) ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════
@@ -3930,12 +3962,580 @@ function importProgress(event) {
 }
 
 // ═══════════════════════════════════════════
+//  AI DEFINITION LAYER
+//  Looks up a kid-friendly definition + sentence for any word.
+//  Order: built-in STUDY_WORD_DEFS → cached AI result → live AI (if endpoint set).
+//  Works fully offline; AI is purely additive when CFG.aiEndpoint is configured.
+// ═══════════════════════════════════════════
+
+function getAIDefCache() {
+  try { return JSON.parse(localStorage.getItem(PREFIX + 'aidefs') || '{}'); } catch(e) { return {}; }
+}
+function saveAIDefCache(c) {
+  try { localStorage.setItem(PREFIX + 'aidefs', JSON.stringify(c)); } catch(e) {}
+}
+
+// Synchronous lookup — returns {d, s} or null. Never hits the network.
+function lookupDefinition(word) {
+  const key = word.toLowerCase();
+  if (STUDY_WORD_DEFS[key]) return STUDY_WORD_DEFS[key];
+  const cache = getAIDefCache();
+  if (cache[key]) return cache[key];
+  return null;
+}
+
+// Async fetch from the AI endpoint; caches result and patches the live question.
+function requestAIDefinition(word, questionObj) {
+  if (!CFG.aiEndpoint) return;
+  fetch(CFG.aiEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ word: word })
+  })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data || !data.definition) return;
+      const entry = { d: data.definition, s: data.sentence || '' };
+      const cache = getAIDefCache();
+      cache[word.toLowerCase()] = entry;
+      saveAIDefCache(cache);
+      // If this exact question is still active, patch it so Show Answer is correct
+      if (quizState && quizState.currentQuestion === questionObj) {
+        questionObj.a = entry.d;
+        questionObj._sentence = entry.s;
+        questionObj._aiPending = false;
+        if (quizState.showingAnswer) renderQuiz();
+      }
+    })
+    .catch(() => {}); // offline / endpoint down — silently keep fallback text
+}
+
+// ═══════════════════════════════════════════
+//  PROGRESS LOG (for the dashboard)
+//  Appends a dated level snapshot per child+subject, deduped by day.
+// ═══════════════════════════════════════════
+
+function logProgress(childId, subject, level) {
+  if (isAdultChild(childId)) return;
+  try {
+    const key = PREFIX + 'plog_' + childId;
+    const log = JSON.parse(localStorage.getItem(key) || '[]');
+    const day = new Date().toISOString().slice(0, 10);
+    // Replace today's entry for this subject if present, else append
+    const i = log.findIndex(e => e.day === day && e.subject === subject);
+    if (i >= 0) log[i].level = level;
+    else log.push({ day, subject, level });
+    // Keep the log bounded
+    if (log.length > 400) log.splice(0, log.length - 400);
+    localStorage.setItem(key, JSON.stringify(log));
+  } catch(e) {}
+}
+
+function getProgressLog(childId) {
+  try { return JSON.parse(localStorage.getItem(PREFIX + 'plog_' + childId) || '[]'); } catch(e) { return []; }
+}
+
+// ═══════════════════════════════════════════
+//  PROGRESS DASHBOARD
+// ═══════════════════════════════════════════
+
+function renderDashboard() {
+  const el = document.getElementById('dashboardContent');
+  if (!el) return;
+  const ids = Object.keys(CHILDREN);
+  if (ids.length === 0) { el.innerHTML = '<p style="color:var(--text-dim);">No learners yet.</p>'; return; }
+
+  let html = '';
+  for (const id of ids) {
+    const child = CHILDREN[id];
+    if (isAdultChild(id)) continue;
+    const session = getSession(id);
+    const color = childColor(child);
+    const studyN = getStudyWords(id).length;
+    const spellN = getSpellingWords(id).length;
+    const masteredN = getArchivedWords(id).length;
+    const qStats = getQuizStats(id);
+    const quizMastered = Object.values(qStats).filter(s => (s.r || 0) >= QUIZME_MASTER_AT).length;
+
+    html += `<div style="background:var(--card);border-radius:14px;border-left:5px solid ${color};padding:16px;margin-bottom:16px;">`;
+    html += `<h3 style="margin-bottom:10px;">${child.emoji} ${escapeHTML(child.name)} <span style="font-size:0.8rem;color:var(--text-dim);font-weight:400;">${escapeHTML(child.info)}</span></h3>`;
+
+    // Current levels table (focused vs distracted)
+    html += `<table class="report-table" style="margin:0 0 12px;"><tr><th>Subject</th><th>🎯 Focused</th><th>🏃 Distracted</th></tr>`;
+    for (const subj of getChildSubjects(id)) {
+      const f = session.levels[subj + '_focused'];
+      const d = session.levels[subj + '_distracted'];
+      const name = (SUBJECTS.find(s => s.id === subj) || { name: subj }).name;
+      const fmt = v => (v === undefined ? '—' : `Grade ${Math.floor(v/10)}.${v%10}`);
+      html += `<tr><td>${name}</td><td>${fmt(f)}</td><td>${fmt(d)}</td></tr>`;
+    }
+    html += `</table>`;
+
+    // Word counts
+    html += `<div class="stat-row" style="margin:0;">
+      <div class="stat-box"><div class="stat-val">${studyN}</div><div class="stat-label">Study words</div></div>
+      <div class="stat-box"><div class="stat-val">${spellN}</div><div class="stat-label">Spelling words</div></div>
+      <div class="stat-box"><div class="stat-val">${masteredN}</div><div class="stat-label">Mastered</div></div>
+      <div class="stat-box"><div class="stat-val">${quizMastered}</div><div class="stat-label">Quiz mastered</div></div>
+    </div>`;
+
+    // Sparkline of recent levels (All-subject average per day)
+    const log = getProgressLog(id);
+    if (log.length >= 2) {
+      const byDay = {};
+      for (const e of log) { (byDay[e.day] = byDay[e.day] || []).push(e.level); }
+      const days = Object.keys(byDay).sort().slice(-14);
+      const avgs = days.map(d => byDay[d].reduce((a,b)=>a+b,0) / byDay[d].length);
+      const min = Math.min(...avgs), max = Math.max(...avgs), range = (max - min) || 1;
+      const w = 280, h = 50;
+      const pts = avgs.map((v, i) => `${(i/(avgs.length-1))*w},${h - ((v-min)/range)*h}`).join(' ');
+      html += `<div style="margin-top:12px;"><div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:4px;">Level trend (last ${days.length} active days)</div>
+        <svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${w}px;height:${h}px;">
+          <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg></div>`;
+    }
+    html += `</div>`;
+  }
+  el.innerHTML = html || '<p style="color:var(--text-dim);">No learner data yet.</p>';
+}
+
+// ═══════════════════════════════════════════
+//  QUIZ ME — self-serve multiple-choice vocabulary test
+//  (like the Word Explorer's Quiz Me). The KID taps the answer and gets
+//  instant feedback; 3 correct in a row offers to master the word.
+// ═══════════════════════════════════════════
+
+const QUIZME_MASTER_AT = 3;
+let quizMe = null;
+
+function getQuizStats(childId) {
+  try { return JSON.parse(localStorage.getItem(PREFIX + 'quizstats_' + childId) || '{}'); } catch(e) { return {}; }
+}
+function saveQuizStats(childId, stats) {
+  try { localStorage.setItem(PREFIX + 'quizstats_' + childId, JSON.stringify(stats)); } catch(e) {}
+}
+
+// Words in the child's study list that have a usable definition (built-in or cached AI).
+function quizMePool(childId) {
+  return getStudyWords(childId)
+    .map(w => ({ w: w, def: lookupDefinition(w) }))
+    .filter(e => e.def && e.def.d);
+}
+
+function startQuizMe() {
+  const childId = state.activeChild;
+  if (!childId) { showScreen('home'); return; }
+  const pool = quizMePool(childId);
+  if (pool.length < 4) {
+    alert('Quiz Me needs at least 4 study words with definitions. Add more words in Word Entry first!');
+    return;
+  }
+  quizMe = { childId };
+  nextQuizMeQuestion();
+  showScreen('quizMe');
+}
+
+function buildQuizMeQuestion() {
+  const pool = quizMePool(quizMe.childId);
+  if (pool.length < 4) return null;
+  const target = pool[randInt(0, pool.length - 1)];
+  const distractors = shuffle(pool.filter(e => e.w !== target.w)).slice(0, 3);
+  const options = shuffle([target.w, ...distractors.map(e => e.w)]);
+  return { entry: target, options, correctIdx: options.indexOf(target.w), answered: false };
+}
+
+function nextQuizMeQuestion() {
+  const q = buildQuizMeQuestion();
+  if (!q) { alert('Need at least 4 study words with definitions.'); exitQuizMe(); return; }
+  quizMe.q = q;
+  const c = CHILDREN[quizMe.childId];
+  document.getElementById('quizMeWho').textContent = `${c.emoji} ${c.name}`;
+  document.getElementById('quizMeDef').textContent = q.entry.def.d;
+  document.getElementById('quizMeFeedback').textContent = '';
+  document.getElementById('quizMeMasterBtn').style.display = 'none';
+  document.getElementById('quizMeNextBtn').style.display = 'none';
+  document.getElementById('quizMeOptions').innerHTML = q.options.map((w, i) =>
+    `<button class="btn btn-next quizme-opt" id="quizMeOpt-${i}" style="display:block;width:100%;margin:8px 0;" onclick="answerQuizMe(${i})">${escapeHTML(w)}</button>`
+  ).join('');
+  speak('Which word means: ' + q.entry.def.d);
+}
+
+function answerQuizMe(i) {
+  const q = quizMe && quizMe.q;
+  if (!q || q.answered) return;
+  q.answered = true;
+  const correct = i === q.correctIdx;
+  const wl = q.entry.w.toLowerCase();
+
+  const stats = getQuizStats(quizMe.childId);
+  const st = stats[wl] || { r: 0, w: 0 };
+  if (correct) st.r++; else { st.r = 0; st.w++; }
+  stats[wl] = st;
+  saveQuizStats(quizMe.childId, stats);
+
+  q.options.forEach((w, idx) => {
+    const btn = document.getElementById('quizMeOpt-' + idx);
+    if (!btn) return;
+    btn.disabled = true;
+    if (idx === q.correctIdx) btn.style.background = '#2e7d32';
+    else if (idx === i) btn.style.background = '#c62828';
+  });
+
+  const fb = document.getElementById('quizMeFeedback');
+  if (correct) {
+    fb.textContent = `✅ Correct! (${st.r} in a row)`;
+    playSound('correct');
+    const archived = getArchivedWords(quizMe.childId).map(s => s.toLowerCase());
+    if (st.r >= QUIZME_MASTER_AT && !archived.includes(wl)) {
+      document.getElementById('quizMeMasterBtn').style.display = 'block';
+    }
+  } else {
+    fb.textContent = `❌ It was "${q.entry.w}"`;
+    playSound('incorrect');
+  }
+  document.getElementById('quizMeNextBtn').style.display = 'block';
+}
+
+function masterQuizMeWord() {
+  if (!quizMe || !quizMe.q) return;
+  const word = quizMe.q.entry.w;
+  // Add to mastered archive and remove from the active study list
+  const arc = getArchivedWords(quizMe.childId);
+  if (!arc.includes(word)) { arc.push(word); saveArchivedWords(quizMe.childId, arc); }
+  const studyKey = PREFIX + 'words_' + quizMe.childId;
+  try {
+    const list = JSON.parse(localStorage.getItem(studyKey) || '[]').filter(w => w !== word);
+    localStorage.setItem(studyKey, JSON.stringify(list));
+  } catch(e) {}
+  document.getElementById('quizMeMasterBtn').style.display = 'none';
+  document.getElementById('quizMeFeedback').textContent = `⭐ "${word}" mastered!`;
+  syncPushDebounced();
+}
+
+function exitQuizMe() {
+  quizMe = null;
+  try { window.speechSynthesis.cancel(); } catch(e) {}
+  showScreen('subject');
+}
+
+// ═══════════════════════════════════════════
+//  ADD / SUBTRACT HELPER — "Make a Ten" strategy
+//  Teaches single-digit ± double-digit by first bridging the double-digit
+//  number to the nearest multiple of ten, then adding/subtracting the rest.
+//  Starts as a fully-animated demonstration for every question; as the child
+//  progresses (level rises) it switches to answer-first, then reinforces with
+//  the same animation. Difficulty (number size) grows with level.
+// ═══════════════════════════════════════════
+
+let makeTen = null;
+const MAKETEN_ANSWERFIRST_LEVEL = 8; // once level reaches this, ask before showing the animation
+
+function makeTenLevel(childId) {
+  const s = getSession(childId);
+  if (s.levels.makeTen === undefined) s.levels.makeTen = 0;
+  return s.levels.makeTen;
+}
+
+function setMakeTenLevel(childId, lvl) {
+  const s = getSession(childId);
+  s.levels.makeTen = Math.max(0, Math.min(99, Math.round(lvl)));
+  saveState();
+  logProgress(childId, 'makeTen', s.levels.makeTen);
+}
+
+function clearMakeTenTimers() {
+  if (makeTen && makeTen.timers) { makeTen.timers.forEach(t => clearTimeout(t)); makeTen.timers = []; }
+  try { window.speechSynthesis.cancel(); } catch(e) {}
+}
+
+// Build a make-a-ten question. b is always a single digit that crosses a ten,
+// so the bridging strategy is genuinely needed.
+function buildMakeTenQuestion(level) {
+  const maxTens = Math.min(9, 2 + Math.floor(level / 5)); // 10s..up to 90s as level climbs
+  const op = Math.random() < 0.5 ? '+' : '-';
+  let A, b, gap, rest, tenTarget, answer;
+  if (op === '+') {
+    const tens = randInt(1, maxTens);
+    const units = randInt(2, 8);      // leaves a gap of 2..8 to the next ten
+    gap = 10 - units;                 // add this to reach the next ten
+    rest = randInt(1, 9 - gap);       // what's left after bridging (keeps b <= 9)
+    A = tens * 10 + units;
+    b = gap + rest;
+    tenTarget = A + gap;
+    answer = A + b;
+  } else {
+    const tens = randInt(1, maxTens);
+    const units = randInt(1, 8);      // subtract these to reach the ten below
+    gap = units;
+    rest = randInt(1, 9 - units);     // what's left after bridging (keeps b <= 9)
+    A = tens * 10 + units;
+    b = gap + rest;
+    tenTarget = A - gap;
+    answer = A - b;
+  }
+  return { op, opDisplay: op === '+' ? '+' : '\u2212', A, b, gap, rest, tenTarget, answer, answered: false };
+}
+
+function startMakeTen() {
+  const childId = state.activeChild;
+  if (!childId) { showScreen('home'); return; }
+  makeTen = { childId, timers: [], correctRun: 0, incorrectRun: 0 };
+  showScreen('makeTen');
+  nextMakeTen();
+}
+
+function nextMakeTen() {
+  clearMakeTenTimers();
+  const childId = makeTen.childId;
+  const level = makeTenLevel(childId);
+  const answerFirst = level >= MAKETEN_ANSWERFIRST_LEVEL;
+  const q = buildMakeTenQuestion(level);
+  makeTen.q = q;
+  makeTen.answerFirst = answerFirst;
+
+  const c = CHILDREN[childId];
+  document.getElementById('makeTenWho').textContent = `${c.emoji} ${c.name}`;
+  document.getElementById('makeTenProblem').textContent = `${q.A} ${q.opDisplay} ${q.b} = ?`;
+  document.getElementById('makeTenAnswerReveal').textContent = '';
+  document.getElementById('makeTenSteps').innerHTML = '';
+  document.getElementById('makeTenFeedback').textContent = '';
+  document.getElementById('makeTenLine').innerHTML = '';
+  document.getElementById('makeTenNextBtn').style.display = 'none';
+
+  const area = document.getElementById('makeTenAnswerArea');
+  const input = document.getElementById('makeTenInput');
+  if (answerFirst) {
+    document.getElementById('makeTenHint').textContent = 'Try it first — then watch how!';
+    area.style.display = 'block';
+    input.value = '';
+    input.disabled = false;
+    setTimeout(() => { try { input.focus(); } catch(e) {} }, 50);
+    speak(`What is ${q.A} ${q.op === '+' ? 'plus' : 'minus'} ${q.b}?`);
+  } else {
+    document.getElementById('makeTenHint').textContent = "Let's make a ten!";
+    area.style.display = 'none';
+    speak(`Let's solve ${q.A} ${q.op === '+' ? 'plus' : 'minus'} ${q.b}.`);
+    makeTen.timers.push(setTimeout(runMakeTenAnimation, 700));
+  }
+}
+
+function submitMakeTen() {
+  const q = makeTen && makeTen.q;
+  if (!q || q.answered) return;
+  const input = document.getElementById('makeTenInput');
+  const val = parseInt(input.value, 10);
+  if (isNaN(val)) { input.focus(); return; }
+  q.answered = true;
+  input.disabled = true;
+  const correct = val === q.answer;
+  const fb = document.getElementById('makeTenFeedback');
+  if (correct) {
+    fb.textContent = '✅ Correct!';
+    fb.style.color = 'var(--green)';
+    playSound('correct');
+    makeTen.correctRun++; makeTen.incorrectRun = 0;
+    let lvl = makeTenLevel(makeTen.childId) + 2;
+    if (makeTen.correctRun >= 3) { lvl += 2; makeTen.correctRun = 0; }
+    setMakeTenLevel(makeTen.childId, lvl);
+  } else {
+    fb.textContent = `Not quite — let's see how.`;
+    fb.style.color = 'var(--yellow)';
+    playSound('incorrect');
+    makeTen.incorrectRun++; makeTen.correctRun = 0;
+    if (makeTen.incorrectRun >= 2) {
+      setMakeTenLevel(makeTen.childId, makeTenLevel(makeTen.childId) - 3);
+      makeTen.incorrectRun = 0;
+    }
+  }
+  // Always reinforce with the animation after an answer
+  makeTen.timers.push(setTimeout(runMakeTenAnimation, 500));
+}
+
+// Draw the number line and return a position helper. Markers for the bridge
+// ten and the answer start hidden and are revealed as the dot hops.
+function makeTenRenderLine(q) {
+  const lineMin = Math.floor(Math.min(q.A, q.answer, q.tenTarget) / 10) * 10;
+  let lineMax = Math.ceil(Math.max(q.A, q.answer, q.tenTarget) / 10) * 10;
+  if (lineMax <= lineMin) lineMax = lineMin + 10;
+  const span = lineMax - lineMin;
+  const pos = v => ((v - lineMin) / span) * 100;
+  let ticks = '';
+  for (let v = lineMin; v <= lineMax; v++) {
+    const isTen = v % 10 === 0;
+    ticks += `<div class="mt-tick${isTen ? ' mt-tick-ten' : ''}" style="left:${pos(v)}%"></div>`;
+    if (isTen) ticks += `<div class="mt-lbl" style="left:${pos(v)}%">${v}</div>`;
+  }
+  const html =
+    `<div class="mt-line">${ticks}` +
+    `<div class="mt-mark mt-start" style="left:${pos(q.A)}%">${q.A}</div>` +
+    `<div class="mt-mark mt-ten" id="mtTenMark" style="left:${pos(q.tenTarget)}%;opacity:0">${q.tenTarget}</div>` +
+    `<div class="mt-mark mt-ans" id="mtAnsMark" style="left:${pos(q.answer)}%;opacity:0">${q.answer}</div>` +
+    `<div class="mt-dot" id="mtDot" style="left:${pos(q.A)}%"></div>` +
+    `</div>`;
+  document.getElementById('makeTenLine').innerHTML = html;
+  return pos;
+}
+
+function runMakeTenAnimation() {
+  const q = makeTen.q;
+  const pos = makeTenRenderLine(q);
+  const stepsEl = document.getElementById('makeTenSteps');
+  const verb = q.op === '+' ? 'Add' : 'Take away';
+  const verbLow = q.op === '+' ? 'add' : 'take away';
+  const T = (fn, ms) => makeTen.timers.push(setTimeout(fn, ms));
+
+  stepsEl.innerHTML = `Start at <b>${q.A}</b>.`;
+  speak(`Start at ${q.A}.`);
+
+  T(() => {
+    stepsEl.innerHTML += `<br>${verb} <b>${q.gap}</b> to make <b>${q.tenTarget}</b>.`;
+    const d = document.getElementById('mtDot'); if (d) d.style.left = pos(q.tenTarget) + '%';
+    const tm = document.getElementById('mtTenMark'); if (tm) tm.style.opacity = 1;
+    speak(`${verb} ${q.gap} to make ${q.tenTarget}.`);
+  }, 1300);
+
+  T(() => {
+    stepsEl.innerHTML += `<br>Then ${verbLow} <b>${q.rest}</b> more.`;
+    const d = document.getElementById('mtDot'); if (d) d.style.left = pos(q.answer) + '%';
+    const am = document.getElementById('mtAnsMark'); if (am) am.style.opacity = 1;
+    speak(`Then ${verbLow} ${q.rest} more.`);
+  }, 2700);
+
+  T(() => {
+    stepsEl.innerHTML += `<br><span style="color:var(--green);font-weight:800;font-size:1.2rem;">${q.A} ${q.opDisplay} ${q.b} = ${q.answer}</span>`;
+    document.getElementById('makeTenAnswerReveal').textContent = `= ${q.answer}`;
+    playSound('correct');
+    speak(`${q.A} ${q.op === '+' ? 'plus' : 'minus'} ${q.b} equals ${q.answer}.`);
+    document.getElementById('makeTenNextBtn').style.display = 'block';
+    // Demo phase earns steady progress toward the answer-first stage
+    if (!makeTen.answerFirst) setMakeTenLevel(makeTen.childId, makeTenLevel(makeTen.childId) + 1);
+  }, 4100);
+}
+
+function exitMakeTen() {
+  clearMakeTenTimers();
+  makeTen = null;
+  showScreen('subject');
+}
+
+// ═══════════════════════════════════════════
+//  CROSS-DEVICE SYNC (Firebase Realtime Database)
+//  Shares progress across devices under a family code. Last-write-wins by
+//  timestamp. Disabled unless CFG.firebase is set and a sync code is saved.
+// ═══════════════════════════════════════════
+
+let _fbDb = null, _syncCode = null, _syncTimer = null, _syncApplying = false;
+
+function syncCodeKey() { return PREFIX + 'synccode'; }
+
+function initSync() {
+  if (!CFG.firebase || typeof firebase === 'undefined') return;
+  _syncCode = localStorage.getItem(syncCodeKey());
+  if (!_syncCode) return; // sync not set up on this device
+  try {
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(CFG.firebase);
+    _fbDb = firebase.database();
+    syncPull(true); // initial pull, then live updates
+    _fbDb.ref('learningHub/' + _syncCode).on('value', snap => {
+      const data = snap.val();
+      if (data) applyRemote(data);
+    });
+    updateSyncBtn();
+  } catch(e) { console.warn('Sync init failed', e); }
+}
+
+function syncSetup() {
+  if (!CFG.firebase || typeof firebase === 'undefined') {
+    alert('Sync is not configured for this version.');
+    return;
+  }
+  const current = localStorage.getItem(syncCodeKey()) || '';
+  const code = prompt(
+    'Cross-device sync\n\nEnter a family sync code (any word or phrase — use the SAME code on every device to share progress):',
+    current
+  );
+  if (code === null) return;
+  const clean = code.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!clean) { alert('Please enter a code with letters or numbers.'); return; }
+  localStorage.setItem(syncCodeKey(), clean);
+  _syncCode = clean;
+  initSync();
+  syncPush(); // push current device state up immediately
+  alert('Sync enabled with code "' + clean + '". Enter the same code on your other devices.');
+  updateSyncBtn();
+}
+
+function updateSyncBtn() {
+  const btn = document.getElementById('syncBtn');
+  if (!btn) return;
+  if (_syncCode) { btn.textContent = '☁️ Synced'; btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)'; }
+}
+
+// Gather the syncable blob for this child set
+function syncSnapshot() {
+  const blob = { _ts: Date.now(), sessions: state.sessions, children: IS_GENERIC ? CHILDREN : undefined, words: {}, spelling: {}, archive: {}, flashcards: {}, quizstats: {} };
+  const ids = Object.keys(CHILDREN);
+  for (const id of ids) {
+    blob.words[id] = getStudyWords(id);
+    blob.spelling[id] = getSpellingWords(id);
+    blob.archive[id] = getArchivedWords(id);
+    try { blob.flashcards[id] = JSON.parse(localStorage.getItem(PREFIX + 'flashcards_' + id) || '[]'); } catch(e) { blob.flashcards[id] = []; }
+    blob.quizstats[id] = getQuizStats(id);
+  }
+  return blob;
+}
+
+function syncPush() {
+  if (!_fbDb || !_syncCode || _syncApplying) return;
+  try { _fbDb.ref('learningHub/' + _syncCode).set(syncSnapshot()); } catch(e) {}
+}
+
+function syncPushDebounced() {
+  if (!_fbDb || !_syncCode) return;
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(syncPush, 1500);
+}
+
+function syncPull(initial) {
+  if (!_fbDb || !_syncCode) return;
+  _fbDb.ref('learningHub/' + _syncCode).once('value').then(snap => {
+    const data = snap.val();
+    if (data) applyRemote(data);
+    else if (initial) syncPush(); // nothing remote yet — seed it from this device
+  }).catch(() => {});
+}
+
+// Apply a remote snapshot to local storage. Last-write-wins on the whole blob.
+function applyRemote(data) {
+  if (!data || typeof data !== 'object') return;
+  _syncApplying = true;
+  try {
+    if (data.sessions) { state.sessions = data.sessions; }
+    if (IS_GENERIC && data.children) { CHILDREN = data.children; saveChildren(); }
+    const ids = Object.keys(CHILDREN);
+    for (const id of ids) {
+      if (data.words && data.words[id]) localStorage.setItem(PREFIX + 'words_' + id, JSON.stringify(data.words[id]));
+      if (data.spelling && data.spelling[id]) localStorage.setItem(PREFIX + 'spelling_' + id, JSON.stringify(data.spelling[id]));
+      if (data.archive && data.archive[id]) localStorage.setItem(PREFIX + 'archive_' + id, JSON.stringify(data.archive[id]));
+      if (data.flashcards && data.flashcards[id]) localStorage.setItem(PREFIX + 'flashcards_' + id, JSON.stringify(data.flashcards[id]));
+      if (data.quizstats && data.quizstats[id]) saveQuizStats(id, data.quizstats[id]);
+    }
+    saveState();
+    renderHome();
+    renderChildTabs();
+  } catch(e) { console.warn('applyRemote failed', e); }
+  _syncApplying = false;
+}
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 
 // Seed spelling/study word lists once per seed key.
 // Each entry runs once per device — won't re-add if user deletes words.
+// Only the family variant ships preset seed lists; generic starts empty.
 function seedWords() {
+  if (CFG.seeds !== 'family') return;
   const seeds = [
     {
       key: PREFIX + 'seed_logan_spelling_ight_ought_2026_05_02',
@@ -3987,9 +4587,31 @@ function seedWords() {
   }
 }
 
+// Inject the make-a-ten number-line styles once.
+(function injectMakeTenStyles() {
+  const css = `
+.mt-line{position:relative;height:74px;margin:0 16px;}
+.mt-line::before{content:'';position:absolute;left:0;right:0;top:36px;height:4px;background:var(--accent);border-radius:2px;}
+.mt-tick{position:absolute;top:30px;width:2px;height:14px;background:var(--text-dim);transform:translateX(-50%);}
+.mt-tick-ten{height:24px;top:24px;width:3px;background:var(--text);}
+.mt-lbl{position:absolute;top:52px;font-size:0.72rem;color:var(--text-dim);transform:translateX(-50%);}
+.mt-mark{position:absolute;top:0;transform:translateX(-50%);font-weight:800;font-size:0.9rem;padding:2px 7px;border-radius:8px;transition:opacity .4s;z-index:2;}
+.mt-start{background:#1565c0;color:#fff;}
+.mt-ten{background:#f9a825;color:#000;}
+.mt-ans{background:#2e7d32;color:#fff;}
+.mt-dot{position:absolute;top:27px;width:20px;height:20px;border-radius:50%;background:var(--yellow,#ffd600);border:3px solid #fff;transform:translateX(-50%);transition:left .7s ease;box-shadow:0 0 8px rgba(255,214,0,.8);z-index:3;}
+`;
+  const el = document.createElement('style');
+  el.textContent = css;
+  document.head.appendChild(el);
+})();
+
+loadChildren();
 loadState();
 seedWords();
 updateToggleVisual();
 updateFeatureToggles();
 renderHome();
 renderChildTabs();
+initSync();
+updateSyncBtn();
