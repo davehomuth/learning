@@ -2240,6 +2240,17 @@ function renderHome() {
     mpCard.innerHTML = '<div class="emoji">🎮</div><div class="name">Multiplayer</div><div class="info">Multiple kids at once</div>';
     container.appendChild(mpCard);
   }
+
+  // UFLI Spelling card (family variant only) — opens the standalone Grade 2 UFLI app
+  if (!IS_GENERIC) {
+    const ufliCard = document.createElement('button');
+    ufliCard.type = 'button';
+    ufliCard.className = 'home-card';
+    ufliCard.style.borderColor = 'var(--green)';
+    ufliCard.addEventListener('click', () => { window.location.href = 'ufli.html'; });
+    ufliCard.innerHTML = '<div class="emoji">🔤</div><div class="name">UFLI Spelling</div><div class="info">Grade 2 spelling patterns</div>';
+    container.appendChild(ufliCard);
+  }
 }
 
 function renderChildTabs() {

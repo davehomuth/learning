@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>UFLI Spelling — Grade 2</title>
+<style>
+  :root{
+    --bg:#f4f7fb; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --brand:#3b6fd4; --brand2:#2b56ad; --good:#1f9d55; --bad:#e0533d;
+    --warm:#f6b73c; --line:#e5e9f0; --pattern:#ffe28a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:560px;margin:0 auto;padding:16px 16px 60px;}
+  h1{font-size:22px;margin:6px 0 2px;text-align:center;}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,40,80,.05);}
+  .card h2{margin:0 0 10px;font-size:17px;}
+  button{font-family:inherit;font-size:17px;border:none;border-radius:14px;
+    padding:15px 18px;cursor:pointer;width:100%;font-weight:600;}
+  .btn{background:var(--brand);color:#fff;}
+  .btn:active{background:var(--brand2);}
+  .btn.big{font-size:19px;padding:20px;}
+  .btn.ghost{background:#eef2f9;color:var(--brand2);}
+  .btn.warm{background:var(--warm);color:#5a3d00;}
+  .btn.good{background:var(--good);color:#fff;}
+  .btn.bad{background:var(--bad);color:#fff;}
+  .btn.small{padding:11px 12px;font-size:15px;}
+  .row{display:flex;gap:10px;}
+  .row>*{flex:1;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  label.fld{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px;font-weight:600;}
+  input[type=text]{width:100%;font-size:20px;padding:14px;border:2px solid var(--line);
+    border-radius:12px;font-family:inherit;text-align:center;}
+  input[type=text]:focus{outline:none;border-color:var(--brand);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .chip{border:2px solid var(--line);background:#fff;border-radius:999px;
+    padding:9px 14px;font-size:15px;font-weight:600;cursor:pointer;color:var(--ink);width:auto;}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .chip.pat{background:#f0f5ff;color:var(--brand2);border-color:#cddcff;}
+  .hidden{display:none;}
+  .word{font-size:44px;font-weight:800;text-align:center;letter-spacing:2px;margin:18px 0;}
+  .pattern-hl{background:var(--pattern);border-radius:6px;padding:0 4px;}
+  .boxes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:22px 0;}
+  .box{min-width:52px;height:64px;border:3px solid var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;
+    background:#fff;padding:0 8px;}
+  .box.fill{border-color:var(--brand);}
+  .box.pat{background:var(--pattern);border-color:var(--warm);}
+  .prompt{text-align:center;color:var(--muted);font-size:15px;margin-bottom:6px;}
+  .progress{text-align:center;color:var(--muted);font-size:13px;margin-top:4px;}
+  .result{text-align:center;font-size:20px;font-weight:700;margin:14px 0;}
+  .result.ok{color:var(--good);} .result.no{color:var(--bad);}
+  .speak-btn{background:var(--warm);color:#5a3d00;font-size:22px;}
+  .backlink{background:none;color:var(--muted);font-size:14px;padding:8px;width:auto;font-weight:600;}
+  .tiny{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;}
+  .missed-item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:16px;}
+  .missed-item b{color:var(--bad);}
+  .day-badge{display:inline-block;background:#eef2f9;color:var(--brand2);border-radius:999px;
+    padding:4px 12px;font-size:13px;font-weight:700;}
+  .center{text-align:center;}
+  .heart-word{font-size:40px;font-weight:800;text-align:center;margin:16px 0;}
+  .foot{text-align:center;color:#aab2c0;font-size:11px;margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ================= WORD BANK =================
+   Each word stored as graphemes joined by '.'.
+   The vowel-team / r-controlled grapheme is the "pattern" key.
+   Words only use that pattern + already-known base graphemes,
+   so a week's list can never leak an untaught spelling. */
+const PATTERNS = {
+  ar:  {label:"ar",  words:["c.ar","c.ar.t","s.t.ar","f.ar.m","h.ar.d","p.ar.k","d.ar.k","y.ar.d","sh.ar.p","s.t.ar.t","p.ar.t","h.ar.m","b.ar.n","c.ar.d","j.ar","f.ar","ar.t","ar.m","ch.ar.t","s.m.ar.t"]},
+  or:  {label:"or",  words:["f.or","c.or.n","f.or.k","b.or.n","h.or.n","s.or.t","p.or.t","n.or.th","s.t.or.m","sh.or.t","s.p.or.t","t.or.ch","f.or.t","c.or.d","th.or.n","s.c.or.ch","p.or.ch","c.or.k"]},
+  er:  {label:"er",  words:["h.er","f.er.n","h.er.d","t.er.m","v.er.b","g.er.m","p.er.ch","c.l.er.k","s.t.er.n","j.er.k","p.er.k","h.er.b"]},
+  ir:  {label:"ir",  words:["b.ir.d","g.ir.l","d.ir.t","sh.ir.t","f.ir.s.t","s.t.ir","s.ir","f.ir.m","s.w.ir.l","th.ir.d","s.k.ir.t","b.ir.th"]},
+  ur:  {label:"ur",  words:["f.ur","t.ur.n","b.ur.n","h.ur.t","c.ur.l","s.ur.f","c.ur.b","b.l.ur","s.p.ur","ch.ur.ch","b.ur.s.t","h.ur.l"]},
+  ai:  {label:"ai",  words:["r.ai.n","t.r.ai.n","p.ai.n","w.ai.t","m.ai.l","t.ai.l","s.ai.l","p.ai.n.t","b.r.ai.n","ch.ai.n","t.r.ai.l","s.n.ai.l","m.ai.n","r.ai.l","g.r.ai.n","f.ai.n.t"]},
+  ay:  {label:"ay",  words:["d.ay","p.l.ay","s.t.ay","w.ay","s.ay","m.ay","c.l.ay","t.r.ay","g.r.ay","p.r.ay","s.p.r.ay","s.t.r.ay","h.ay","l.ay","b.ay","p.ay"]},
+  ee:  {label:"ee",  words:["s.ee","t.r.ee","f.ee.t","s.ee.d","g.r.ee.n","s.l.ee.p","s.w.ee.t","th.r.ee","k.ee.p","f.ee.l","w.ee.k","d.ee.p","m.ee.t","n.ee.d","f.r.ee","s.p.ee.d"]},
+  ea:  {label:"ea",  words:["ea.t","s.ea","t.ea.m","r.ea.d","l.ea.f","b.ea.ch","c.l.ea.n","d.r.ea.m","m.ea.t","s.ea.t","t.ea.ch","s.p.ea.k","m.ea.l","l.ea.p","t.r.ea.t","b.ea.d"]},
+  oa:  {label:"oa",  words:["b.oa.t","c.oa.t","r.oa.d","s.oa.p","g.oa.t","t.oa.s.t","c.oa.s.t","f.l.oa.t","th.r.oa.t","l.oa.d","f.oa.m","r.oa.s.t","s.oa.k","t.oa.d","c.l.oa.k","m.oa.n"]},
+  ow_o:{label:"ow (snow)", words:["s.n.ow","g.r.ow","sh.ow","s.l.ow","b.l.ow","th.r.ow","g.l.ow","f.l.ow","c.r.ow","l.ow","r.ow","b.ow.l","m.ow","t.ow","g.r.ow.n","k.n.ow.n"]},
+  igh: {label:"igh", words:["h.igh","n.igh.t","l.igh.t","r.igh.t","s.igh.t","f.igh.t","m.igh.t","b.r.igh.t","f.l.igh.t","t.igh.t","f.r.igh.t","s.igh","th.igh","k.n.igh.t","s.l.igh.t","p.l.igh.t"]},
+  oi:  {label:"oi",  words:["oi.l","c.oi.n","j.oi.n","p.oi.n.t","b.oi.l","s.oi.l","s.p.oi.l","j.oi.n.t","m.oi.s.t","f.oi.l","c.oi.l","b.r.oi.l"]},
+  oy:  {label:"oy",  words:["b.oy","t.oy","j.oy","s.oy","p.l.oy","c.oy","R.oy","t.r.oy"]},
+  ou:  {label:"ou",  words:["ou.t","l.ou.d","c.l.ou.d","r.ou.n.d","f.ou.n.d","s.ou.n.d","m.ou.th","s.ou.th","p.r.ou.d","c.ou.n.t","g.r.ou.n.d","sh.ou.t","s.c.ou.t","s.p.ou.t","m.ou.n.t","p.ou.n.d"]},
+  ow_ou:{label:"ow (cow)", words:["c.ow","n.ow","h.ow","ow.l","d.ow.n","t.ow.n","b.r.ow.n","c.l.ow.n","c.r.ow.n","f.r.ow.n","g.ow.n","g.r.ow.l","c.r.ow.d","p.l.ow","h.ow.l","w.ow"]},
+  oo_long:{label:"oo (moon)", words:["m.oo.n","s.oo.n","f.oo.d","r.oo.m","z.oo","b.oo.t","r.oo.f","t.oo.th","s.p.oo.n","b.r.oo.m","p.oo.l","c.oo.l","h.oo.p","s.c.oo.p","b.l.oo.m","d.r.oo.p"]},
+  oo_short:{label:"oo (book)", words:["b.oo.k","l.oo.k","g.oo.d","f.oo.t","t.oo.k","c.oo.k","h.oo.k","w.oo.d","h.oo.d","s.t.oo.d","sh.oo.k","b.r.oo.k","w.oo.l","h.oo.f"]},
+  aw:  {label:"aw",  words:["s.aw","p.aw","j.aw","l.aw","d.r.aw","c.l.aw","s.t.r.aw","y.aw.n","l.aw.n","d.aw.n","h.aw.k","c.r.aw.l","sh.aw.l","f.aw.n","th.aw","r.aw"]},
+  au:  {label:"au",  words:["h.au.l","f.au.l.t","v.au.l.t","l.au.n.ch","au.g.u.s.t","g.au.n.t","t.au.n.t","h.au.n.t","d.au.n.t"]}
+};
+
+/* Simple decodable sentence frames. Only very common irregular words
+   (the, a, is, I, we, my, on, to, and, has, was, will, can) are used as glue. */
+const SENT_FRAMES = [
+  "The {W} is on the mat.",
+  "I can see the {W}.",
+  "We got a big {W}.",
+  "My {W} is red.",
+  "Can I get the {W}?",
+  "The {W} is on top.",
+  "I will get my {W}.",
+  "We ran to the {W}."
+];
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const app = $('app');
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function graphemesOf(dot){return dot.split('.');}
+function wordOf(dot){return dot.split('.').join('');}
+function speak(text){
+  try{ speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.rate=0.75; u.pitch=1.05; speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- persistence ---------- */
+const CFG_KEY='ufli_config', MISS_KEY='ufli_missed';
+function loadCfg(){try{return JSON.parse(localStorage.getItem(CFG_KEY))||null;}catch(e){return null;}}
+function saveCfg(c){localStorage.setItem(CFG_KEY,JSON.stringify(c));}
+function loadMissed(){try{return JSON.parse(localStorage.getItem(MISS_KEY))||{};}catch(e){return {};}}
+function saveMissed(m){localStorage.setItem(MISS_KEY,JSON.stringify(m));}
+function markMissed(word){const m=loadMissed();m[word]=(m[word]||0)+1;saveMissed(m);}
+
+/* ================= APP STATE ================= */
+let cfg = loadCfg();   // {week, patterns:[keys], heart:[words]}
+
+/* Build the practice & reserve pools for the current config.
+   Half the pattern words -> practice (seen this week).
+   The other half -> reserve (only used in Friday test). */
+function buildPools(){
+  let practice=[], reserve=[];
+  cfg.patterns.forEach(k=>{
+    const shuffled=shuffle(PATTERNS[k].words);
+    const half=Math.ceil(shuffled.length/2);
+    shuffled.forEach((w,i)=>{
+      const entry={dot:w, word:wordOf(w), pattern:k};
+      if(i<half) practice.push(entry); else reserve.push(entry);
+    });
+  });
+  return {practice, reserve};
+}
+
+/* ================= SCREENS ================= */
+function render(html){app.innerHTML=html;window.scrollTo(0,0);}
+
+function homeScreen(){
+  if(!cfg){ return setupScreen(); }
+  const patLabels=cfg.patterns.map(k=>PATTERNS[k].label).join(" &nbsp;·&nbsp; ");
+  const hearts=cfg.heart.length?cfg.heart.map(esc).join(", "):"none";
+  render(`
+    <h1>UFLI Spelling</h1>
+    <div class="sub">Grade 2 · practise this week's sounds</div>
+    <div class="card center">
+      <div class="day-badge">This week</div>
+      <div class="word" style="font-size:34px;margin:14px 0 6px">${patLabels}</div>
+      <div class="tiny">Heart words: ${hearts}</div>
+    </div>
+    <div class="card">
+      <h2>Practise (Mon–Thu)</h2>
+      <div class="grid2">
+        <button class="btn" onclick="startBoxes()">🔤 Sound Boxes</button>
+        <button class="btn" onclick="startDictation()">🎧 Word Dictation</button>
+        <button class="btn warm" onclick="startHeart()">❤️ Heart Words</button>
+        <button class="btn ghost" onclick="startSentence()">📝 Sentences</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Friday</h2>
+      <button class="btn good big" onclick="startTest()">✅ Take the Spelling Test</button>
+      <div class="tiny">Brand-new words in the same patterns — just like the real test.</div>
+    </div>
+    <div class="row" style="margin-top:4px">
+      <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
+      <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
+    </div>
+    <div class="foot">UFLI Spelling · v1.0 · offline-ready</div>
+  `);
+}
+
+let setupSel=[], setupHearts=[];
+function setupScreen(){
+  setupSel = cfg? cfg.patterns.slice():[];
+  setupHearts = cfg? cfg.heart.slice():[];
+  const chips=Object.keys(PATTERNS).map(k=>
+    `<button class="chip ${setupSel.includes(k)?'on':''}" onclick="toggleSetup('${k}')">${PATTERNS[k].label}</button>`
+  ).join('');
+  render(`
+    <h1>Set up the week</h1>
+    <div class="sub">Enter what the teacher sent home Monday</div>
+    <div class="card">
+      <h2>1 · This week's patterns</h2>
+      <div class="tiny" style="text-align:left;margin:0 0 8px">Tap the 2 (or more) sounds you're learning.</div>
+      <div class="chips" id="patChips">${chips}</div>
+    </div>
+    <div class="card">
+      <h2>2 · Heart words</h2>
+      <div class="tiny" style="text-align:left;margin:0 0 8px">The tricky "learn by heart" words. Add them one at a time.</div>
+      <div class="row">
+        <input type="text" id="heartInput" placeholder="e.g. said" autocapitalize="none">
+        <button class="btn small" style="flex:0 0 80px" onclick="addHeart()">Add</button>
+      </div>
+      <div class="chips" id="heartChips">${renderHeartChips()}</div>
+    </div>
+    <button class="btn big" onclick="finishSetup()">Start the week →</button>
+    ${cfg?'<button class="backlink" onclick="homeScreen()">← Cancel</button>':''}
+  `);
+}
+function toggleSetup(k){
+  const i=setupSel.indexOf(k);
+  if(i>=0) setupSel.splice(i,1); else setupSel.push(k);
+  $('patChips').innerHTML=Object.keys(PATTERNS).map(key=>
+    `<button class="chip ${setupSel.includes(key)?'on':''}" onclick="toggleSetup('${key}')">${PATTERNS[key].label}</button>`
+  ).join('');
+}
+function renderHeartChips(){
+  return setupHearts.map((w,i)=>`<button class="chip pat" onclick="removeHeart(${i})">${esc(w)} ✕</button>`).join('');
+}
+function addHeart(){
+  const v=$('heartInput').value.trim().toLowerCase();
+  if(v && !setupHearts.includes(v)) setupHearts.push(v);
+  $('heartInput').value='';
+  $('heartChips').innerHTML=renderHeartChips();
+}
+function removeHeart(i){setupHearts.splice(i,1);$('heartChips').innerHTML=renderHeartChips();}
+function finishSetup(){
+  if(setupSel.length===0){alert("Pick at least one pattern.");return;}
+  cfg={week:new Date().toISOString().slice(0,10), patterns:setupSel, heart:setupHearts};
+  saveCfg(cfg);
+  homeScreen();
+}
+
+/* ---------- SOUND BOXES (Elkonin) ---------- */
+let session=null;
+function startBoxes(){
+  const {practice}=buildPools();
+  session={mode:'boxes', list:shuffle(practice), i:0};
+  boxesQuestion();
+}
+function boxesQuestion(){
+  if(session.i>=session.list.length){ return doneScreen("Sound Boxes"); }
+  const it=session.list[session.i];
+  const gs=graphemesOf(it.dot);
+  const boxes=gs.map(()=>`<div class="box"></div>`).join('');
+  render(`
+    <button class="backlink" onclick="homeScreen()">← Home</button>
+    <div class="card center">
+      <div class="prompt">Listen, then tap each box to build the word</div>
+      <button class="btn speak-btn" style="width:auto;padding:14px 26px;margin:6px auto" onclick="speak('${it.word}')">🔊 Say it again</button>
+      <div class="boxes" id="boxRow">${boxes}</div>
+      <button class="btn" onclick="revealBox()">Show next sound</button>
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+    <div class="row">
+      <button class="btn good small" onclick="boxesNext(true)">Got it</button>
+      <button class="btn bad small" onclick="boxesNext(false)">Missed it</button>
+    </div>
+  `);
+  session.revealed=0;
+  speak(it.word);
+}
+function revealBox(){
+  const it=session.list[session.i];
+  const gs=graphemesOf(it.dot);
+  if(session.revealed>=gs.length) return;
+  const row=$('boxRow').children;
+  const idx=session.revealed;
+  const isPat = gs[idx]===PATTERNS[it.pattern].label.split(' ')[0] || gs[idx]===it.pattern.split('_')[0];
+  row[idx].textContent=gs[idx];
+  row[idx].classList.add(isPat?'pat':'fill');
+  session.revealed++;
+  speak(gs[idx]);
+}
+function boxesNext(ok){
+  const it=session.list[session.i];
+  if(!ok) markMissed(it.word);
+  session.i++;
+  boxesQuestion();
+}
+
+/* ---------- WORD DICTATION ---------- */
+function startDictation(){
+  const {practice}=buildPools();
+  session={mode:'dict', list:shuffle(practice), i:0};
+  dictQuestion();
+}
+function dictQuestion(){
+  if(session.i>=session.list.length){ return doneScreen("Word Dictation"); }
+  const it=session.list[session.i];
+  render(`
+    <button class="backlink" onclick="homeScreen()">← Home</button>
+    <div class="card center">
+      <div class="prompt">Listen and type the word</div>
+      <button class="btn speak-btn" style="width:auto;padding:16px 30px;margin:10px auto" onclick="speak('${it.word}')">🔊 Say the word</button>
+      <input type="text" id="dictIn" autocapitalize="none" autocomplete="off" placeholder="type here"
+        onkeydown="if(event.key==='Enter')checkDict()">
+      <button class="btn" style="margin-top:12px" onclick="checkDict()">Check</button>
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+  `);
+  setTimeout(()=>{speak(it.word);$('dictIn').focus();},250);
+}
+function checkDict(){
+  const it=session.list[session.i];
+  const val=$('dictIn').value.trim().toLowerCase();
+  const ok=val===it.word;
+  if(!ok) markMissed(it.word);
+  const gs=graphemesOf(it.dot);
+  const patLbl=PATTERNS[it.pattern].label.split(' ')[0];
+  const shown=gs.map(g=> (g===patLbl||g===it.pattern.split('_')[0])?`<span class="pattern-hl">${g}</span>`:g).join('');
+  render(`
+    <div class="card center">
+      <div class="result ${ok?'ok':'no'}">${ok?'✅ Correct!':'❌ Not quite'}</div>
+      ${ok?'':`<div class="tiny">You wrote: ${esc(val)||'(nothing)'}</div>`}
+      <div class="word">${shown}</div>
+      <button class="btn speak-btn" style="width:auto;padding:12px 22px;margin:0 auto 8px" onclick="speak('${it.word}')">🔊</button>
+      <button class="btn" onclick="dictNext()">Next word →</button>
+    </div>
+  `);
+}
+function dictNext(){session.i++;dictQuestion();}
+
+/* ---------- HEART WORDS ---------- */
+function startHeart(){
+  if(cfg.heart.length===0){ alert("No heart words set for this week. Add them in ⚙️ New Week.");return; }
+  session={mode:'heart', list:shuffle(cfg.heart), i:0, phase:'flash'};
+  heartQuestion();
+}
+function heartQuestion(){
+  if(session.i>=session.list.length){ return doneScreen("Heart Words"); }
+  const w=session.list[session.i];
+  render(`
+    <button class="backlink" onclick="homeScreen()">← Home</button>
+    <div class="card center">
+      <div class="prompt">Look carefully — remember it by heart</div>
+      <div class="heart-word">${esc(w)}</div>
+      <button class="btn speak-btn" style="width:auto;padding:12px 22px;margin:0 auto 12px" onclick="speak('${esc(w)}')">🔊 Hear it</button>
+      <button class="btn" onclick="heartHide()">I'm ready — hide it</button>
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+  `);
+  speak(w);
+}
+function heartHide(){
+  const w=session.list[session.i];
+  render(`
+    <div class="card center">
+      <div class="prompt">Now type it from memory</div>
+      <button class="btn speak-btn" style="width:auto;padding:14px 26px;margin:10px auto" onclick="speak('${esc(w)}')">🔊 Say it</button>
+      <input type="text" id="heartIn" autocapitalize="none" autocomplete="off" placeholder="type here"
+        onkeydown="if(event.key==='Enter')checkHeart()">
+      <button class="btn" style="margin-top:12px" onclick="checkHeart()">Check</button>
+    </div>
+  `);
+  setTimeout(()=>$('heartIn').focus(),200);
+}
+function checkHeart(){
+  const w=session.list[session.i];
+  const val=$('heartIn').value.trim().toLowerCase();
+  const ok=val===w.toLowerCase();
+  if(!ok) markMissed(w);
+  render(`
+    <div class="card center">
+      <div class="result ${ok?'ok':'no'}">${ok?'✅ Yes!':'❌ Look again'}</div>
+      <div class="heart-word">${esc(w)}</div>
+      <button class="btn" onclick="heartNext()">Next →</button>
+    </div>
+  `);
+}
+function heartNext(){session.i++;heartQuestion();}
+
+/* ---------- SENTENCE DICTATION ---------- */
+function startSentence(){
+  const {practice}=buildPools();
+  const chosen=shuffle(practice).slice(0,6);
+  const frames=shuffle(SENT_FRAMES);
+  session={mode:'sent', list:chosen.map((it,i)=>({
+    word:it.word, dot:it.dot, pattern:it.pattern,
+    text:frames[i%frames.length].replace('{W}',it.word)
+  })), i:0};
+  sentQuestion();
+}
+function sentQuestion(){
+  if(session.i>=session.list.length){ return doneScreen("Sentences"); }
+  const s=session.list[session.i];
+  render(`
+    <button class="backlink" onclick="homeScreen()">← Home</button>
+    <div class="card center">
+      <div class="prompt">Listen to the sentence, then check yourself</div>
+      <button class="btn speak-btn" style="width:auto;padding:16px 30px;margin:10px auto" onclick="speak('${esc(s.text)}')">🔊 Say the sentence</button>
+      <div class="tiny">Write it on paper, then tap to see the answer.</div>
+      <button class="btn ghost" style="margin-top:12px" onclick="sentReveal()">Show the sentence</button>
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+  `);
+  setTimeout(()=>speak(s.text),300);
+}
+function sentReveal(){
+  const s=session.list[session.i];
+  render(`
+    <div class="card center">
+      <div class="word" style="font-size:26px;line-height:1.4">${esc(s.text)}</div>
+      <div class="row">
+        <button class="btn good small" onclick="sentNext(true)">Got it</button>
+        <button class="btn bad small" onclick="sentNext(false)">Missed word</button>
+      </div>
+    </div>
+  `);
+}
+function sentNext(ok){
+  const s=session.list[session.i];
+  if(!ok) markMissed(s.word);
+  session.i++;
+  sentQuestion();
+}
+
+/* ---------- FRIDAY TEST (reserve words, never seen this week) ---------- */
+function startTest(){
+  const {reserve}=buildPools();
+  // test = new pattern words + the same heart words
+  let list=shuffle(reserve).slice(0,10).map(it=>({word:it.word,dot:it.dot,pattern:it.pattern,heart:false}));
+  cfg.heart.forEach(h=>list.push({word:h,dot:null,pattern:null,heart:true}));
+  session={mode:'test', list:shuffle(list), i:0, correct:0, wrong:[]};
+  testQuestion();
+}
+function testQuestion(){
+  if(session.i>=session.list.length){ return testDone(); }
+  const it=session.list[session.i];
+  render(`
+    <div class="center"><div class="day-badge">Friday Test</div></div>
+    <div class="card center">
+      <div class="prompt">Listen and spell the word</div>
+      <button class="btn speak-btn" style="width:auto;padding:16px 30px;margin:10px auto" onclick="speak('${esc(it.word)}')">🔊 Say the word</button>
+      <input type="text" id="testIn" autocapitalize="none" autocomplete="off" placeholder="spell it"
+        onkeydown="if(event.key==='Enter')checkTest()">
+      <button class="btn" style="margin-top:12px" onclick="checkTest()">Next</button>
+      <div class="progress">Word ${session.i+1} of ${session.list.length}</div>
+    </div>
+  `);
+  setTimeout(()=>{speak(it.word);$('testIn').focus();},250);
+}
+function checkTest(){
+  const it=session.list[session.i];
+  const val=$('testIn').value.trim().toLowerCase();
+  const ok=val===it.word.toLowerCase();
+  if(ok) session.correct++; else { session.wrong.push({word:it.word,got:val}); markMissed(it.word); }
+  session.i++;
+  testQuestion();
+}
+function testDone(){
+  const total=session.list.length;
+  const wrongList=session.wrong.length
+    ? session.wrong.map(w=>`<div class="missed-item"><span>${esc(w.word)}</span><b>${esc(w.got)||'—'}</b></div>`).join('')
+    : `<div class="tiny">Every word spelled correctly. 🎉</div>`;
+  render(`
+    <h1>Test done!</h1>
+    <div class="card center">
+      <div class="word" style="font-size:38px">${session.correct} / ${total}</div>
+      <div class="tiny">Not a grade — just to see which patterns stuck.</div>
+    </div>
+    <div class="card">
+      <h2>Words to look at again</h2>
+      ${wrongList}
+      <div class="tiny" style="margin-top:8px">Left = correct spelling · Right = what was typed</div>
+    </div>
+    <button class="btn" onclick="homeScreen()">Done</button>
+  `);
+}
+
+/* ---------- generic practice-done ---------- */
+function doneScreen(name){
+  render(`
+    <div class="card center">
+      <div class="result ok">🎉 ${name} complete!</div>
+      <div class="row">
+        <button class="btn ghost small" onclick="homeScreen()">Home</button>
+        <button class="btn small" onclick="repeatSession('${name}')">Again</button>
+      </div>
+    </div>
+  `);
+}
+function repeatSession(name){
+  if(name==='Sound Boxes')startBoxes();
+  else if(name==='Word Dictation')startDictation();
+  else if(name==='Heart Words')startHeart();
+  else if(name==='Sentences')startSentence();
+  else homeScreen();
+}
+
+/* ---------- PARENT VIEW ---------- */
+function parentScreen(){
+  const m=loadMissed();
+  const entries=Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  const list=entries.length
+    ? entries.map(([w,c])=>`<div class="missed-item"><span>${esc(w)}</span><b>${c}×</b></div>`).join('')
+    : `<div class="tiny">Nothing missed yet — data appears as your child practises.</div>`;
+  render(`
+    <h1>Parent View</h1>
+    <div class="sub">Words that keep coming up wrong</div>
+    <div class="card">
+      <h2>Recurring misses</h2>
+      ${list}
+    </div>
+    ${entries.length?`<button class="btn bad small" onclick="clearMissed()">Clear this list</button>`:''}
+    <button class="backlink" onclick="homeScreen()">← Home</button>
+  `);
+}
+function clearMissed(){ if(confirm("Clear the missed-words list?")){saveMissed({});parentScreen();} }
+
+/* boot */
+homeScreen();
+</script>
+</body>
+</html>
