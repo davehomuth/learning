@@ -155,7 +155,7 @@ let cfg = loadCfg();   // {week, patterns:[keys], heart:[words]}
    Half the pattern words -> practice (seen this week).
    The other half -> reserve (only used in Friday test). */
 function buildPools(){
-  let practice=[], reserve=[];
+  let practice=[], reserve=[], review=[];
   cfg.patterns.forEach(k=>{
     const shuffled=shuffle(PATTERNS[k].words);
     const half=Math.ceil(shuffled.length/2);
@@ -164,7 +164,23 @@ function buildPools(){
       if(i<half) practice.push(entry); else reserve.push(entry);
     });
   });
-  return {practice, reserve};
+  // Carry-forward: words from patterns learned in earlier weeks, for mixed review.
+  const known=(cfg.carry && cfg.known)?cfg.known:[];
+  known.forEach(k=>{
+    if(!PATTERNS[k]) return;
+    PATTERNS[k].words.forEach(w=>{
+      review.push({dot:w, word:wordOf(w), pattern:k, hi:PATTERNS[k].label.split(' ')[0]});
+    });
+  });
+  return {practice, reserve, review};
+}
+/* Practice list for Mon–Thu modes: this week's words, plus a review sample
+   from earlier weeks when carry-forward is on. Friday test never uses review. */
+function practicePool(){
+  const {practice, review}=buildPools();
+  if(!cfg.carry || review.length===0) return practice;
+  const n=Math.max(4, Math.ceil(practice.length/2));
+  return shuffle(practice.concat(shuffle(review).slice(0,n)));
 }
 
 /* ================= SCREENS ================= */
@@ -182,6 +198,7 @@ function homeScreen(){
       <div class="day-badge">This week</div>
       <div class="word" style="font-size:34px;margin:14px 0 6px">${patLabels}</div>
       <div class="tiny">Heart words: ${hearts}</div>
+      ${(cfg.carry&&cfg.known&&cfg.known.length)?`<div class="tiny" style="margin-top:6px">🔁 Also reviewing: ${cfg.known.filter(k=>PATTERNS[k]).map(k=>PATTERNS[k].label.split(' ')[0]).join(', ')}</div>`:''}
     </div>
     <div class="card">
       <h2>Practise (Mon–Thu)</h2>
@@ -202,7 +219,7 @@ function homeScreen(){
       <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
     </div>
     <button class="backlink" onclick="chooseLevel()">↔ Switch (Grade 2 / Junior K)</button>
-    <div class="foot">UFLI Spelling · v1.1 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.2 · offline-ready</div>
   `);
 }
 
@@ -239,7 +256,7 @@ function jkHome(){
       <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
       <button class="btn ghost small" onclick="chooseLevel()">↔ Switch level</button>
     </div>
-    <div class="foot">UFLI Spelling · v1.1 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.2 · offline-ready</div>
   `);
 }
 function jkDone(name, again){
@@ -323,13 +340,16 @@ function firstPick(pick, ans){
 }
 function firstNext(){ session.i++; firstQuestion(); }
 
-let setupSel=[], setupHearts=[];
+let setupSel=[], setupHearts=[], setupCarry=true;
 function setupScreen(){
   setupSel = (cfg&&cfg.patterns)? cfg.patterns.slice():[];
   setupHearts = (cfg&&cfg.heart)? cfg.heart.slice():[];
+  setupCarry = (cfg&&cfg.carry!==undefined)? cfg.carry : true;
   const chips=Object.keys(PATTERNS).map(k=>
     `<button class="chip ${setupSel.includes(k)?'on':''}" onclick="toggleSetup('${k}')">${PATTERNS[k].label}</button>`
   ).join('');
+  const carried=[...new Set([...((cfg&&cfg.known)?cfg.known:[]),...((cfg&&cfg.patterns)?cfg.patterns:[])])].filter(k=>PATTERNS[k]&&!setupSel.includes(k));
+  const hasHistory=!!(cfg&&((cfg.known&&cfg.known.length)||(cfg.patterns&&cfg.patterns.length)));
   render(`
     <h1>Set up the week</h1>
     <div class="sub">Enter what the teacher sent home Monday</div>
@@ -347,9 +367,21 @@ function setupScreen(){
       </div>
       <div class="chips" id="heartChips">${renderHeartChips()}</div>
     </div>
+    ${hasHistory?`
+    <div class="card">
+      <h2>3 · Review earlier weeks</h2>
+      <div class="tiny" style="text-align:left;margin:0 0 8px">Mix words from patterns learned in past weeks into the Mon–Thu practice, so he keeps applying them. The Friday test still uses only this week's sounds.</div>
+      <button class="chip ${setupCarry?'on':''}" id="carryBtn" onclick="toggleCarry()">${setupCarry?'✓ Carry-forward ON':'Carry-forward OFF'}</button>
+      ${carried.length?`<div class="tiny" style="text-align:left;margin:10px 0 4px">Carrying forward:</div><div class="chips">${carried.map(k=>`<button class="chip pat">${PATTERNS[k].label}</button>`).join('')}</div>`:`<div class="tiny" style="text-align:left;margin-top:8px">No earlier patterns yet — this matters from week 2 onward.</div>`}
+    </div>`:''}
     <button class="btn big" onclick="finishSetup()">Start the week →</button>
     ${cfg?'<button class="backlink" onclick="homeScreen()">← Cancel</button>':''}
   `);
+}
+function toggleCarry(){
+  setupCarry=!setupCarry;
+  const b=$('carryBtn');
+  if(b){ b.className='chip '+(setupCarry?'on':''); b.textContent=setupCarry?'✓ Carry-forward ON':'Carry-forward OFF'; }
 }
 function toggleSetup(k){
   const i=setupSel.indexOf(k);
@@ -370,7 +402,10 @@ function addHeart(){
 function removeHeart(i){setupHearts.splice(i,1);$('heartChips').innerHTML=renderHeartChips();}
 function finishSetup(){
   if(setupSel.length===0){alert("Pick at least one pattern.");return;}
-  cfg={level:'g2', week:new Date().toISOString().slice(0,10), patterns:setupSel, heart:setupHearts};
+  const prevKnown=(cfg&&cfg.known)?cfg.known:[];
+  const prevPats=(cfg&&cfg.patterns)?cfg.patterns:[];
+  const known=[...new Set([...prevKnown,...prevPats])].filter(k=>!setupSel.includes(k)&&PATTERNS[k]);
+  cfg={level:'g2', week:new Date().toISOString().slice(0,10), patterns:setupSel, heart:setupHearts, carry:setupCarry, known};
   saveCfg(cfg);
   homeScreen();
 }
@@ -378,7 +413,7 @@ function finishSetup(){
 /* ---------- SOUND BOXES (Elkonin) ---------- */
 let session=null;
 function startBoxes(){
-  const {practice}=buildPools();
+  const practice=practicePool();
   session={mode:'boxes', list:shuffle(practice), i:0};
   boxesQuestion();
 }
@@ -425,7 +460,7 @@ function boxesNext(ok){
 
 /* ---------- WORD DICTATION ---------- */
 function startDictation(){
-  const {practice}=buildPools();
+  const practice=practicePool();
   session={mode:'dict', list:shuffle(practice), i:0};
   dictQuestion();
 }
@@ -515,7 +550,7 @@ function heartNext(){session.i++;heartQuestion();}
 
 /* ---------- SENTENCE DICTATION ---------- */
 function startSentence(){
-  const {practice}=buildPools();
+  const practice=practicePool();
   const chosen=shuffle(practice).slice(0,6);
   const frames=shuffle(SENT_FRAMES);
   session={mode:'sent', list:chosen.map((it,i)=>({
