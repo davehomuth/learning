@@ -208,6 +208,7 @@ function homeScreen(){
         <button class="btn warm" onclick="startHeart()">❤️ Heart Words</button>
         <button class="btn ghost" onclick="startSentence()">📝 Sentences</button>
       </div>
+      ${(cfg.carry&&cfg.knownHeart&&cfg.knownHeart.length)?`<button class="btn warm" style="margin-top:10px" onclick="startHeartReview()">🔁 Heart Review (${heartReviewPool().length} words)</button>`:''}
     </div>
     <div class="card">
       <h2>Friday</h2>
@@ -219,7 +220,7 @@ function homeScreen(){
       <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
     </div>
     <button class="backlink" onclick="chooseLevel()">↔ Switch (Grade 2 / Junior K)</button>
-    <div class="foot">UFLI Spelling · v1.2 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.3 · offline-ready</div>
   `);
 }
 
@@ -256,7 +257,7 @@ function jkHome(){
       <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
       <button class="btn ghost small" onclick="chooseLevel()">↔ Switch level</button>
     </div>
-    <div class="foot">UFLI Spelling · v1.2 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.3 · offline-ready</div>
   `);
 }
 function jkDone(name, again){
@@ -405,7 +406,11 @@ function finishSetup(){
   const prevKnown=(cfg&&cfg.known)?cfg.known:[];
   const prevPats=(cfg&&cfg.patterns)?cfg.patterns:[];
   const known=[...new Set([...prevKnown,...prevPats])].filter(k=>!setupSel.includes(k)&&PATTERNS[k]);
-  cfg={level:'g2', week:new Date().toISOString().slice(0,10), patterns:setupSel, heart:setupHearts, carry:setupCarry, known};
+  const prevKnownHeart=(cfg&&cfg.knownHeart)?cfg.knownHeart:[];
+  const prevHeart=(cfg&&cfg.heart)?cfg.heart:[];
+  const selLower=setupHearts.map(h=>h.toLowerCase());
+  const knownHeart=[...new Set([...prevKnownHeart,...prevHeart])].filter(h=>!selLower.includes(h.toLowerCase()));
+  cfg={level:'g2', week:new Date().toISOString().slice(0,10), patterns:setupSel, heart:setupHearts, carry:setupCarry, known, knownHeart};
   saveCfg(cfg);
   homeScreen();
 }
@@ -502,11 +507,22 @@ function dictNext(){session.i++;dictQuestion();}
 /* ---------- HEART WORDS ---------- */
 function startHeart(){
   if(cfg.heart.length===0){ alert("No heart words set for this week. Add them in ⚙️ New Week.");return; }
-  session={mode:'heart', list:shuffle(cfg.heart), i:0, phase:'flash'};
+  session={mode:'heart', list:shuffle(cfg.heart), i:0, phase:'flash', doneName:'Heart Words'};
+  heartQuestion();
+}
+/* Cumulative heart words: earlier weeks (when carry on) + this week. */
+function heartReviewPool(){
+  const carried=(cfg.carry && cfg.knownHeart)?cfg.knownHeart:[];
+  return [...new Set([...carried, ...cfg.heart])];
+}
+function startHeartReview(){
+  const list=heartReviewPool();
+  if(list.length===0){ alert("No earlier heart words to review yet."); return; }
+  session={mode:'heart', list:shuffle(list), i:0, phase:'flash', doneName:'Heart Review'};
   heartQuestion();
 }
 function heartQuestion(){
-  if(session.i>=session.list.length){ return doneScreen("Heart Words"); }
+  if(session.i>=session.list.length){ return doneScreen(session.doneName||"Heart Words"); }
   const w=session.list[session.i];
   render(`
     <button class="backlink" onclick="homeScreen()">← Home</button>
@@ -662,6 +678,7 @@ function repeatSession(name){
   if(name==='Sound Boxes')startBoxes();
   else if(name==='Word Dictation')startDictation();
   else if(name==='Heart Words')startHeart();
+  else if(name==='Heart Review')startHeartReview();
   else if(name==='Sentences')startSentence();
   else homeScreen();
 }
