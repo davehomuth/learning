@@ -2241,15 +2241,24 @@ function renderHome() {
     container.appendChild(mpCard);
   }
 
-  // UFLI Spelling card (family variant only) — opens the standalone Grade 2 UFLI app
+  // UFLI Spelling card (family variant only) — opens the standalone Grade 2 / JK UFLI app
   if (!IS_GENERIC) {
     const ufliCard = document.createElement('button');
     ufliCard.type = 'button';
     ufliCard.className = 'home-card';
     ufliCard.style.borderColor = 'var(--green)';
     ufliCard.addEventListener('click', () => { window.location.href = 'ufli.html'; });
-    ufliCard.innerHTML = '<div class="emoji">🔤</div><div class="name">UFLI Spelling</div><div class="info">Grade 2 spelling patterns</div>';
+    ufliCard.innerHTML = '<div class="emoji">🔤</div><div class="name">UFLI Spelling</div><div class="info">Grade 2 & Junior K phonics</div>';
     container.appendChild(ufliCard);
+
+    // Word Roots card — standalone Grade 4-5 roots/affixes app (Logan)
+    const rootsCard = document.createElement('button');
+    rootsCard.type = 'button';
+    rootsCard.className = 'home-card';
+    rootsCard.style.borderColor = 'var(--logan)';
+    rootsCard.addEventListener('click', () => { window.location.href = 'spelling5.html'; });
+    rootsCard.innerHTML = '<div class="emoji">🌱</div><div class="name">Word Roots</div><div class="info">Grade 4–5 roots & affixes</div>';
+    container.appendChild(rootsCard);
   }
 }
 

@@ -112,6 +112,20 @@ const SENT_FRAMES = [
   "We ran to the {W}."
 ];
 
+/* ================= JK / SK EARLY PHONICS ================= */
+const LETTERS=[
+ {l:'a',k:'apple'},{l:'b',k:'ball'},{l:'c',k:'cat'},{l:'d',k:'dog'},{l:'e',k:'egg'},
+ {l:'f',k:'fish'},{l:'g',k:'goat'},{l:'h',k:'hat'},{l:'i',k:'igloo'},{l:'j',k:'jam'},
+ {l:'k',k:'kite'},{l:'l',k:'leaf'},{l:'m',k:'moon'},{l:'n',k:'nest'},{l:'o',k:'octopus'},
+ {l:'p',k:'pig'},{l:'q',k:'queen'},{l:'r',k:'rain'},{l:'s',k:'sun'},{l:'t',k:'top'},
+ {l:'u',k:'umbrella'},{l:'v',k:'van'},{l:'w',k:'web'},{l:'x',k:'fox'},{l:'y',k:'yo-yo'},{l:'z',k:'zip'}
+];
+const CVC=["c.a.t","h.a.t","m.a.p","b.a.g","r.a.t","p.a.n","c.a.p","f.a.n","j.a.m","v.a.n",
+ "b.e.d","h.e.n","p.e.n","w.e.t","l.e.g","r.e.d","n.e.t","j.e.t",
+ "p.i.g","s.i.t","b.i.g","l.i.p","f.i.n","z.i.p","d.i.g","h.i.t","p.i.n",
+ "d.o.g","h.o.t","b.o.x","m.o.p","p.o.t","f.o.x","l.o.g","c.o.t",
+ "s.u.n","b.u.s","c.u.p","m.u.d","r.u.g","b.u.g","h.u.t","n.u.t","j.u.g","c.u.t"];
+
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
 const app = $('app');
@@ -146,7 +160,7 @@ function buildPools(){
     const shuffled=shuffle(PATTERNS[k].words);
     const half=Math.ceil(shuffled.length/2);
     shuffled.forEach((w,i)=>{
-      const entry={dot:w, word:wordOf(w), pattern:k};
+      const entry={dot:w, word:wordOf(w), pattern:k, hi:PATTERNS[k].label.split(' ')[0]};
       if(i<half) practice.push(entry); else reserve.push(entry);
     });
   });
@@ -157,7 +171,8 @@ function buildPools(){
 function render(html){app.innerHTML=html;window.scrollTo(0,0);}
 
 function homeScreen(){
-  if(!cfg){ return setupScreen(); }
+  if(!cfg){ return chooseLevel(); }
+  if(cfg.level==='jk'){ return jkHome(); }
   const patLabels=cfg.patterns.map(k=>PATTERNS[k].label).join(" &nbsp;·&nbsp; ");
   const hearts=cfg.heart.length?cfg.heart.map(esc).join(", "):"none";
   render(`
@@ -186,14 +201,132 @@ function homeScreen(){
       <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
       <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
     </div>
-    <div class="foot">UFLI Spelling · v1.0 · offline-ready</div>
+    <button class="backlink" onclick="chooseLevel()">↔ Switch (Grade 2 / Junior K)</button>
+    <div class="foot">UFLI Spelling · v1.1 · offline-ready</div>
   `);
 }
 
+/* ---------- LEVEL CHOOSER ---------- */
+function chooseLevel(){
+  render(`
+    <h1>UFLI Spelling</h1>
+    <div class="sub">Who is practising today?</div>
+    <div class="card">
+      <button class="btn big" onclick="pickLevel('g2')">📚 Grade 2 — spelling patterns</button>
+      <div class="tiny" style="margin:8px 0 0">Vowel teams, r-controlled, diphthongs. Weekly list + Friday test.</div>
+    </div>
+    <div class="card">
+      <button class="btn big warm" onclick="pickLevel('jk')">🌟 Junior K — letters &amp; sounds</button>
+      <div class="tiny" style="margin:8px 0 0">Letter sounds and blending simple words. Tap and listen — no typing.</div>
+    </div>
+    ${cfg?'<button class="backlink" onclick="homeScreen()">← Cancel</button>':''}
+  `);
+}
+function pickLevel(lvl){
+  if(lvl==='g2'){ setupScreen(); }
+  else { cfg={level:'jk'}; saveCfg(cfg); jkHome(); }
+}
+
+/* ---------- JK HOME ---------- */
+function jkHome(){
+  render(`
+    <h1>Letters &amp; Sounds</h1>
+    <div class="sub">Junior Kindergarten · tap and listen</div>
+    <div class="card"><button class="btn big" onclick="startLetters()">🔤 Letter Sounds</button></div>
+    <div class="card"><button class="btn big good" onclick="startCVC()">🧱 Build a Word</button></div>
+    <div class="card"><button class="btn big warm" onclick="startFirst()">👂 First Sound</button></div>
+    <div class="row" style="margin-top:4px">
+      <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
+      <button class="btn ghost small" onclick="chooseLevel()">↔ Switch level</button>
+    </div>
+    <div class="foot">UFLI Spelling · v1.1 · offline-ready</div>
+  `);
+}
+function jkDone(name, again){
+  render(`
+    <div class="card center">
+      <div class="result ok">🎉 ${name} done!</div>
+      <div class="row">
+        <button class="btn ghost small" onclick="jkHome()">Home</button>
+        <button class="btn small" id="againBtn">Again</button>
+      </div>
+    </div>
+  `);
+  $('againBtn').onclick=again;
+}
+
+/* ---------- JK: LETTER SOUNDS ---------- */
+function startLetters(){ session={mode:'letters', list:shuffle(LETTERS.slice()), i:0}; letterCard(); }
+function letterCard(){
+  if(session.i>=session.list.length){ return jkDone('Letter Sounds', startLetters); }
+  const it=session.list[session.i];
+  render(`
+    <button class="backlink" onclick="jkHome()">← Back</button>
+    <div class="card center">
+      <div class="prompt">What sound does this letter make?</div>
+      <div style="font-size:120px;font-weight:800;color:var(--brand);margin:6px 0;line-height:1">${it.l}</div>
+      <button class="btn speak-btn big" style="width:auto;padding:16px 30px;margin:6px auto" onclick="sayLetter()">🔊 Hear the sound</button>
+      <div class="tiny" id="letterKey" style="visibility:hidden;font-size:18px">${it.l} — ${it.k}</div>
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+    <div class="row">
+      <button class="btn ghost small" onclick="letterPrev()">← Back</button>
+      <button class="btn small" onclick="letterNext()">Next →</button>
+    </div>
+  `);
+  setTimeout(sayLetter,300);
+}
+function sayLetter(){ const it=session.list[session.i]; $('letterKey').style.visibility='visible'; speak(it.l+'. '+it.l+' is for '+it.k+'.'); }
+function letterNext(){ session.i++; letterCard(); }
+function letterPrev(){ if(session.i>0)session.i--; letterCard(); }
+
+/* ---------- JK: BUILD A WORD (CVC sound boxes) ---------- */
+function startCVC(){
+  const list=shuffle(CVC.map(d=>{const gs=d.split('.');return {dot:d, word:gs.join(''), hi:gs[1]};}));
+  session={mode:'boxes', list, i:0, done:()=>jkDone('Build a Word', startCVC)};
+  boxesQuestion();
+}
+
+/* ---------- JK: FIRST SOUND ---------- */
+function startFirst(){ session={mode:'first', list:shuffle(CVC.slice()), i:0}; firstQuestion(); }
+function firstQuestion(){
+  if(session.i>=session.list.length){ return jkDone('First Sound', startFirst); }
+  const gs=session.list[session.i].split('.'); const word=gs.join(''); const ans=gs[0];
+  const pool='bcdfghjklmnprstvwz'.split('').filter(c=>c!==ans);
+  const opts=shuffle([ans, ...shuffle(pool).slice(0,2)]);
+  render(`
+    <button class="backlink" onclick="jkHome()">← Back</button>
+    <div class="card center">
+      <div class="prompt">Which sound does the word start with?</div>
+      <button class="btn speak-btn big" style="width:auto;padding:16px 34px;margin:8px auto" onclick="speak('${word}')">🔊 ${word}</button>
+      <div class="row" style="margin-top:18px">
+        ${opts.map(o=>`<button class="btn" style="font-size:34px;padding:22px" onclick="firstPick('${o}','${ans}')">${o}</button>`).join('')}
+      </div>
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+  `);
+  setTimeout(()=>speak(word),300);
+}
+function firstPick(pick, ans){
+  const word=session.list[session.i].split('.').join('');
+  const ok=pick===ans;
+  if(!ok) markMissed(word);
+  render(`
+    <div class="card center">
+      <div class="result ${ok?'ok':'no'}">${ok?'✅ Yes!':'❌ Not quite'}</div>
+      <div class="word">${word}</div>
+      <div class="tiny">starts with <b>${ans}</b></div>
+      <button class="btn" style="margin-top:12px" onclick="firstNext()">Next →</button>
+    </div>
+  `);
+  speak(ans);
+}
+function firstNext(){ session.i++; firstQuestion(); }
+
 let setupSel=[], setupHearts=[];
 function setupScreen(){
-  setupSel = cfg? cfg.patterns.slice():[];
-  setupHearts = cfg? cfg.heart.slice():[];
+  setupSel = (cfg&&cfg.patterns)? cfg.patterns.slice():[];
+  setupHearts = (cfg&&cfg.heart)? cfg.heart.slice():[];
   const chips=Object.keys(PATTERNS).map(k=>
     `<button class="chip ${setupSel.includes(k)?'on':''}" onclick="toggleSetup('${k}')">${PATTERNS[k].label}</button>`
   ).join('');
@@ -237,7 +370,7 @@ function addHeart(){
 function removeHeart(i){setupHearts.splice(i,1);$('heartChips').innerHTML=renderHeartChips();}
 function finishSetup(){
   if(setupSel.length===0){alert("Pick at least one pattern.");return;}
-  cfg={week:new Date().toISOString().slice(0,10), patterns:setupSel, heart:setupHearts};
+  cfg={level:'g2', week:new Date().toISOString().slice(0,10), patterns:setupSel, heart:setupHearts};
   saveCfg(cfg);
   homeScreen();
 }
@@ -250,7 +383,7 @@ function startBoxes(){
   boxesQuestion();
 }
 function boxesQuestion(){
-  if(session.i>=session.list.length){ return doneScreen("Sound Boxes"); }
+  if(session.i>=session.list.length){ return session.done?session.done():doneScreen("Sound Boxes"); }
   const it=session.list[session.i];
   const gs=graphemesOf(it.dot);
   const boxes=gs.map(()=>`<div class="box"></div>`).join('');
@@ -277,7 +410,7 @@ function revealBox(){
   if(session.revealed>=gs.length) return;
   const row=$('boxRow').children;
   const idx=session.revealed;
-  const isPat = gs[idx]===PATTERNS[it.pattern].label.split(' ')[0] || gs[idx]===it.pattern.split('_')[0];
+  const isPat = it.hi && gs[idx]===it.hi;
   row[idx].textContent=gs[idx];
   row[idx].classList.add(isPat?'pat':'fill');
   session.revealed++;
@@ -318,8 +451,7 @@ function checkDict(){
   const ok=val===it.word;
   if(!ok) markMissed(it.word);
   const gs=graphemesOf(it.dot);
-  const patLbl=PATTERNS[it.pattern].label.split(' ')[0];
-  const shown=gs.map(g=> (g===patLbl||g===it.pattern.split('_')[0])?`<span class="pattern-hl">${g}</span>`:g).join('');
+  const shown=gs.map(g=> (it.hi&&g===it.hi)?`<span class="pattern-hl">${g}</span>`:g).join('');
   render(`
     <div class="card center">
       <div class="result ${ok?'ok':'no'}">${ok?'✅ Correct!':'❌ Not quite'}</div>

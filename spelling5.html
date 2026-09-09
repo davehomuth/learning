@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Word Roots — Grade 4/5</title>
+<style>
+  :root{
+    --bg:#0f1b2d; --card:#17263d; --ink:#eef2f8; --muted:#9fb0c4;
+    --brand:#4f9bff; --brand2:#2f7ae0; --good:#3ecf8e; --bad:#ff6b57;
+    --warm:#f6b73c; --line:#26374f; --hl:#ffd166;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:600px;margin:0 auto;padding:16px 16px 60px;}
+  h1{font-size:22px;margin:6px 0 2px;text-align:center;}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-bottom:14px;}
+  .card h2{margin:0 0 10px;font-size:17px;}
+  button{font-family:inherit;font-size:17px;border:none;border-radius:14px;
+    padding:15px 18px;cursor:pointer;width:100%;font-weight:600;color:#fff;}
+  .btn{background:var(--brand);}
+  .btn:active{background:var(--brand2);}
+  .btn.big{font-size:19px;padding:20px;}
+  .btn.ghost{background:#22344e;color:var(--brand);}
+  .btn.warm{background:var(--warm);color:#4a3000;}
+  .btn.good{background:var(--good);color:#04371f;}
+  .btn.bad{background:var(--bad);}
+  .btn.small{padding:11px 12px;font-size:15px;}
+  .row{display:flex;gap:10px;} .row>*{flex:1;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  input[type=text]{width:100%;font-size:20px;padding:14px;border:2px solid var(--line);
+    border-radius:12px;font-family:inherit;text-align:center;background:#0c1626;color:var(--ink);}
+  input[type=text]:focus{outline:none;border-color:var(--brand);}
+  .word{font-size:40px;font-weight:800;text-align:center;letter-spacing:1px;margin:16px 0;}
+  .morph{color:var(--hl);}
+  .prompt{text-align:center;color:var(--muted);font-size:15px;margin-bottom:6px;}
+  .progress{text-align:center;color:var(--muted);font-size:13px;margin-top:8px;}
+  .result{text-align:center;font-size:20px;font-weight:700;margin:14px 0;}
+  .result.ok{color:var(--good);} .result.no{color:var(--bad);}
+  .backlink{background:none;color:var(--muted);font-size:14px;padding:8px;width:auto;font-weight:600;}
+  .tiny{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
+  .center{text-align:center;}
+  .big-morph{font-size:46px;font-weight:800;text-align:center;color:var(--hl);margin:10px 0;}
+  .mean{font-size:22px;font-weight:700;text-align:center;margin:6px 0;}
+  .examples{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;}
+  .ex-chip{background:#22344e;border-radius:999px;padding:7px 13px;font-size:15px;}
+  .opt{background:#22344e;color:var(--ink);text-align:left;margin-bottom:10px;}
+  .opt:active{background:#2c4460;}
+  .missed-item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:16px;}
+  .missed-item b{color:var(--bad);}
+  .badge{display:inline-block;background:#22344e;color:var(--brand);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;}
+  .foot{text-align:center;color:#5b6b82;font-size:11px;margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+/* ============ MORPHEME DATA (Grade 4-5) ============ */
+const ROOTS=[
+  {m:"port",  mean:"to carry",       ex:["import","export","transport","portable"]},
+  {m:"struct",mean:"to build",       ex:["construct","structure","instruct","destruction"]},
+  {m:"spect", mean:"to look",        ex:["inspect","respect","spectator","inspector"]},
+  {m:"dict",  mean:"to say or tell", ex:["predict","dictate","contradict","dictionary"]},
+  {m:"rupt",  mean:"to break",       ex:["erupt","interrupt","rupture","disrupt"]},
+  {m:"scrib", mean:"to write",       ex:["describe","scribble","prescribe","inscribe"]},
+  {m:"tract", mean:"to pull or drag",ex:["attract","subtract","tractor","extract"]},
+  {m:"form",  mean:"shape",          ex:["transform","reform","uniform","formation"]},
+  {m:"ject",  mean:"to throw",       ex:["reject","inject","eject","project"]},
+  {m:"vis",   mean:"to see",         ex:["visible","vision","visitor","supervise"]},
+  {m:"aud",   mean:"to hear",        ex:["audible","audience","audio","auditorium"]},
+  {m:"graph", mean:"to write or draw",ex:["autograph","paragraph","photograph","graphic"]},
+  {m:"meter", mean:"to measure",     ex:["thermometer","diameter","perimeter","speedometer"]},
+  {m:"phon",  mean:"sound",          ex:["telephone","phonics","symphony","microphone"]},
+  {m:"bio",   mean:"life",           ex:["biology","biography","antibiotic","biosphere"]},
+  {m:"tele",  mean:"far off",        ex:["telephone","television","telescope","teleport"]}
+];
+const PREFIXES=[
+  {m:"un-",   mean:"not",             ex:["unhappy","unfair","unlock","unusual"]},
+  {m:"re-",   mean:"again",           ex:["rewrite","return","replay","rebuild"]},
+  {m:"pre-",  mean:"before",          ex:["preview","prepay","preheat","predict"]},
+  {m:"dis-",  mean:"not / opposite",  ex:["disagree","dislike","disappear","disconnect"]},
+  {m:"mis-",  mean:"wrongly",         ex:["mistake","misspell","misplace","misunderstand"]},
+  {m:"sub-",  mean:"under",           ex:["submarine","subway","subtract","submerge"]},
+  {m:"inter-",mean:"between",         ex:["interact","internet","interview","international"]},
+  {m:"trans-",mean:"across",          ex:["transport","translate","transfer","transform"]},
+  {m:"non-",  mean:"not",             ex:["nonsense","nonstop","nonfiction","nonliving"]},
+  {m:"im-",   mean:"not",             ex:["impossible","impatient","imperfect","immature"]}
+];
+const SUFFIXES=[
+  {m:"-ful",  mean:"full of",         ex:["helpful","careful","joyful","powerful"]},
+  {m:"-less", mean:"without",         ex:["careless","hopeless","fearless","harmless"]},
+  {m:"-ment", mean:"state or act of", ex:["movement","payment","enjoyment","agreement"]},
+  {m:"-tion", mean:"act or state of", ex:["action","education","celebration","invention"]},
+  {m:"-able", mean:"able to be",      ex:["comfortable","enjoyable","washable","reliable"]},
+  {m:"-ly",   mean:"in a way",        ex:["quickly","slowly","happily","carefully"]},
+  {m:"-ness", mean:"state of being",  ex:["kindness","darkness","happiness","sadness"]},
+  {m:"-er",   mean:"one who",         ex:["teacher","painter","worker","builder"]}
+];
+
+/* Spelling words for dictation: word + the morpheme substring to highlight */
+const WORDS=[
+  ["transport","trans"],["import","port"],["portable","port"],["construct","struct"],
+  ["structure","struct"],["instruct","struct"],["inspect","spect"],["spectator","spect"],
+  ["predict","dict"],["contradict","dict"],["dictionary","dict"],["interrupt","rupt"],
+  ["disrupt","rupt"],["describe","scrib"],["prescribe","scrib"],["subtract","tract"],
+  ["attract","tract"],["extract","tract"],["transform","form"],["uniform","form"],
+  ["project","ject"],["reject","ject"],["visible","vis"],["supervise","vis"],
+  ["audience","aud"],["auditorium","aud"],["paragraph","graph"],["autograph","graph"],
+  ["photograph","graph"],["thermometer","meter"],["perimeter","meter"],["telephone","phon"],
+  ["microphone","phon"],["biography","bio"],["telescope","tele"],["television","tele"],
+  ["unusual","un"],["rebuild","re"],["preview","pre"],["disappear","dis"],
+  ["misspell","mis"],["submarine","sub"],["interview","inter"],["international","inter"],
+  ["translate","trans"],["nonfiction","non"],["impossible","im"],["powerful","ful"],
+  ["fearless","less"],["agreement","ment"],["celebration","tion"],["invention","tion"],
+  ["comfortable","able"],["reliable","able"],["carefully","ly"],["happiness","ness"],
+  ["builder","er"]
+];
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const app=$('app');
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=0.85;speechSynthesis.speak(u);}catch(e){}}
+function highlight(word,hi){
+  const i=word.toLowerCase().indexOf(hi.toLowerCase());
+  if(i<0) return esc(word);
+  return esc(word.slice(0,i))+'<span class="morph">'+esc(word.slice(i,i+hi.length))+'</span>'+esc(word.slice(i+hi.length));
+}
+const MISS_KEY='roots_missed';
+function loadMissed(){try{return JSON.parse(localStorage.getItem(MISS_KEY))||{};}catch(e){return {};}}
+function saveMissed(m){localStorage.setItem(MISS_KEY,JSON.stringify(m));}
+function markMissed(w){const m=loadMissed();m[w]=(m[w]||0)+1;saveMissed(m);}
+
+function render(html){app.innerHTML=html;window.scrollTo(0,0);}
+let session=null;
+
+/* ---------- HOME ---------- */
+function home(){
+  render(`
+    <h1>Word Roots</h1>
+    <div class="sub">Grade 4–5 · roots, prefixes &amp; suffixes</div>
+    <div class="card">
+      <h2>Practise</h2>
+      <div class="grid2">
+        <button class="btn" onclick="startDict()">🎧 Word Dictation</button>
+        <button class="btn good" onclick="startExplore()">🔍 Roots Explorer</button>
+        <button class="btn warm" onclick="startQuiz()">🧠 Meaning Quiz</button>
+        <button class="btn ghost" onclick="parentScreen()">👀 Progress</button>
+      </div>
+    </div>
+    <div class="tiny">Every word shows the root or affix that builds its meaning.</div>
+    <div class="foot">Word Roots · v1.0 · offline-ready</div>
+  `);
+}
+
+/* ---------- WORD DICTATION ---------- */
+function startDict(){ session={list:shuffle(WORDS.slice()), i:0}; dictQ(); }
+function dictQ(){
+  if(session.i>=session.list.length){ return doneScreen('Word Dictation', startDict); }
+  const [word]=session.list[session.i];
+  render(`
+    <button class="backlink" onclick="home()">← Home</button>
+    <div class="card center">
+      <div class="prompt">Listen and spell the word</div>
+      <button class="btn warm" style="width:auto;padding:16px 30px;margin:10px auto" onclick="speak('${word}')">🔊 Say the word</button>
+      <input type="text" id="dIn" autocapitalize="none" autocomplete="off" placeholder="spell it"
+        onkeydown="if(event.key==='Enter')checkDict()">
+      <button class="btn" style="margin-top:12px" onclick="checkDict()">Check</button>
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+  `);
+  setTimeout(()=>{speak(word);$('dIn').focus();},250);
+}
+function checkDict(){
+  const [word,hi]=session.list[session.i];
+  const val=$('dIn').value.trim().toLowerCase();
+  const ok=val===word.toLowerCase();
+  if(!ok) markMissed(word);
+  const info=[...ROOTS,...PREFIXES,...SUFFIXES].find(x=>x.m.replace(/-/g,'')===hi);
+  render(`
+    <div class="card center">
+      <div class="result ${ok?'ok':'no'}">${ok?'✅ Correct!':'❌ Not quite'}</div>
+      ${ok?'':`<div class="tiny">You wrote: ${esc(val)||'(nothing)'}</div>`}
+      <div class="word">${highlight(word,hi)}</div>
+      <div class="tiny">${info?('<b>'+esc(info.m)+'</b> means "'+esc(info.mean)+'"'):''}</div>
+      <button class="btn" style="margin-top:12px" onclick="dictNext()">Next word →</button>
+    </div>
+  `);
+}
+function dictNext(){ session.i++; dictQ(); }
+
+/* ---------- ROOTS EXPLORER ---------- */
+function startExplore(){
+  render(`
+    <button class="backlink" onclick="home()">← Home</button>
+    <div class="card center">
+      <div class="prompt">Choose a set to explore</div>
+      <button class="btn big" style="margin:8px 0" onclick="exploreSet('roots')">🌱 Roots</button>
+      <button class="btn big good" style="margin:8px 0" onclick="exploreSet('prefixes')">⬅️ Prefixes</button>
+      <button class="btn big warm" style="margin:8px 0" onclick="exploreSet('suffixes')">➡️ Suffixes</button>
+    </div>
+  `);
+}
+function exploreSet(which){
+  const data = which==='roots'?ROOTS : which==='prefixes'?PREFIXES : SUFFIXES;
+  session={list:shuffle(data.slice()), i:0, which}; exploreCard(false);
+}
+function exploreCard(reveal){
+  if(session.i>=session.list.length){ return doneScreen('Explorer', ()=>exploreSet(session.which)); }
+  const it=session.list[session.i];
+  render(`
+    <button class="backlink" onclick="startExplore()">← Sets</button>
+    <div class="card center">
+      <div class="big-morph">${esc(it.m)}</div>
+      ${reveal?`
+        <div class="mean">${esc(it.mean)}</div>
+        <div class="examples">${it.ex.map(e=>`<span class="ex-chip">${highlight(e,it.m.replace(/-/g,''))}</span>`).join('')}</div>
+        <button class="btn" style="margin-top:16px" onclick="exploreNext()">Next →</button>
+      `:`
+        <div class="prompt" style="margin-top:10px">What does it mean?</div>
+        <button class="btn good" style="margin-top:12px" onclick="exploreCard(true)">Show meaning</button>
+      `}
+      <div class="progress">${session.i+1} of ${session.list.length}</div>
+    </div>
+  `);
+}
+function exploreNext(){ session.i++; exploreCard(false); }
+
+/* ---------- MEANING QUIZ ---------- */
+function startQuiz(){
+  const all=[...ROOTS,...PREFIXES,...SUFFIXES];
+  session={list:shuffle(all.slice()), i:0, pool:all, correct:0}; quizQ();
+}
+function quizQ(){
+  if(session.i>=session.list.length){ return quizDone(); }
+  const it=session.list[session.i];
+  const others=shuffle(session.pool.filter(x=>x.mean!==it.mean)).slice(0,3).map(x=>x.mean);
+  const opts=shuffle([it.mean,...others]);
+  render(`
+    <button class="backlink" onclick="home()">← Home</button>
+    <div class="card center">
+      <div class="prompt">What does this mean?</div>
+      <div class="big-morph">${esc(it.m)}</div>
+    </div>
+    <div class="card">
+      ${opts.map(o=>`<button class="btn opt" onclick="quizPick(this,'${esc(o).replace(/'/g,"\\'")}','${esc(it.mean).replace(/'/g,"\\'")}')">${esc(o)}</button>`).join('')}
+    </div>
+    <div class="progress">${session.i+1} of ${session.list.length}</div>
+  `);
+}
+function quizPick(btn, pick, ans){
+  const ok=pick===ans;
+  if(ok) session.correct++; else markMissed(session.list[session.i].m);
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===ans) b.style.background='var(--good)', b.style.color='#04371f';
+    else if(b===btn) b.style.background='var(--bad)';
+  });
+  const nb=document.createElement('button');
+  nb.className='btn'; nb.textContent='Next →'; nb.style.marginTop='12px';
+  nb.onclick=()=>{ session.i++; quizQ(); };
+  app.appendChild(nb);
+}
+function quizDone(){
+  render(`
+    <h1>Quiz done!</h1>
+    <div class="card center">
+      <div class="word">${session.correct} / ${session.list.length}</div>
+      <button class="btn" onclick="home()">Home</button>
+    </div>
+  `);
+}
+
+/* ---------- shared done ---------- */
+function doneScreen(name, again){
+  render(`
+    <div class="card center">
+      <div class="result ok">🎉 ${name} complete!</div>
+      <div class="row">
+        <button class="btn ghost small" onclick="home()">Home</button>
+        <button class="btn small" id="againBtn">Again</button>
+      </div>
+    </div>
+  `);
+  $('againBtn').onclick=again;
+}
+
+/* ---------- PROGRESS ---------- */
+function parentScreen(){
+  const m=loadMissed();
+  const entries=Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  const list=entries.length
+    ? entries.map(([w,c])=>`<div class="missed-item"><span>${esc(w)}</span><b>${c}×</b></div>`).join('')
+    : `<div class="tiny">Nothing missed yet.</div>`;
+  render(`
+    <h1>Progress</h1>
+    <div class="sub">Words &amp; roots that keep coming up wrong</div>
+    <div class="card"><h2>Recurring misses</h2>${list}</div>
+    ${entries.length?`<button class="btn bad small" onclick="clearMissed()">Clear list</button>`:''}
+    <button class="backlink" onclick="home()">← Home</button>
+  `);
+}
+function clearMissed(){ if(confirm('Clear the missed list?')){saveMissed({});parentScreen();} }
+
+home();
+</script>
+</body>
+</html>
