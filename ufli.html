@@ -148,6 +148,23 @@ function loadMissed(){try{return JSON.parse(localStorage.getItem(MISS_KEY))||{};
 function saveMissed(m){localStorage.setItem(MISS_KEY,JSON.stringify(m));}
 function markMissed(word){const m=loadMissed();m[word]=(m[word]||0)+1;saveMissed(m);}
 
+/* Spaced repetition (Leitner) for heart-word review.
+   State per word: {box, due(ms), seen}. Correct promotes a box (longer wait),
+   a miss drops to box 0 (due again the same day). New words are due immediately. */
+const SR_KEY='ufli_heart_sr';
+const SR_DAYS=[0,1,2,4,7,14,30];      // interval in days by box
+const DAY_MS=24*60*60*1000;
+function loadSR(){try{return JSON.parse(localStorage.getItem(SR_KEY))||{};}catch(e){return {};}}
+function saveSR(s){localStorage.setItem(SR_KEY,JSON.stringify(s));}
+function srUpdate(word, ok){
+  const s=loadSR(), k=word.toLowerCase();
+  const cur=s[k]||{box:0,due:0,seen:0};
+  const box=ok?Math.min(cur.box+1, SR_DAYS.length-1):0;
+  s[k]={box, due:Date.now()+SR_DAYS[box]*DAY_MS, seen:(cur.seen||0)+1};
+  saveSR(s);
+}
+function srIsDue(word, sr, now){const s=sr[word.toLowerCase()]; return !s || (s.due||0)<=now;}
+
 /* ================= APP STATE ================= */
 let cfg = loadCfg();   // {week, patterns:[keys], heart:[words]}
 
@@ -208,7 +225,7 @@ function homeScreen(){
         <button class="btn warm" onclick="startHeart()">❤️ Heart Words</button>
         <button class="btn ghost" onclick="startSentence()">📝 Sentences</button>
       </div>
-      ${(cfg.carry&&cfg.knownHeart&&cfg.knownHeart.length)?`<button class="btn warm" style="margin-top:10px" onclick="startHeartReview()">🔁 Heart Review (${heartReviewPool().length} words)</button>`:''}
+      ${(cfg.carry&&cfg.knownHeart&&cfg.knownHeart.length)?`<button class="btn warm" style="margin-top:10px" onclick="startHeartReview()">🔁 Heart Review (${heartDueCount()} due today)</button>`:''}
     </div>
     <div class="card">
       <h2>Friday</h2>
@@ -220,7 +237,7 @@ function homeScreen(){
       <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
     </div>
     <button class="backlink" onclick="chooseLevel()">↔ Switch (Grade 2 / Junior K)</button>
-    <div class="foot">UFLI Spelling · v1.3 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.4 · offline-ready</div>
   `);
 }
 
@@ -257,7 +274,7 @@ function jkHome(){
       <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
       <button class="btn ghost small" onclick="chooseLevel()">↔ Switch level</button>
     </div>
-    <div class="foot">UFLI Spelling · v1.3 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.4 · offline-ready</div>
   `);
 }
 function jkDone(name, again){
@@ -515,11 +532,36 @@ function heartReviewPool(){
   const carried=(cfg.carry && cfg.knownHeart)?cfg.knownHeart:[];
   return [...new Set([...carried, ...cfg.heart])];
 }
+function heartDueCount(){
+  const pool=heartReviewPool(), now=Date.now(), sr=loadSR();
+  return pool.filter(w=>srIsDue(w,sr,now)).length;
+}
 function startHeartReview(){
-  const list=heartReviewPool();
-  if(list.length===0){ alert("No earlier heart words to review yet."); return; }
-  session={mode:'heart', list:shuffle(list), i:0, phase:'flash', doneName:'Heart Review'};
+  const pool=heartReviewPool();
+  if(pool.length===0){ alert("No earlier heart words to review yet."); return; }
+  const now=Date.now(), sr=loadSR();
+  const due=pool.filter(w=>srIsDue(w,sr,now))
+    .sort((a,b)=>((sr[a.toLowerCase()]||{}).due||0)-((sr[b.toLowerCase()]||{}).due||0));
+  if(due.length===0){ return heartCaughtUp(pool, sr); }
+  session={mode:'heart', list:due, i:0, phase:'flash', sr:true, doneName:'Heart Review'};
   heartQuestion();
+}
+function startHeartReviewAll(){
+  const pool=heartReviewPool();
+  session={mode:'heart', list:shuffle(pool), i:0, phase:'flash', sr:true, doneName:'Heart Review'};
+  heartQuestion();
+}
+function heartCaughtUp(pool, sr){
+  const upcoming=pool.map(w=>(sr[w.toLowerCase()]||{}).due||0).filter(d=>d>Date.now()).sort((a,b)=>a-b)[0];
+  const when=upcoming?new Date(upcoming).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'}):'later';
+  render(`
+    <button class="backlink" onclick="homeScreen()">← Home</button>
+    <div class="card center">
+      <div class="result ok">🎉 All caught up!</div>
+      <div class="tiny">No heart words are due right now.<br>Next review: <b>${when}</b>.</div>
+      <button class="btn warm" style="margin-top:14px" onclick="startHeartReviewAll()">Practise them all anyway</button>
+    </div>
+  `);
 }
 function heartQuestion(){
   if(session.i>=session.list.length){ return doneScreen(session.doneName||"Heart Words"); }
@@ -554,10 +596,13 @@ function checkHeart(){
   const val=$('heartIn').value.trim().toLowerCase();
   const ok=val===w.toLowerCase();
   if(!ok) markMissed(w);
+  let requeued=false;
+  if(session.sr){ srUpdate(w, ok); if(!ok){ session.list.push(w); requeued=true; } }
   render(`
     <div class="card center">
       <div class="result ${ok?'ok':'no'}">${ok?'✅ Yes!':'❌ Look again'}</div>
       <div class="heart-word">${esc(w)}</div>
+      ${requeued?`<div class="tiny">We'll try this one again in a moment.</div>`:''}
       <button class="btn" onclick="heartNext()">Next →</button>
     </div>
   `);
@@ -698,8 +743,29 @@ function parentScreen(){
       ${list}
     </div>
     ${entries.length?`<button class="btn bad small" onclick="clearMissed()">Clear this list</button>`:''}
+    ${heartScheduleCard()}
     <button class="backlink" onclick="homeScreen()">← Home</button>
   `);
+}
+function heartScheduleCard(){
+  const sr=loadSR();
+  const words=Object.keys(sr);
+  if(words.length===0) return '';
+  const now=Date.now();
+  const rows=words
+    .sort((a,b)=>(sr[a].due||0)-(sr[b].due||0))
+    .map(w=>{
+      const s=sr[w];
+      const due=(s.due||0)<=now ? '<b>due now</b>'
+        : new Date(s.due).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      const dots='●'.repeat(s.box)+'○'.repeat(SR_DAYS.length-1-s.box);
+      return `<div class="missed-item"><span>${esc(w)} <span class="tiny" style="letter-spacing:1px">${dots}</span></span><span>${due}</span></div>`;
+    }).join('');
+  return `<div class="card">
+      <h2>Heart word schedule</h2>
+      <div class="tiny" style="text-align:left;margin:0 0 8px">Spaced repetition — dots show how well learned; date is the next review.</div>
+      ${rows}
+    </div>`;
 }
 function clearMissed(){ if(confirm("Clear the missed-words list?")){saveMissed({});parentScreen();} }
 
