@@ -146,6 +146,8 @@ const SUBJECTS = [
   { id: 'makeTen', name: 'Add/Subtract Helper', icon: '➕' },
   { id: 'english', name: 'English', icon: '📖' },
   { id: 'science', name: 'Science', icon: '🔬' },
+  { id: 'gradeWords', name: 'Grade Words', icon: '🎓' },
+  { id: 'writing',   name: 'Writing',    icon: '✍️' },
   { id: 'wordStudy', name: 'Word Study', icon: '✏️' },
   { id: 'spelling',  name: 'Spelling',   icon: '🔤' },
   { id: 'newWords',  name: 'New Words',  icon: '📚' },
@@ -243,6 +245,219 @@ function masterWordFlashcard(word) {
     return;
   }
   nextQuestion();
+}
+
+// ═══════════════════════════════════════════
+//  GRADE WORDS — leveled per-child word banks with mastery + spaced re-check
+//  Mackenzie (JK) & Cole (Grade 2): read the word aloud.
+//  Logan (Grade 5): give the meaning (uses the AI/dictionary definitions).
+//  10 levels each. Mastered words are re-tested after 3 sessions to confirm.
+// ═══════════════════════════════════════════
+
+const GRADE_WORD_BANKS = {
+  jk: [
+    ['a','b','c','d','e','f','g'],
+    ['h','i','j','k','l','m','n'],
+    ['o','p','q','r','s','t','u'],
+    ['v','w','x','y','z'],
+    ['I','a','is','it','the','to'],
+    ['and','my','me','we','see','go'],
+    ['no','up','at','in','on','can'],
+    ['cat','dog','sun','hat','bed','pig'],
+    ['cup','red','big','run','top','mom'],
+    ['dad','bus','map','net','jam','win']
+  ],
+  grade2: [
+    ['cat','map','sad','fan','pin','big','sit','him','lip','tan','bat','dig'],
+    ['bed','pen','red','hot','dog','box','mud','cup','run','sun','jet','log'],
+    ['stop','frog','clap','spin','glad','trip','plum','skip','drum','flag','grin','swim'],
+    ['ship','chin','that','when','fish','chip','bath','whip','shop','much','then','wish'],
+    ['cake','bike','home','cute','name','ride','note','tube','gate','time','rope','mule'],
+    ['rain','feet','boat','read','tail','seed','road','leaf','wait','tree','soap','meat'],
+    ['star','corn','bird','turn','farm','fork','girl','hurt','hard','born','dirt','curl'],
+    ['because','friend','people','could','would','school','said','does','been','again','every','other'],
+    ['rabbit','basket','sunset','magnet','picnic','kitten','muffin','napkin','ribbon','button','happen','tennis'],
+    ['enough','thought','laugh','through','favorite','beautiful','different','together','important','remember','question','surprise']
+  ],
+  grade5: [
+    ['abundant','brisk','cautious','dwell','feeble','humble','idle','keen'],
+    ['jagged','luminous','meager','nimble','obscure','placid','quaint','rugged'],
+    ['sturdy','timid','uneasy','vivid','weary','zealous','anguish','bewilder'],
+    ['cascade','dedicate','elaborate','feasible','gigantic','hearty','immense','jubilant'],
+    ['kindle','linger','mimic','notorious','oblige','ponder','quiver','relentless'],
+    ['scarce','tedious','unravel','versatile','wary','yield','adhere','benevolent'],
+    ['coincide','diminish','eloquent','fluctuate','gregarious','hinder','illuminate','intricate'],
+    ['jeopardize','lavish','meticulous','novice','obsolete','plausible','quench','reluctant'],
+    ['scrupulous','tangible','unanimous','vindicate','whimsical','arduous','brevity','candid'],
+    ['deft','formidable','haphazard','impeccable','laconic','magnanimous','prudent','tenacious']
+  ]
+};
+
+const GRADE_WORD_MODE = { jk: 'read', grade2: 'read', grade5: 'meaning' };
+const GW_REVIEW_AFTER = 3; // sessions before a mastered word is re-checked
+
+// JK letter phonics keywords for the read-aloud answer prompt
+const JK_LETTER_KEYWORD = { a:'apple',b:'ball',c:'cat',d:'dog',e:'egg',f:'fish',g:'goat',h:'hat',i:'igloo',j:'jam',k:'kite',l:'lion',m:'moon',n:'nest',o:'octopus',p:'pig',q:'queen',r:'ring',s:'sun',t:'top',u:'umbrella',v:'van',w:'web',x:'fox',y:'yarn',z:'zebra' };
+
+// Example sentences for the trickier grade-2 words (phonetic words use a simple fallback)
+const GRADE_WORD_SENTENCES = {
+  because:'I stayed inside because it was raining.', friend:'My best friend sits beside me.',
+  people:'Many people came to the fair.', could:'I could hear the birds singing.',
+  would:'She said she would help me.', school:'We walk to school every morning.',
+  said:'He said hello to the new student.', does:'She does her homework after dinner.',
+  been:'I have been to the zoo before.', again:'Let us play that game again.',
+  every:'I brush my teeth every night.', other:'The other team played very well.',
+  rabbit:'The rabbit hopped across the yard.', basket:'We filled the basket with apples.',
+  sunset:'The sunset turned the sky orange.', magnet:'The magnet stuck to the fridge.',
+  picnic:'We had a picnic in the park.', kitten:'The tiny kitten chased the yarn.',
+  muffin:'I ate a warm blueberry muffin.', napkin:'Please put the napkin on your lap.',
+  ribbon:'She tied a red ribbon in her hair.', button:'I pushed the button to start it.',
+  happen:'What will happen at the show?', tennis:'We played tennis after school.',
+  enough:'I have had enough to eat.', thought:'I thought about the answer.',
+  laugh:'The funny joke made me laugh.', through:'We walked through the tunnel.',
+  favorite:'Blue is my favorite color.', beautiful:'The garden looked beautiful.',
+  different:'These two shoes are different.', together:'We built the fort together.',
+  important:'It is important to be kind.', remember:'I remember your birthday.',
+  question:'I raised my hand to ask a question.', surprise:'The party was a big surprise.'
+};
+
+function gwBankKeyFor(childId) { const c = CHILDREN[childId]; return c && c.gradeWords ? c.gradeWords : null; }
+function gwBankFor(childId) { const k = gwBankKeyFor(childId); return k ? GRADE_WORD_BANKS[k] : null; }
+function gwMode(childId) { const k = gwBankKeyFor(childId); return (k && GRADE_WORD_MODE[k]) || 'read'; }
+
+function gwGetLevel(childId) { try { return parseInt(localStorage.getItem(PREFIX + 'gw_level_' + childId) || '0', 10) || 0; } catch(e) { return 0; } }
+function gwSetLevel(childId, l) { try { localStorage.setItem(PREFIX + 'gw_level_' + childId, String(l)); } catch(e) {} }
+
+function gwGetMastered(childId) { try { return JSON.parse(localStorage.getItem(PREFIX + 'gw_mastered_' + childId) || '{}'); } catch(e) { return {}; } }
+function gwSaveMastered(childId, m) { try { localStorage.setItem(PREFIX + 'gw_mastered_' + childId, JSON.stringify(m)); } catch(e) {} }
+
+function gwGetSession(childId) { try { return parseInt(localStorage.getItem(PREFIX + 'gw_session_' + childId) || '0', 10) || 0; } catch(e) { return 0; } }
+function gwBumpSession(childId) { const n = gwGetSession(childId) + 1; try { localStorage.setItem(PREFIX + 'gw_session_' + childId, String(n)); } catch(e) {} return n; }
+
+function gwReviewDue(childId) {
+  const m = gwGetMastered(childId); const s = gwGetSession(childId); const due = [];
+  for (const w in m) { if (m[w] && !m[w].c && (s - (m[w].s || 0)) >= GW_REVIEW_AFTER) due.push(w); }
+  return due;
+}
+
+function gradeWordsStats(childId) {
+  const bank = gwBankFor(childId); if (!bank) return null;
+  const m = gwGetMastered(childId);
+  return {
+    level: Math.min(gwGetLevel(childId), bank.length - 1),
+    levels: bank.length,
+    mastered: Object.keys(m).length,
+    total: bank.reduce((n, lv) => n + lv.length, 0),
+    reviewDue: gwReviewDue(childId).length
+  };
+}
+
+function gwBuildQuestion(childId, word, isReview) {
+  if (gwMode(childId) === 'meaning') {
+    const def = lookupDefinition(word);
+    if (def) return { q: `What does "${word}" mean?`, a: def.d, _sentence: def.s, _gwWord: word, _gwReview: isReview };
+    if (CFG.aiEndpoint) {
+      const q = { q: `What does "${word}" mean?`, a: '(Looking up definition…)', _gwWord: word, _gwReview: isReview, _aiPending: true };
+      requestAIDefinition(word, q);
+      return q;
+    }
+    return { q: `What does "${word}" mean?`, a: `(Check the meaning of "${word}")`, _gwWord: word, _gwReview: isReview };
+  }
+  // read-aloud mode
+  const isLetter = word.length === 1 && /[a-z]/i.test(word);
+  let sentence;
+  if (isLetter) { const kw = JK_LETTER_KEYWORD[word.toLowerCase()]; sentence = kw ? `${word.toUpperCase()} is for ${kw}.` : `This is the letter ${word.toUpperCase()}.`; }
+  else sentence = GRADE_WORD_SENTENCES[word] || `I can read the word "${word}".`;
+  return { q: word, a: word, _gwBigWord: word.toUpperCase(), _gwSentence: sentence, _gwWord: word, _gwReview: isReview };
+}
+
+function genGradeWord(childId) {
+  const bank = gwBankFor(childId); if (!bank) return null;
+  const mastered = gwGetMastered(childId);
+  // Sometimes re-check a mastered word that is due for confirmation
+  const due = gwReviewDue(childId);
+  if (due.length && Math.random() < 0.35) return gwBuildQuestion(childId, due[randInt(0, due.length - 1)], true);
+  // Find a level with unmastered words, advancing through levels as needed
+  let level = Math.min(gwGetLevel(childId), bank.length - 1);
+  for (let i = 0; i < bank.length; i++) {
+    const active = bank[level].filter(w => !mastered[w]);
+    if (active.length) {
+      gwSetLevel(childId, level);
+      return gwBuildQuestion(childId, pickWord('gw_' + childId + '_' + level, active), false);
+    }
+    if (level < bank.length - 1) level++; else break;
+  }
+  // Whole bank mastered — serve any due review, else signal completion
+  if (due.length) return gwBuildQuestion(childId, due[randInt(0, due.length - 1)], true);
+  return null;
+}
+
+function masterGradeWord(word) {
+  const childId = quizState.childId;
+  const m = gwGetMastered(childId);
+  m[word] = { s: gwGetSession(childId), c: false };
+  gwSaveMastered(childId, m);
+  playSound('streak');
+  if (typeof syncPushDebounced === 'function') syncPushDebounced();
+  nextQuestion();
+}
+
+function gwConfirmMastery(word) {
+  const childId = quizState.childId;
+  const m = gwGetMastered(childId);
+  if (m[word]) { m[word].c = true; gwSaveMastered(childId, m); }
+  playSound('correct');
+  nextQuestion();
+}
+
+function gwNeedsPractice(word) {
+  const childId = quizState.childId;
+  const m = gwGetMastered(childId);
+  if (m[word]) { delete m[word]; gwSaveMastered(childId, m); }
+  nextQuestion();
+}
+
+// ═══════════════════════════════════════════
+//  WRITING — grade-2 sentence & writing practice (Cole)
+//  Read the prompt aloud; child writes the answer (scratchpad available).
+//  Answer screen shows a model answer to compare against.
+// ═══════════════════════════════════════════
+
+const WRITING_BANK = [
+  { q: 'Fix this sentence: "my dog is brown"', a: 'My dog is brown.' },
+  { q: 'Fix this sentence: "we went to the park"', a: 'We went to the park.' },
+  { q: 'Add the right ending mark: "Are you coming with us"', a: 'Are you coming with us?' },
+  { q: 'Add the right ending mark: "Look out"', a: 'Look out!' },
+  { q: 'Fix this sentence: "i like pizza and juice"', a: 'I like pizza and juice.' },
+  { q: 'Capitalize the name: "my friend sam is here"', a: 'My friend Sam is here.' },
+  { q: 'Fix this sentence: "the cat ran fast"', a: 'The cat ran fast.' },
+  { q: 'Add the commas: "I have a dog a cat and a fish"', a: 'I have a dog, a cat, and a fish.' },
+  { q: 'Put these words in order: park / to / the / went / We', a: 'We went to the park.' },
+  { q: 'Put these words in order: red / is / apple / The', a: 'The apple is red.' },
+  { q: 'Put these words in order: like / dogs / I / big', a: 'I like big dogs.' },
+  { q: 'Put these words in order: sky / blue / is / The', a: 'The sky is blue.' },
+  { q: 'Write a sentence about your favorite animal.', a: 'Example: My favorite animal is a dolphin because it is smart.' },
+  { q: 'Write a sentence that tells what you did today.', a: 'Example: Today I played soccer with my brothers.' },
+  { q: 'Write a sentence using the word "because".', a: 'Example: I was happy because we went swimming.' },
+  { q: 'Write a question you could ask a friend.', a: 'Example: What is your favorite game to play?' },
+  { q: 'Write a sentence that starts with "When".', a: 'Example: When it snows, we build a fort.' },
+  { q: 'Write a sentence about the weather today.', a: 'Example: It is sunny and warm outside today.' },
+  { q: 'Describe your favorite food using two describing words.', a: 'Example: I love warm, cheesy pizza.' },
+  { q: 'Write a sentence with "and" that joins two ideas.', a: 'Example: I ran fast and I jumped high.' },
+  { q: 'Make this sentence longer: "The dog ran."', a: 'Example: The big brown dog ran quickly across the yard.' },
+  { q: 'Make this sentence longer: "I ate lunch."', a: 'Example: I ate a yummy cheese sandwich for lunch.' },
+  { q: 'Add a describing word: "The ___ car was fast."', a: 'Example: The shiny red car was fast.' },
+  { q: 'Add a describing word: "We saw a ___ dog."', a: 'Example: We saw a fluffy white dog.' },
+  { q: 'Finish the story: "One morning I woke up and..."', a: 'Example: ...I found a puppy sleeping on my bed!' },
+  { q: 'Finish the story: "The best day ever was when..."', a: 'Example: ...we went to the beach and built a huge sandcastle.' },
+  { q: 'Write a sentence using the word "friend".', a: 'Example: My friend and I like to ride bikes.' },
+  { q: 'Write a sentence using the word "school".', a: 'Example: I learn new things at school every day.' }
+];
+
+function genWriting(level, distracted) {
+  const q = pickWord('writing', WRITING_BANK.map(x => x.q));
+  const item = WRITING_BANK.find(x => x.q === q) || WRITING_BANK[0];
+  return { q: item.q, a: item.a, _writing: true };
 }
 
 // Difficulty level: 0-59 where level = grade*10 + decile
@@ -1211,7 +1426,7 @@ function genWordStudy(childId) {
   const words = getStudyWords(childId);
   if (words.length === 0) return null;
   const w = pickWord('study_' + childId, words);
-  if (childGrade(childId) <= 1) {
+  if (childGrade(childId) <= 2) {
     // Beginning readers: show word in big letters, they read it aloud
     return { q: w, a: w, _displayWord: w.toUpperCase(), _wordStudyBigWord: true, _customWord: w };
   }
@@ -2129,6 +2344,7 @@ function generateQuestion(subject, level, distracted) {
     case 'math': return genMath(level, distracted);
     case 'english': return genEnglish(level, distracted);
     case 'science': return genScience(level, distracted);
+    case 'writing': return genWriting(level, distracted);
     default: return genMath(level, distracted);
   }
 }
@@ -2291,6 +2507,19 @@ function renderChildTabs() {
     showScreen('multiplayerSetup');
   });
   container.appendChild(mpBtn);
+  // UFLI spelling tab (family only)
+  if (!IS_GENERIC) {
+    const ufliBtn = document.createElement('button');
+    ufliBtn.type = 'button';
+    ufliBtn.className = 'child-tab';
+    ufliBtn.style.color = 'var(--green)';
+    ufliBtn.textContent = '🔤 UFLI';
+    ufliBtn.addEventListener('click', () => {
+      if (quizState) saveQuizState();
+      window.location.href = 'ufli.html';
+    });
+    container.appendChild(ufliBtn);
+  }
 }
 
 const ADULT_SUBJECTS = [
@@ -2331,8 +2560,8 @@ function renderSubjectScreen() {
     if (weBtn2) weBtn2.style.display = '';
   }
 
-  // No science for very young kids (JK/SK + Grade 1)
-  const noScience = childGrade(state.activeChild) <= 1;
+  // No science for very young kids (JK/SK + Grade 1) or kids flagged noScience
+  const noScience = childGrade(state.activeChild) <= 1 || !!(child && child.noScience);
   const availableSubjects = noScience ? SUBJECTS.filter(s => s.id !== 'science') : SUBJECTS;
 
   for (const subj of availableSubjects) {
@@ -2405,6 +2634,35 @@ function renderSubjectScreen() {
         <div style="font-size:0.7rem;color:var(--text-dim);">${phase}</div>
       `;
       btn.onclick = () => startMakeTen();
+      grid.appendChild(btn);
+      continue;
+    } else if (subj.id === 'gradeWords') {
+      const c = CHILDREN[state.activeChild];
+      if (!(c && c.gradeWords)) { continue; }
+      const stats = gradeWordsStats(state.activeChild);
+      const label = { jk: 'JK Words', grade2: 'Grade 2 Words', grade5: 'Grade 5 Words' }[c.gradeWords] || 'Grade Words';
+      const modeDesc = gwMode(state.activeChild) === 'meaning' ? 'Meanings of harder words' : 'Read the word aloud';
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${label}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">${modeDesc}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">Level ${stats.level + 1}/${stats.levels} · ⭐ ${stats.mastered} mastered${stats.reviewDue ? (' · 🔁 ' + stats.reviewDue + ' to review') : ''}</div>
+      `;
+      btn.onclick = () => startQuiz('gradeWords');
+      grid.appendChild(btn);
+      continue;
+    } else if (subj.id === 'writing') {
+      const c = CHILDREN[state.activeChild];
+      if (!(c && c.writing)) { continue; }
+      const lvl = session.levels.writing !== undefined ? session.levels.writing : session.levels.english;
+      const g = Math.floor(lvl / 10); const d = lvl % 10;
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Sentences, punctuation &amp; writing prompts</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">Grade ${g}.${d}</div>
+      `;
+      btn.onclick = () => startQuiz('writing');
       grid.appendChild(btn);
       continue;
     } else if (subj.id === 'newWords') {
@@ -2833,6 +3091,7 @@ function renderMultiplayerSetup() {
     { id: 'math', name: 'Math', icon: '🔢' },
     { id: 'english', name: 'English', icon: '📖' }
   ];
+  if (Object.values(CHILDREN).some(c => c.gradeWords)) subjects.push({ id: 'gradeWords', name: 'Grade Words', icon: '🎓' });
   subjectContainer.innerHTML = subjects.map(s =>
     `<button class="btn btn-primary" style="min-width:120px;" onclick="startMultiplayer('${s.id}')">${s.icon} ${s.name}</button>`
   ).join('');
@@ -2918,7 +3177,7 @@ function saveQuizState() {
     const key = getLevelKey('newWords', dist);
     session.levels[key] = quizState.currentLevel;
     session.levels.newWords = quizState.currentLevel; // legacy
-  } else if (!quizState.isWordStudy && !quizState.isSpelling && !quizState.isWordFlashcards && !quizState.isCustom) {
+  } else if (!quizState.isWordStudy && !quizState.isSpelling && !quizState.isWordFlashcards && !quizState.isCustom && !quizState.isGradeWords) {
     const key = getLevelKey(quizState.subject, dist);
     session.levels[key] = quizState.currentLevel;
     session.levels[quizState.subject] = quizState.currentLevel; // legacy
@@ -2928,7 +3187,7 @@ function saveQuizState() {
   // Dashboard progress log
   if (quizState.isAll) {
     for (const s of quizState.childSubjects) logProgress(quizState.childId, s, quizState.currentLevels[s]);
-  } else if (!quizState.isWordStudy && !quizState.isSpelling && !quizState.isWordFlashcards && !quizState.isCustom) {
+  } else if (!quizState.isWordStudy && !quizState.isSpelling && !quizState.isWordFlashcards && !quizState.isCustom && !quizState.isGradeWords) {
     logProgress(quizState.childId, quizState.subject, quizState.currentLevel);
   }
   saveState();
@@ -2939,6 +3198,8 @@ const CORE_SUBJECTS = ['math', 'english', 'science'];
 function getChildSubjects(childId) {
   const child = CHILDREN[childId];
   if (child && child.adult) return child.subjects || [];
+  // Some kids skip science by preset flag
+  if (child && child.noScience) return ['math', 'english'];
   // Younger kids (JK/SK + Grade 1) skip science
   if (childGrade(childId) <= 1) return ['math', 'english'];
   return CORE_SUBJECTS;
@@ -2957,6 +3218,10 @@ function startQuiz(subject) {
   const isCustom = subject === 'custom';
   const isSpelling = subject === 'spelling';
   const isWordFlashcards = subject === 'wordFlashcards';
+  const isGradeWords = subject === 'gradeWords';
+  const isWriting = subject === 'writing';
+  if (isGradeWords) gwBumpSession(childId);
+  if (!isAdultChild(childId) && isWriting && session.levels.writing === undefined) session.levels.writing = session.levels.english;
   const childSubjects = getChildSubjects(childId);
 
   // For "all" mode, we track levels per subject individually
@@ -2972,7 +3237,7 @@ function startQuiz(subject) {
     startLevels.newWords = session.levels[key] !== undefined ? session.levels[key] : session.levels.newWords;
   } else if (isER || isResearch) {
     startLevels[subject] = session.levels[subject] || 30;
-  } else if (!isWordStudy && !isCustom && !isSpelling && !isWordFlashcards) {
+  } else if (!isWordStudy && !isCustom && !isSpelling && !isWordFlashcards && !isGradeWords) {
     const key = getLevelKey(subject, distracted);
     startLevels[subject] = session.levels[key] !== undefined ? session.levels[key] : session.levels[subject];
   }
@@ -2987,7 +3252,7 @@ function startQuiz(subject) {
     }
     if (isER) return session.levels.erQuestions || 30;
     if (isResearch) return session.levels.newResearch || 30;
-    if (isWordStudy || isCustom || isSpelling || isWordFlashcards) return 0;
+    if (isWordStudy || isCustom || isSpelling || isWordFlashcards || isGradeWords) return 0;
     const key = getLevelKey(subject, distracted);
     return session.levels[key] !== undefined ? session.levels[key] : session.levels[subject];
   };
@@ -3003,6 +3268,8 @@ function startQuiz(subject) {
     isCustom,
     isSpelling,
     isWordFlashcards,
+    isGradeWords,
+    isWriting,
     isResearch,
     quizDistracted: distracted, // lock mode for this session
     currentLevels: { ...startLevels },
@@ -3093,6 +3360,13 @@ function nextQuestion() {
       showScreen('subject');
       return;
     }
+  } else if (quizState.isGradeWords) {
+    question = genGradeWord(quizState.childId);
+    if (!question) {
+      alert('🎉 Every word in this list is mastered! Amazing work!');
+      showScreen('subject');
+      return;
+    }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
   } else if (quizState.isCustom) {
@@ -3164,8 +3438,15 @@ function renderQuiz() {
   if (isMP) {
     infoPrefix = `🎮 `;
   }
-  document.getElementById('quizInfo').textContent =
-    `${infoPrefix}${child.emoji} ${child.name} | ${currentSubjName} | ${levelLabel} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
+  if (quizState.isGradeWords) {
+    const st = gradeWordsStats(quizState.childId);
+    document.getElementById('quizInfo').textContent = st
+      ? `${infoPrefix}${child.emoji} ${child.name} | ${currentSubjName} | 📚 Level ${st.level + 1}/${st.levels} | ⭐ ${st.mastered} mastered${st.reviewDue ? ' | 🔁 ' + st.reviewDue + ' to review' : ''} | Q#${quizState.questionNum}`
+      : '';
+  } else {
+    document.getElementById('quizInfo').textContent =
+      `${infoPrefix}${child.emoji} ${child.name} | ${currentSubjName} | ${levelLabel} | Q#${quizState.questionNum} | ${distracted ? '🏃 Distracted' : '🎯 Focused'} | Repeat queue: ${quizState.repeatQueue.length}`;
+  }
 
   // Show/hide scratchpad button
   updateScratchpadBtn();
@@ -3190,6 +3471,10 @@ function renderQuiz() {
   } else if (quizState.currentQuestion._wordStudyBigWord) {
     // Cole/Mack Word Study: show word in big white letters
     questionTextEl.innerHTML = '<div style="font-size:4rem;font-weight:800;letter-spacing:4px;color:white;">' + quizState.currentQuestion.q.toUpperCase() + '</div>';
+  } else if (quizState.currentQuestion._gwBigWord) {
+    // Grade Words (read-aloud): show the word big; flag review checks
+    const reviewTag = quizState.currentQuestion._gwReview ? '<div style="font-size:0.85rem;color:var(--yellow);margin-bottom:8px;">🔁 Mastery check — read it again!</div>' : '';
+    questionTextEl.innerHTML = reviewTag + '<div style="font-size:4rem;font-weight:800;letter-spacing:4px;color:white;">' + quizState.currentQuestion.q.toUpperCase() + '</div>';
   } else if (quizState.isWordStudy && quizState.currentQuestion._displayWord && !quizState.showingAnswer) {
     questionTextEl.innerHTML = quizState.currentQuestion.q + '<div style="font-size:3rem;margin-top:20px;font-weight:800;letter-spacing:4px;">' + quizState.currentQuestion._displayWord + '</div>';
   } else {
@@ -3207,8 +3492,15 @@ function renderQuiz() {
       answerHTML = '<div style="font-size:3rem;font-weight:800;letter-spacing:3px;color:white;">' + quizState.currentQuestion.a.toUpperCase() + '</div>';
       answerHTML += '<div style="font-size:1.1rem;color:var(--text-dim);margin-top:16px;font-style:italic;font-weight:400;line-height:1.6;">"' + quizState.currentQuestion._wordFlashcardSentence + '"</div>';
     }
-    // New Words / Word Study: example sentence is hidden behind a button — only revealed on click.
-    if ((quizState.isNewWords || quizState.isWordStudy) && quizState.currentQuestion._sentence) {
+    // Grade Words (read-aloud): show the word big again + an example sentence
+    if (quizState.isGradeWords && quizState.currentQuestion._gwBigWord) {
+      answerHTML = '<div style="font-size:3rem;font-weight:800;letter-spacing:3px;color:white;">' + quizState.currentQuestion.a.toUpperCase() + '</div>';
+      if (quizState.currentQuestion._gwSentence) {
+        answerHTML += '<div style="font-size:1.1rem;color:var(--text-dim);margin-top:16px;font-style:italic;font-weight:400;line-height:1.6;">"' + quizState.currentQuestion._gwSentence + '"</div>';
+      }
+    }
+    // New Words / Word Study / Grade Words (meaning): example sentence is hidden behind a button — only revealed on click.
+    if ((quizState.isNewWords || quizState.isWordStudy || quizState.isGradeWords) && quizState.currentQuestion._sentence) {
       const safeSentence = quizState.currentQuestion._sentence
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
@@ -3250,6 +3542,16 @@ function renderQuiz() {
     if (quizState.isWordFlashcards && quizState.currentQuestion._wordFlashcard) {
       const safeWord = quizState.currentQuestion._wordFlashcard.replace(/'/g, "\\'");
       extraButtons += `<button class="btn" style="background:#2e7d32;margin-top:8px;" onclick="masterWordFlashcard('${safeWord}')">⭐ Mastered</button>`;
+    }
+    // Grade Words: Mastered button, or confirm/practice buttons on a mastery re-check
+    if (quizState.isGradeWords && quizState.currentQuestion._gwWord) {
+      const safeWord = quizState.currentQuestion._gwWord.replace(/'/g, "\\'");
+      if (quizState.currentQuestion._gwReview) {
+        extraButtons += `<button class="btn" style="background:#2e7d32;margin-top:8px;" onclick="gwConfirmMastery('${safeWord}')">✓ Still Got It</button>`;
+        extraButtons += `<button class="btn" style="background:#c62828;margin-top:8px;" onclick="gwNeedsPractice('${safeWord}')">🔁 Practice Again</button>`;
+      } else {
+        extraButtons += `<button class="btn" style="background:#2e7d32;margin-top:8px;font-size:0.8rem;padding:6px 12px;" onclick="masterGradeWord('${safeWord}')">⭐ Mastered</button>`;
+      }
     }
     // New Words: add "Add to Word List" button (goes to Word Study only)
     if (quizState.isNewWords && quizState.currentQuestion._newWord) {
@@ -3312,6 +3614,9 @@ function skipQuestion() {
   } else if (quizState.isWordFlashcards) {
     question = genWordFlashcard(quizState.childId);
     if (!question) { alert('All words mastered! 🎉'); showScreen('subject'); return; }
+  } else if (quizState.isGradeWords) {
+    question = genGradeWord(quizState.childId);
+    if (!question) { alert('🎉 Every word in this list is mastered!'); showScreen('subject'); return; }
   } else if (quizState.isNewWords) {
     question = genNewWord(quizState.currentLevel);
   } else if (quizState.isCustom) {
@@ -3674,10 +3979,12 @@ function updateScratchpadBtn() {
   if (!btn || !quizState) { if (btn) btn.style.display = 'none'; return; }
   // Show for Logan on math questions (or any math in All Subjects)
   const isMath = quizState.currentSubject === 'math' || quizState.subject === 'math';
+  const isWriting = quizState.currentSubject === 'writing' || quizState.subject === 'writing';
   // Scratchpad: per-child flag (family preset) or any kid grade 3+ (younger kids do mental math only)
   const spChild = CHILDREN[quizState.childId];
   const spEnabled = spChild && (spChild.scratchpad || (IS_GENERIC && (spChild.grade || 0) >= 3));
-  btn.style.display = (spEnabled && isMath) ? 'block' : 'none';
+  // Writing always offers the scratchpad — it's a writing exercise.
+  btn.style.display = ((spEnabled && isMath) || isWriting) ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════

@@ -709,14 +709,14 @@
 <script>
 window.APP_CONFIG = {
   variant: 'family',
-  version: '4.7',
+  version: '4.8',
   versionFile: 'version.txt',
   storagePrefix: 'homuth_',
   // Preset children (family version). colorIndex maps into CHILD_COLOR_HEX.
   children: {
-    logan:     { name: 'Logan',     grade: 4, emoji: '🏒', colorIndex: 0, info: 'Grade 4', startDecile: { math: 50, english: 50, science: 45 }, scratchpad: true },
-    cole:      { name: 'Cole',      grade: 1, emoji: '🏒', colorIndex: 1, info: 'Grade 1 · Reading Focus', startDecile: { math: 15, english: 15, science: 15 }, wordFlashcards: true, makeTenHelper: true },
-    mackenzie: { name: 'Mackenzie', grade: 0, emoji: '🌟', colorIndex: 2, info: 'JK in September', startDecile: { math: 5, english: 5, science: 5 } },
+    logan:     { name: 'Logan',     grade: 5, emoji: '🏒', colorIndex: 0, info: 'Grade 5', startDecile: { math: 60, english: 60, science: 55 }, scratchpad: true, gradeWords: 'grade5' },
+    cole:      { name: 'Cole',      grade: 2, emoji: '🏒', colorIndex: 1, info: 'Grade 2 · Reading & Writing', startDecile: { math: 25, english: 25 }, wordFlashcards: true, makeTenHelper: true, noScience: true, gradeWords: 'grade2', writing: true },
+    mackenzie: { name: 'Mackenzie', grade: 0, emoji: '🌟', colorIndex: 2, info: 'JK', startDecile: { math: 5, english: 5 }, gradeWords: 'jk' },
     daddy:     { name: 'Daddy',     grade: 0, emoji: '🩺', colorIndex: 3, info: 'Emergency Medicine', adult: true, subjects: ['erQuestions', 'newResearch'], startDecile: { erQuestions: 30, newResearch: 30 } }
   },
   seeds: 'family',   // use the built-in family seed lists (Logan's words)
@@ -734,6 +734,6 @@ window.APP_CONFIG = {
   aiEndpoint: 'https://learning-app-gilt-psi.vercel.app/api/define'
 };
 </script>
-<script src="learning-core.js?v=4.7"></script>
+<script src="learning-core.js?v=4.8"></script>
 </body>
 </html>
