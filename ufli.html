@@ -77,6 +77,12 @@
    Words only use that pattern + already-known base graphemes,
    so a week's list can never leak an untaught spelling. */
 const PATTERNS = {
+  th:  {label:"th (that)", words:["th.a.t","th.i.s","th.e.n","th.e.m","w.i.th","b.a.th","m.a.th","p.a.th","c.l.o.th","m.o.th","th.i.n","th.a.n","th.u.d","th.u.m.p","t.ee.th","t.e.n.th"]},
+  sh:  {label:"sh (ship)", words:["t.r.a.sh","sh.o.p","sh.i.p","sh.e.ll","f.i.sh","w.i.sh","c.a.sh","d.a.sh","b.r.u.sh","c.r.a.sh","f.r.e.sh","sh.u.t","sh.e.d","f.l.a.sh","s.p.l.a.sh","d.i.sh"]},
+  ch:  {label:"ch (chin)", words:["ch.i.n","ch.o.p","ch.a.t","ch.i.p","m.u.ch","s.u.ch","r.i.ch","l.u.n.ch","b.e.n.ch","ch.e.s.t","ch.o.m.p","ch.u.m","i.n.ch","p.i.n.ch","r.a.n.ch","ch.e.ss"]},
+  ck:  {label:"ck (duck)", words:["s.n.a.ck","b.a.ck","p.a.ck","s.a.ck","d.u.ck","l.u.ck","r.o.ck","s.o.ck","l.o.ck","k.i.ck","s.i.ck","t.i.ck","d.e.ck","n.e.ck","b.l.a.ck","t.r.u.ck"]},
+  wh:  {label:"wh (when)", words:["wh.e.n","wh.i.ch","wh.i.p","wh.i.z","wh.i.s.k","wh.a.m","wh.i.m","wh.i.ff","wh.a.ck","wh.ee.l","wh.ea.t","wh.a.l.e","wh.i.t.e"]},
+  ph:  {label:"ph (phone)", words:["ph.o.n.e","g.r.a.ph","ph.o.t.o","d.o.l.ph.i.n","e.l.e.ph.a.n.t","a.l.ph.a.b.e.t","t.r.o.ph.y","n.e.ph.e.w","m.or.ph","ph.o.n.i.c.s","g.o.ph.e.r"]},
   ar:  {label:"ar",  words:["c.ar","c.ar.t","s.t.ar","f.ar.m","h.ar.d","p.ar.k","d.ar.k","y.ar.d","sh.ar.p","s.t.ar.t","p.ar.t","h.ar.m","b.ar.n","c.ar.d","j.ar","f.ar","ar.t","ar.m","ch.ar.t","s.m.ar.t"]},
   or:  {label:"or",  words:["f.or","c.or.n","f.or.k","b.or.n","h.or.n","s.or.t","p.or.t","n.or.th","s.t.or.m","sh.or.t","s.p.or.t","t.or.ch","f.or.t","c.or.d","th.or.n","s.c.or.ch","p.or.ch","c.or.k"]},
   er:  {label:"er",  words:["h.er","f.er.n","h.er.d","t.er.m","v.er.b","g.er.m","p.er.ch","c.l.er.k","s.t.er.n","j.er.k","p.er.k","h.er.b"]},
@@ -237,7 +243,7 @@ function homeScreen(){
       <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
     </div>
     <button class="backlink" onclick="chooseLevel()">↔ Switch (Grade 2 / Junior K)</button>
-    <div class="foot">UFLI Spelling · v1.4 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.5 · offline-ready</div>
   `);
 }
 
@@ -274,7 +280,7 @@ function jkHome(){
       <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
       <button class="btn ghost small" onclick="chooseLevel()">↔ Switch level</button>
     </div>
-    <div class="foot">UFLI Spelling · v1.4 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.5 · offline-ready</div>
   `);
 }
 function jkDone(name, again){
