@@ -139,6 +139,60 @@ const CVC=["c.a.t","h.a.t","m.a.p","b.a.g","r.a.t","p.a.n","c.a.p","f.a.n","j.a.
  "d.o.g","h.o.t","b.o.x","m.o.p","p.o.t","f.o.x","l.o.g","c.o.t",
  "s.u.n","b.u.s","c.u.p","m.u.d","r.u.g","b.u.g","h.u.t","n.u.t","j.u.g","c.u.t"];
 
+/* Built-in English->French translations for the flag button (offline).
+   Keyed by lowercase English word. Only words we can translate cleanly are
+   listed; the flag button stays hidden for anything not here. */
+const FR = {
+  // common heart / glue words
+  "one":"un","once":"une fois","said":"a dit","they":"ils","your":"ton","you":"tu",
+  "was":"était","were":"étaient","are":"sont","here":"ici","there":"là","come":"venir",
+  "some":"quelque","what":"quoi","who":"qui","want":"vouloir","from":"de","put":"mettre",
+  // th / sh / ch / ck / wh / ph
+  "bath":"le bain","math":"les maths","path":"le chemin","cloth":"le tissu","moth":"la mite","teeth":"les dents","thin":"mince",
+  "trash":"les ordures","shop":"le magasin","ship":"le bateau","shell":"le coquillage","fish":"le poisson","wish":"le souhait","cash":"l'argent","brush":"la brosse","fresh":"frais","shut":"fermer","shed":"la cabane","splash":"l'éclaboussure","dish":"l'assiette",
+  "chin":"le menton","chip":"la frite","much":"beaucoup","rich":"riche","lunch":"le déjeuner","bench":"le banc","chest":"la poitrine","ranch":"le ranch","chess":"les échecs",
+  "snack":"la collation","back":"le dos","sack":"le sac","duck":"le canard","luck":"la chance","rock":"le rocher","sock":"la chaussette","lock":"la serrure","kick":"donner un coup de pied","sick":"malade","neck":"le cou","black":"noir","truck":"le camion",
+  "when":"quand","which":"quel","whip":"le fouet","wheel":"la roue","wheat":"le blé","whale":"la baleine","white":"blanc",
+  "phone":"le téléphone","graph":"le graphique","photo":"la photo","dolphin":"le dauphin","elephant":"l'éléphant","alphabet":"l'alphabet","trophy":"le trophée","nephew":"le neveu",
+  // ng / nk
+  "bring":"apporter","ring":"la bague","king":"le roi","sing":"chanter","wing":"l'aile","thing":"la chose","spring":"le printemps","long":"long","song":"la chanson","strong":"fort","hang":"accrocher","lung":"le poumon",
+  "think":"penser","pink":"rose","sink":"l'évier","wink":"le clin d'œil","drink":"la boisson","bank":"la banque","tank":"le réservoir","thank":"remercier","junk":"la camelote","trunk":"le tronc","skunk":"la mouffette","chunk":"le morceau",
+  // VCe
+  "make":"faire","cake":"le gâteau","lake":"le lac","take":"prendre","bake":"cuire","snake":"le serpent","gate":"la barrière","late":"en retard","plate":"l'assiette","name":"le nom","game":"le jeu","same":"même","cave":"la grotte","save":"sauver","grape":"le raisin","tape":"le ruban","cane":"la canne","plane":"l'avion",
+  "like":"aimer","bike":"le vélo","hike":"la randonnée","time":"le temps","line":"la ligne","nine":"neuf","pine":"le pin","ride":"monter","side":"le côté","slide":"le toboggan","hide":"cacher","wide":"large","bite":"mordre","kite":"le cerf-volant","five":"cinq","drive":"conduire","smile":"le sourire","mile":"le mille",
+  "home":"la maison","bone":"l'os","cone":"le cône","stone":"la pierre","nose":"le nez","rose":"la rose","hole":"le trou","pole":"le poteau","robe":"la robe","globe":"le globe","note":"la note","rope":"la corde","hope":"espérer","smoke":"la fumée","slope":"la pente","stove":"la cuisinière",
+  "these":"ces","theme":"le thème","scene":"la scène",
+  "rule":"la règle","fuse":"le fusible","cube":"le cube","tube":"le tube","mule":"la mule","cute":"mignon","mute":"muet","flute":"la flûte","tune":"la mélodie","dune":"la dune","prune":"le pruneau","huge":"énorme","use":"utiliser","rude":"impoli","duke":"le duc","plume":"la plume",
+  // r-controlled
+  "car":"la voiture","cart":"le chariot","star":"l'étoile","farm":"la ferme","hard":"dur","park":"le parc","dark":"sombre","yard":"la cour","sharp":"pointu","start":"commencer","part":"la partie","barn":"la grange","card":"la carte","jar":"le pot","far":"loin","art":"l'art","arm":"le bras","chart":"le tableau","smart":"intelligent",
+  "for":"pour","corn":"le maïs","fork":"la fourchette","born":"né","horn":"le klaxon","sort":"trier","port":"le port","north":"le nord","storm":"la tempête","short":"court","sport":"le sport","torch":"la torche","fort":"le fort","cord":"le cordon","thorn":"l'épine","porch":"le porche","cork":"le bouchon",
+  "her":"elle","fern":"la fougère","herd":"le troupeau","term":"le terme","verb":"le verbe","germ":"le microbe","perch":"le perchoir","clerk":"le commis","herb":"l'herbe",
+  "bird":"l'oiseau","girl":"la fille","dirt":"la saleté","shirt":"la chemise","first":"premier","stir":"remuer","sir":"monsieur","firm":"ferme","third":"troisième","skirt":"la jupe","birth":"la naissance",
+  "fur":"la fourrure","turn":"tourner","burn":"brûler","hurt":"blesser","curl":"la boucle","surf":"surfer","church":"l'église","burst":"éclater","hurl":"lancer",
+  // vowel teams
+  "rain":"la pluie","train":"le train","pain":"la douleur","wait":"attendre","mail":"le courrier","tail":"la queue","sail":"la voile","paint":"la peinture","brain":"le cerveau","chain":"la chaîne","trail":"le sentier","snail":"l'escargot","main":"principal","rail":"le rail","grain":"le grain","faint":"s'évanouir",
+  "day":"le jour","play":"jouer","stay":"rester","way":"le chemin","say":"dire","clay":"l'argile","tray":"le plateau","gray":"gris","pray":"prier","hay":"le foin","lay":"poser","bay":"la baie","pay":"payer",
+  "see":"voir","tree":"l'arbre","feet":"les pieds","seed":"la graine","green":"vert","sleep":"dormir","sweet":"sucré","three":"trois","keep":"garder","feel":"sentir","week":"la semaine","deep":"profond","meet":"rencontrer","need":"avoir besoin","free":"libre","speed":"la vitesse",
+  "eat":"manger","sea":"la mer","team":"l'équipe","read":"lire","leaf":"la feuille","beach":"la plage","clean":"propre","dream":"le rêve","meat":"la viande","seat":"le siège","teach":"enseigner","speak":"parler","meal":"le repas","leap":"sauter","treat":"la friandise","bead":"la perle",
+  "boat":"le bateau","coat":"le manteau","road":"la route","soap":"le savon","goat":"la chèvre","toast":"le pain grillé","coast":"la côte","float":"flotter","throat":"la gorge","load":"la charge","foam":"la mousse","roast":"rôtir","soak":"tremper","toad":"le crapaud","cloak":"la cape","moan":"gémir",
+  "snow":"la neige","grow":"grandir","show":"montrer","slow":"lent","blow":"souffler","throw":"lancer","glow":"briller","flow":"couler","crow":"le corbeau","low":"bas","row":"la rangée","bowl":"le bol","mow":"tondre","tow":"remorquer","grown":"grandi","known":"connu",
+  "high":"haut","night":"la nuit","light":"la lumière","right":"droite","sight":"la vue","fight":"se battre","bright":"brillant","flight":"le vol","tight":"serré","fright":"la peur","sigh":"soupirer","thigh":"la cuisse","knight":"le chevalier",
+  "oil":"l'huile","coin":"la pièce","join":"joindre","point":"le point","boil":"bouillir","soil":"la terre","spoil":"gâter","joint":"l'articulation","moist":"humide","foil":"le papier alu","coil":"la bobine","broil":"griller",
+  "boy":"le garçon","toy":"le jouet","joy":"la joie","soy":"le soja",
+  "out":"dehors","loud":"fort","cloud":"le nuage","round":"rond","found":"trouvé","sound":"le son","mouth":"la bouche","south":"le sud","proud":"fier","count":"compter","ground":"le sol","shout":"crier","scout":"l'éclaireur","spout":"le bec","mount":"monter","pound":"la livre",
+  "cow":"la vache","now":"maintenant","how":"comment","owl":"le hibou","down":"en bas","town":"la ville","brown":"marron","clown":"le clown","crown":"la couronne","frown":"froncer les sourcils","gown":"la robe","growl":"grogner","crowd":"la foule","plow":"la charrue","howl":"hurler",
+  "moon":"la lune","soon":"bientôt","food":"la nourriture","room":"la chambre","zoo":"le zoo","boot":"la botte","roof":"le toit","tooth":"la dent","spoon":"la cuillère","broom":"le balai","pool":"la piscine","cool":"frais","hoop":"le cerceau","bloom":"fleurir","droop":"s'affaisser",
+  "book":"le livre","look":"regarder","good":"bon","foot":"le pied","took":"pris","cook":"cuisiner","hook":"le crochet","wood":"le bois","hood":"la capuche","stood":"debout","brook":"le ruisseau","wool":"la laine","hoof":"le sabot",
+  "saw":"la scie","paw":"la patte","jaw":"la mâchoire","law":"la loi","draw":"dessiner","claw":"la griffe","straw":"la paille","yawn":"bâiller","lawn":"la pelouse","dawn":"l'aube","hawk":"le faucon","crawl":"ramper","shawl":"le châle","fawn":"le faon","thaw":"dégeler","raw":"cru",
+  "haul":"transporter","fault":"la faute","vault":"le coffre","launch":"lancer","august":"août","haunt":"hanter",
+  // CVC
+  "cat":"le chat","hat":"le chapeau","map":"la carte","bag":"le sac","rat":"le rat","pan":"la poêle","cap":"la casquette","fan":"le ventilateur","jam":"la confiture","van":"la camionnette",
+  "bed":"le lit","hen":"la poule","pen":"le stylo","wet":"mouillé","leg":"la jambe","red":"rouge","net":"le filet","jet":"l'avion à réaction",
+  "pig":"le cochon","sit":"s'asseoir","big":"grand","lip":"la lèvre","fin":"la nageoire","zip":"la fermeture éclair","dig":"creuser","hit":"frapper","pin":"l'épingle",
+  "dog":"le chien","hot":"chaud","box":"la boîte","mop":"la serpillière","pot":"le pot","fox":"le renard","log":"la bûche","cot":"le lit de camp",
+  "sun":"le soleil","bus":"le bus","cup":"la tasse","mud":"la boue","rug":"le tapis","bug":"l'insecte","hut":"la hutte","nut":"la noix","jug":"la cruche","cut":"couper"
+};
+
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
 const app = $('app');
@@ -149,11 +203,25 @@ function wordOf(dot){return dot.split('.').join('');}
 /* hi = the pattern grapheme(s) to highlight. A string for a single grapheme,
    or an array for split patterns like VCe (vowel + silent e, e.g. a_e). */
 function hiHas(hi,g){return Array.isArray(hi)?hi.includes(g):hi===g;}
-function speak(text){
+function speak(text, lang){
   try{ speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
-    u.rate=0.75; u.pitch=1.05; speechSynthesis.speak(u);
+    u.lang=lang||'en-US';
+    u.rate=0.75; u.pitch=1.05;
+    if(lang){ const vs=speechSynthesis.getVoices()||[];
+      const v=vs.find(x=>x.lang&&x.lang.toLowerCase().indexOf(lang.slice(0,2).toLowerCase())===0);
+      if(v) u.voice=v; }
+    speechSynthesis.speak(u);
   }catch(e){}
+}
+/* French translation of a spoken English word (built-in, offline). Returns
+   null when we have no translation, so the flag button can stay hidden. */
+function frOf(word){return word?(FR[word.toLowerCase().trim()]||null):null;}
+function speakFr(word){const f=frOf(word); if(f) speak(f,'fr-FR');}
+function frBtn(word){
+  if(!frOf(word)) return '';
+  const a=esc(word).replace(/'/g,"\\'");
+  return `<button class="fr-btn" style="display:block;margin:22px auto 0;background:none;border:none;font-size:30px;line-height:1;cursor:pointer;padding:4px;opacity:.85" onclick="speakFr('${a}')" title="Écouter en français" aria-label="Écouter en français">🇫🇷</button>`;
 }
 
 /* ---------- persistence ---------- */
@@ -253,7 +321,7 @@ function homeScreen(){
       <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
     </div>
     <button class="backlink" onclick="chooseLevel()">↔ Switch (Grade 2 / Junior K)</button>
-    <div class="foot">UFLI Spelling · v1.6 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.7 · offline-ready</div>
   `);
 }
 
@@ -290,7 +358,7 @@ function jkHome(){
       <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
       <button class="btn ghost small" onclick="chooseLevel()">↔ Switch level</button>
     </div>
-    <div class="foot">UFLI Spelling · v1.6 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.7 · offline-ready</div>
   `);
 }
 function jkDone(name, again){
@@ -354,6 +422,7 @@ function firstQuestion(){
         ${opts.map(o=>`<button class="btn" style="font-size:34px;padding:22px" onclick="firstPick('${o}','${ans}')">${o}</button>`).join('')}
       </div>
       <div class="progress">${session.i+1} of ${session.list.length}</div>
+      ${frBtn(word)}
     </div>
   `);
   setTimeout(()=>speak(word),300);
@@ -468,6 +537,7 @@ function boxesQuestion(){
       <div class="boxes" id="boxRow">${boxes}</div>
       <button class="btn" onclick="revealBox()">Show next sound</button>
       <div class="progress">${session.i+1} of ${session.list.length}</div>
+      ${frBtn(it.word)}
     </div>
     <div class="row">
       <button class="btn good small" onclick="boxesNext(true)">Got it</button>
@@ -514,6 +584,7 @@ function dictQuestion(){
         onkeydown="if(event.key==='Enter')checkDict()">
       <button class="btn" style="margin-top:12px" onclick="checkDict()">Check</button>
       <div class="progress">${session.i+1} of ${session.list.length}</div>
+      ${frBtn(it.word)}
     </div>
   `);
   setTimeout(()=>{speak(it.word);$('dictIn').focus();},250);
@@ -590,6 +661,7 @@ function heartQuestion(){
       <button class="btn speak-btn" style="width:auto;padding:12px 22px;margin:0 auto 12px" onclick="speak('${esc(w)}')">🔊 Hear it</button>
       <button class="btn" onclick="heartHide()">I'm ready — hide it</button>
       <div class="progress">${session.i+1} of ${session.list.length}</div>
+      ${frBtn(w)}
     </div>
   `);
   speak(w);
@@ -603,6 +675,7 @@ function heartHide(){
       <input type="text" id="heartIn" autocapitalize="none" autocomplete="off" placeholder="type here"
         onkeydown="if(event.key==='Enter')checkHeart()">
       <button class="btn" style="margin-top:12px" onclick="checkHeart()">Check</button>
+      ${frBtn(w)}
     </div>
   `);
   setTimeout(()=>$('heartIn').focus(),200);
@@ -691,6 +764,7 @@ function testQuestion(){
         onkeydown="if(event.key==='Enter')checkTest()">
       <button class="btn" style="margin-top:12px" onclick="checkTest()">Next</button>
       <div class="progress">Word ${session.i+1} of ${session.list.length}</div>
+      ${frBtn(it.word)}
     </div>
   `);
   setTimeout(()=>{speak(it.word);$('testIn').focus();},250);
