@@ -83,6 +83,13 @@ const PATTERNS = {
   ck:  {label:"ck (duck)", words:["s.n.a.ck","b.a.ck","p.a.ck","s.a.ck","d.u.ck","l.u.ck","r.o.ck","s.o.ck","l.o.ck","k.i.ck","s.i.ck","t.i.ck","d.e.ck","n.e.ck","b.l.a.ck","t.r.u.ck"]},
   wh:  {label:"wh (when)", words:["wh.e.n","wh.i.ch","wh.i.p","wh.i.z","wh.i.s.k","wh.a.m","wh.i.m","wh.i.ff","wh.a.ck","wh.ee.l","wh.ea.t","wh.a.l.e","wh.i.t.e"]},
   ph:  {label:"ph (phone)", words:["ph.o.n.e","g.r.a.ph","ph.o.t.o","d.o.l.ph.i.n","e.l.e.ph.a.n.t","a.l.ph.a.b.e.t","t.r.o.ph.y","n.e.ph.e.w","m.or.ph","ph.o.n.i.c.s","g.o.ph.e.r"]},
+  ng:  {label:"ng (ring)", words:["b.r.i.ng","r.i.ng","k.i.ng","s.i.ng","w.i.ng","th.i.ng","s.t.i.ng","s.w.i.ng","s.p.r.i.ng","s.t.r.i.ng","l.o.ng","s.o.ng","s.t.r.o.ng","b.a.ng","h.a.ng","r.a.ng","s.a.ng","l.u.ng","h.u.ng","s.t.u.ng"]},
+  nk:  {label:"nk (think)", words:["th.i.nk","sh.r.u.nk","p.i.nk","s.i.nk","w.i.nk","b.l.i.nk","d.r.i.nk","b.a.nk","t.a.nk","th.a.nk","s.a.nk","b.l.a.nk","j.u.nk","t.r.u.nk","s.k.u.nk","h.o.nk","ch.u.nk","d.u.nk"]},
+  a_e: {label:"a_e (cake)", hi:["a","e"], words:["m.a.k.e","c.a.k.e","l.a.k.e","t.a.k.e","b.a.k.e","s.n.a.k.e","g.a.t.e","l.a.t.e","p.l.a.t.e","n.a.m.e","g.a.m.e","s.a.m.e","c.a.v.e","s.a.v.e","g.r.a.p.e","t.a.p.e","c.a.n.e","p.l.a.n.e"]},
+  i_e: {label:"i_e (bike)", hi:["i","e"], words:["l.i.k.e","b.i.k.e","h.i.k.e","t.i.m.e","l.i.n.e","n.i.n.e","p.i.n.e","r.i.d.e","s.i.d.e","s.l.i.d.e","h.i.d.e","w.i.d.e","b.i.t.e","k.i.t.e","f.i.v.e","d.r.i.v.e","s.m.i.l.e","m.i.l.e"]},
+  o_e: {label:"o_e (home)", hi:["o","e"], words:["h.o.m.e","b.o.n.e","c.o.n.e","s.t.o.n.e","n.o.s.e","r.o.s.e","h.o.l.e","p.o.l.e","r.o.b.e","g.l.o.b.e","n.o.t.e","r.o.p.e","h.o.p.e","w.o.k.e","s.m.o.k.e","d.r.o.v.e","s.l.o.p.e","s.t.o.v.e"]},
+  e_e: {label:"e_e (these)", hi:["e"], words:["th.e.s.e","th.e.m.e","e.v.e","g.e.n.e","s.c.e.n.e","h.e.r.e"]},
+  u_e: {label:"u_e (cube)", hi:["u","e"], words:["r.u.l.e","f.u.s.e","c.u.b.e","t.u.b.e","m.u.l.e","c.u.t.e","m.u.t.e","f.l.u.t.e","t.u.n.e","d.u.n.e","p.r.u.n.e","h.u.g.e","u.s.e","r.u.d.e","d.u.k.e","p.l.u.m.e"]},
   ar:  {label:"ar",  words:["c.ar","c.ar.t","s.t.ar","f.ar.m","h.ar.d","p.ar.k","d.ar.k","y.ar.d","sh.ar.p","s.t.ar.t","p.ar.t","h.ar.m","b.ar.n","c.ar.d","j.ar","f.ar","ar.t","ar.m","ch.ar.t","s.m.ar.t"]},
   or:  {label:"or",  words:["f.or","c.or.n","f.or.k","b.or.n","h.or.n","s.or.t","p.or.t","n.or.th","s.t.or.m","sh.or.t","s.p.or.t","t.or.ch","f.or.t","c.or.d","th.or.n","s.c.or.ch","p.or.ch","c.or.k"]},
   er:  {label:"er",  words:["h.er","f.er.n","h.er.d","t.er.m","v.er.b","g.er.m","p.er.ch","c.l.er.k","s.t.er.n","j.er.k","p.er.k","h.er.b"]},
@@ -139,6 +146,9 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function graphemesOf(dot){return dot.split('.');}
 function wordOf(dot){return dot.split('.').join('');}
+/* hi = the pattern grapheme(s) to highlight. A string for a single grapheme,
+   or an array for split patterns like VCe (vowel + silent e, e.g. a_e). */
+function hiHas(hi,g){return Array.isArray(hi)?hi.includes(g):hi===g;}
 function speak(text){
   try{ speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
@@ -183,7 +193,7 @@ function buildPools(){
     const shuffled=shuffle(PATTERNS[k].words);
     const half=Math.ceil(shuffled.length/2);
     shuffled.forEach((w,i)=>{
-      const entry={dot:w, word:wordOf(w), pattern:k, hi:PATTERNS[k].label.split(' ')[0]};
+      const entry={dot:w, word:wordOf(w), pattern:k, hi:PATTERNS[k].hi||PATTERNS[k].label.split(' ')[0]};
       if(i<half) practice.push(entry); else reserve.push(entry);
     });
   });
@@ -192,7 +202,7 @@ function buildPools(){
   known.forEach(k=>{
     if(!PATTERNS[k]) return;
     PATTERNS[k].words.forEach(w=>{
-      review.push({dot:w, word:wordOf(w), pattern:k, hi:PATTERNS[k].label.split(' ')[0]});
+      review.push({dot:w, word:wordOf(w), pattern:k, hi:PATTERNS[k].hi||PATTERNS[k].label.split(' ')[0]});
     });
   });
   return {practice, reserve, review};
@@ -243,7 +253,7 @@ function homeScreen(){
       <button class="btn ghost small" onclick="setupScreen()">⚙️ New Week</button>
     </div>
     <button class="backlink" onclick="chooseLevel()">↔ Switch (Grade 2 / Junior K)</button>
-    <div class="foot">UFLI Spelling · v1.5 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.6 · offline-ready</div>
   `);
 }
 
@@ -280,7 +290,7 @@ function jkHome(){
       <button class="btn ghost small" onclick="parentScreen()">👀 Parent View</button>
       <button class="btn ghost small" onclick="chooseLevel()">↔ Switch level</button>
     </div>
-    <div class="foot">UFLI Spelling · v1.5 · offline-ready</div>
+    <div class="foot">UFLI Spelling · v1.6 · offline-ready</div>
   `);
 }
 function jkDone(name, again){
@@ -473,7 +483,7 @@ function revealBox(){
   if(session.revealed>=gs.length) return;
   const row=$('boxRow').children;
   const idx=session.revealed;
-  const isPat = it.hi && gs[idx]===it.hi;
+  const isPat = it.hi && hiHas(it.hi, gs[idx]);
   row[idx].textContent=gs[idx];
   row[idx].classList.add(isPat?'pat':'fill');
   session.revealed++;
@@ -514,7 +524,7 @@ function checkDict(){
   const ok=val===it.word;
   if(!ok) markMissed(it.word);
   const gs=graphemesOf(it.dot);
-  const shown=gs.map(g=> (it.hi&&g===it.hi)?`<span class="pattern-hl">${g}</span>`:g).join('');
+  const shown=gs.map(g=> (it.hi&&hiHas(it.hi,g))?`<span class="pattern-hl">${g}</span>`:g).join('');
   render(`
     <div class="card center">
       <div class="result ${ok?'ok':'no'}">${ok?'✅ Correct!':'❌ Not quite'}</div>
