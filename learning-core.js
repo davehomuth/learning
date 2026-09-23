@@ -144,6 +144,7 @@ const SUBJECTS = [
   { id: 'all',     name: 'All Subjects', icon: '🎯' },
   { id: 'math',    name: 'Math',    icon: '🔢' },
   { id: 'makeTen', name: 'Add/Subtract Helper', icon: '➕' },
+  { id: 'mathFacts', name: 'Back to Basics Math', icon: '🔟' },
   { id: 'english', name: 'English', icon: '📖' },
   { id: 'science', name: 'Science', icon: '🔬' },
   { id: 'gradeWords', name: 'Grade Words', icon: '🎓' },
@@ -2395,6 +2396,10 @@ function showScreen(name) {
     case 'makeTen':
       document.getElementById('makeTenScreen').classList.add('active');
       break;
+    case 'mathFacts':
+      document.getElementById('mathFactsScreen').classList.add('active');
+      renderMathFactsSections();
+      break;
   }
 }
 
@@ -2634,6 +2639,18 @@ function renderSubjectScreen() {
         <div style="font-size:0.7rem;color:var(--text-dim);">${phase}</div>
       `;
       btn.onclick = () => startMakeTen();
+      grid.appendChild(btn);
+      continue;
+    } else if (subj.id === 'mathFacts') {
+      const c = CHILDREN[state.activeChild];
+      if (!(c && (c.mathFacts || childGrade(state.activeChild) === 2))) { continue; }
+      btn.innerHTML = `
+        <span class="subj-icon">${subj.icon}</span>
+        ${subj.name}
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">Number facts to 14</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">Doubles · Make ten · Missing numbers</div>
+      `;
+      btn.onclick = () => startMathFacts();
       grid.appendChild(btn);
       continue;
     } else if (subj.id === 'gradeWords') {
@@ -4742,6 +4759,149 @@ function runMakeTenAnimation() {
 function exitMakeTen() {
   clearMakeTenTimers();
   makeTen = null;
+  showScreen('subject');
+}
+
+// ═══════════════════════════════════════════
+//  BACK TO BASICS MATH  (Grade 2)
+//  Number facts to 14. Every question — the numbers, the hints, the
+//  ten-frame count — comes from mathFacts.js. This block only renders
+//  what the module hands back and never inspects the arithmetic.
+// ═══════════════════════════════════════════
+
+let mathFacts = null;
+const MATHFACTS_COUNT = 24;
+
+function startMathFacts() {
+  const childId = state.activeChild;
+  if (!childId) { showScreen('home'); return; }
+  if (!window.MathFacts) { alert('Math facts module failed to load.'); return; }
+  mathFacts = { childId, section: null, queue: [], idx: 0, revealed: false };
+  showScreen('mathFacts');
+}
+
+function renderMathFactsSections() {
+  if (!mathFacts) return;
+  const c = CHILDREN[mathFacts.childId];
+  document.getElementById('mathFactsWho').textContent = `${c.emoji} ${c.name}`;
+  document.getElementById('mathFactsPicker').style.display = 'block';
+  document.getElementById('mathFactsPlay').style.display = 'none';
+  const wrap = document.getElementById('mathFactsSectionBtns');
+  wrap.innerHTML = '';
+  for (const s of MathFacts.SECTIONS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-primary';
+    b.style.cssText = 'flex:1 1 40%;min-width:140px;padding:20px 12px;font-size:1.05rem;';
+    b.textContent = `${s.icon} ${s.name}`;
+    b.addEventListener('click', () => startMathFactsSection(s.id));
+    wrap.appendChild(b);
+  }
+}
+
+function startMathFactsSection(section) {
+  mathFacts.section = section;
+  mathFacts.queue = MathFacts.buildSession({ count: MATHFACTS_COUNT, section });
+  mathFacts.idx = 0;
+  document.getElementById('mathFactsPicker').style.display = 'none';
+  document.getElementById('mathFactsPlay').style.display = 'block';
+  renderMathFactsQuestion();
+}
+
+function mathFactsSpeech(q) {
+  return q.parts.map(p => {
+    if (p.t === 'blank') return 'what';
+    if (p.t === 'op') return p.v === '+' ? 'plus' : (p.v === '=' ? 'equals' : 'minus');
+    return String(p.v);
+  }).join(' ');
+}
+
+function renderMathFactsQuestion() {
+  const mf = mathFacts;
+  if (!mf) return;
+  if (mf.idx >= mf.queue.length) { finishMathFacts(); return; }
+  const q = mf.queue[mf.idx];
+  mf.revealed = false;
+
+  // Render straight from parts — the blank is wherever the module put it.
+  const row = document.getElementById('mathFactsProblem');
+  row.innerHTML = '';
+  for (const p of q.parts) {
+    const el = document.createElement('span');
+    if (p.t === 'blank') { el.className = 'mf-blank'; el.id = 'mfBlank'; el.textContent = '?'; }
+    else { el.className = p.t === 'op' ? 'mf-op' : 'mf-num'; el.textContent = p.v; }
+    row.appendChild(el);
+  }
+
+  const frame = document.getElementById('mathFactsFrame');
+  frame.innerHTML = '';
+  frame.style.display = q.frame === undefined ? 'none' : 'grid';
+  if (q.frame !== undefined) {
+    for (let i = 0; i < 10; i++) {
+      const cell = document.createElement('span');
+      cell.className = 'mf-cell' + (i < q.frame ? ' filled' : '');
+      frame.appendChild(cell);
+    }
+  }
+
+  const hint = document.getElementById('mathFactsHint');
+  hint.textContent = ''; hint.style.display = 'none';
+  document.getElementById('mathFactsTapHint').style.display = 'block';
+  document.getElementById('mathFactsJudge').style.display = 'none';
+  document.getElementById('mathFactsNext').style.display = 'none';
+  document.getElementById('mathFactsProgress').textContent = `${mf.idx + 1} of ${mf.queue.length}`;
+  speak(mathFactsSpeech(q));
+}
+
+function revealMathFacts() {
+  const mf = mathFacts;
+  if (!mf || mf.revealed || mf.idx >= mf.queue.length) return;
+  const q = mf.queue[mf.idx];
+  mf.revealed = true;
+  const blank = document.getElementById('mfBlank');
+  if (blank) { blank.textContent = q.answer; blank.classList.add('revealed'); }
+  document.getElementById('mathFactsTapHint').style.display = 'none';
+  document.getElementById('mathFactsJudge').style.display = 'flex';
+  speak(String(q.answer));
+}
+
+function judgeMathFacts(gotIt) {
+  const mf = mathFacts;
+  if (!mf || !mf.revealed) return;
+  if (gotIt) { advanceMathFacts(false); return; }
+  const q = mf.queue[mf.idx];
+  const hint = document.getElementById('mathFactsHint');
+  hint.textContent = '💡 ' + (q.hint || 'Have another look — this one comes back later.');
+  hint.style.display = 'block';
+  if (q.hint) speak(q.hint);
+  document.getElementById('mathFactsJudge').style.display = 'none';
+  document.getElementById('mathFactsNext').style.display = 'block';
+}
+
+function advanceMathFacts(requeue) {
+  const mf = mathFacts;
+  if (!mf) return;
+  // Append only — never reorder, or fact pairs come apart.
+  if (requeue) {
+    const q = mf.queue[mf.idx];
+    const prev = mf.queue[mf.idx - 1], next = mf.queue[mf.idx + 1];
+    // A lone half loses the point of the pair, so both come back together.
+    if (q.pairId && prev && prev.pairId === q.pairId) mf.queue.push(prev, q);
+    else if (q.pairId && next && next.pairId === q.pairId) mf.queue.push(q, next);
+    else mf.queue.push(q);
+  }
+  mf.idx++;
+  renderMathFactsQuestion();
+}
+
+function finishMathFacts() {
+  renderMathFactsSections();
+  alert('All done for now! 🎉');
+}
+
+function exitMathFacts() {
+  mathFacts = null;
+  try { window.speechSynthesis.cancel(); } catch(e) {}
   showScreen('subject');
 }
 

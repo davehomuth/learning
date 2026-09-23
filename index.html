@@ -405,6 +405,22 @@
   .section-sub { color: var(--text-dim); font-size: 0.9rem; }
   .mt-20 { margin-top: 20px; }
 
+  /* Back to Basics Math */
+  .mf-row { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .mf-num, .mf-op { font-size:3.2rem; font-weight:800; line-height:1.1; }
+  .mf-op { color:var(--text-dim); }
+  .mf-blank { font-size:3.2rem; font-weight:800; min-width:72px; text-align:center;
+    border-bottom:5px solid var(--highlight); color:var(--text-dim); line-height:1.1; }
+  .mf-blank.revealed { color:var(--green); border-bottom-color:var(--green); }
+  .mf-frame { display:grid; grid-template-columns:repeat(5,40px); gap:5px;
+    justify-content:center; margin-top:20px; }
+  .mf-cell { width:40px; height:40px; border:2px solid var(--accent);
+    border-radius:7px; background:var(--bg); }
+  .mf-cell.filled { background:var(--highlight); border-color:var(--highlight); }
+  .mf-tap { text-align:center; color:var(--text-dim); font-size:0.95rem; margin-top:18px; }
+  .mf-judge { display:flex; gap:12px; margin-top:20px; }
+  .mf-judge .btn { flex:1; padding:22px 12px; font-size:1.15rem; font-weight:700; }
+
   @media (max-width: 600px) {
     .question-text { font-size: 1.3rem; }
     .btn { padding: 12px 18px; font-size: 1rem; }
@@ -592,6 +608,37 @@
   </div>
 </div>
 
+<!-- ── Back to Basics Math Screen (number facts to 14) ── -->
+<div class="screen" id="mathFactsScreen">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <h2 class="section-title">🔟 Back to Basics Math</h2>
+    <span class="quiz-meta" id="mathFactsWho"></span>
+  </div>
+
+  <div id="mathFactsPicker">
+    <p class="section-sub">Pick what to practise. Every number stays at 14 or under.</p>
+    <div id="mathFactsSectionBtns" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
+    <div style="margin-top:18px;"><button class="btn btn-back" onclick="exitMathFacts()">Done</button></div>
+  </div>
+
+  <div id="mathFactsPlay" style="display:none;">
+    <p class="section-sub" id="mathFactsProgress" style="margin-top:4px;"></p>
+    <div class="question-card" style="min-height:auto;padding:30px 18px;cursor:pointer;"
+         id="mathFactsCard" onclick="revealMathFacts()">
+      <div class="mf-row" id="mathFactsProblem"></div>
+      <div class="mf-frame" id="mathFactsFrame" style="display:none;"></div>
+      <div class="mf-tap" id="mathFactsTapHint">👆 Tap to see the answer</div>
+    </div>
+    <div id="mathFactsHint" style="display:none;margin-top:14px;padding:14px;border-radius:10px;background:var(--accent);font-size:1.1rem;line-height:1.5;"></div>
+    <div class="mf-judge" id="mathFactsJudge" style="display:none;">
+      <button class="btn" style="background:var(--green);color:var(--bg);" onclick="judgeMathFacts(true)">✅ Got it</button>
+      <button class="btn" style="background:var(--highlight);" onclick="judgeMathFacts(false)">🤔 Not yet</button>
+    </div>
+    <button class="btn btn-primary" id="mathFactsNext" style="display:none;width:100%;margin-top:14px;padding:20px;" onclick="advanceMathFacts(true)">➡ Next</button>
+    <div style="margin-top:16px;"><button class="btn btn-back" onclick="exitMathFacts()">Done</button></div>
+  </div>
+</div>
+
 <!-- ── Word Entry Screen ── -->
 <div class="screen" id="wordEntryScreen">
   <div>
@@ -709,13 +756,13 @@
 <script>
 window.APP_CONFIG = {
   variant: 'family',
-  version: '4.9',
+  version: '5.0',
   versionFile: 'version.txt',
   storagePrefix: 'homuth_',
   // Preset children (family version). colorIndex maps into CHILD_COLOR_HEX.
   children: {
     logan:     { name: 'Logan',     grade: 5, emoji: '🏒', colorIndex: 0, info: 'Grade 5', startDecile: { math: 60, english: 60, science: 55 }, scratchpad: true, gradeWords: 'grade5' },
-    cole:      { name: 'Cole',      grade: 2, emoji: '🏒', colorIndex: 1, info: 'Grade 2 · Reading & Writing', startDecile: { math: 25, english: 25 }, wordFlashcards: true, makeTenHelper: true, noScience: true, gradeWords: 'grade2', writing: true },
+    cole:      { name: 'Cole',      grade: 2, emoji: '🏒', colorIndex: 1, info: 'Grade 2 · Reading & Writing', startDecile: { math: 25, english: 25 }, wordFlashcards: true, makeTenHelper: true, noScience: true, gradeWords: 'grade2', writing: true, mathFacts: true },
     mackenzie: { name: 'Mackenzie', grade: 0, emoji: '🌟', colorIndex: 2, info: 'JK', startDecile: { math: 5, english: 5 }, gradeWords: 'jk' },
     daddy:     { name: 'Daddy',     grade: 0, emoji: '🩺', colorIndex: 3, info: 'Emergency Medicine', adult: true, subjects: ['erQuestions', 'newResearch'], startDecile: { erQuestions: 30, newResearch: 30 } }
   },
@@ -734,6 +781,7 @@ window.APP_CONFIG = {
   aiEndpoint: 'https://learning-app-gilt-psi.vercel.app/api/define'
 };
 </script>
-<script src="learning-core.js?v=4.9"></script>
+<script src="mathFacts.js?v=5.0"></script>
+<script src="learning-core.js?v=5.0"></script>
 </body>
 </html>

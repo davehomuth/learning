@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Learning Hub — tests</title>
+<style>body{font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;padding:24px}
+.pass{color:#4ecca3;margin:6px 0}.fail{color:#e94560;margin:6px 0;white-space:pre-wrap}</style></head>
+<body>
+<h1>Self-tests</h1>
+<div id="out">Running…</div>
+<script src="mathFacts.js"></script>
+<script>
+  var out = document.getElementById('out'), lines = [];
+  function run(name, fn) {
+    try { var r = fn(); lines.push('<div class="pass">PASS ' + name + ' — ' + JSON.stringify(r) + '</div>'); }
+    catch (e) { lines.push('<div class="fail">FAIL ' + name + '\n' + e.message + '</div>'); }
+  }
+  run('mathFacts.runSelfTest', function () { return MathFacts.runSelfTest(20000); });
+  out.innerHTML = lines.join('');
+</script>
+</body></html>
