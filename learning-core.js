@@ -2398,7 +2398,7 @@ function showScreen(name) {
       break;
     case 'mathFacts':
       document.getElementById('mathFactsScreen').classList.add('active');
-      renderMathFactsSections();
+      if (!(mathFacts && mathFacts.mp)) renderMathFactsSections(); // mp mode renders its own turns
       break;
   }
 }
@@ -3111,7 +3111,8 @@ function renderMultiplayerSetup() {
   if (Object.values(CHILDREN).some(c => c.gradeWords)) subjects.push({ id: 'gradeWords', name: 'Grade Words', icon: '🎓' });
   subjectContainer.innerHTML = subjects.map(s =>
     `<button class="btn btn-primary" style="min-width:120px;" onclick="startMultiplayer('${s.id}')">${s.icon} ${s.name}</button>`
-  ).join('');
+  ).join('') +
+  `<button class="btn btn-primary" style="min-width:120px;" onclick="startMultiplayerBasics()">🔟 Back to Basics</button>`;
 }
 
 function toggleMPPlayer(id) {
@@ -4772,6 +4773,113 @@ function exitMakeTen() {
 let mathFacts = null;
 const MATHFACTS_COUNT = 24;
 
+// Multiplayer Back to Basics: each child works at a band chosen by grade.
+//  Junior K / grade ≤1 → finger counting (within 10, ten-frame shown)
+//  Grade 2–3           → Cole's existing Back to Basics facts (0–14, from mathFacts.js)
+//  Grade 4+            → mental math (within 100, no ten-frame)
+function mfBandForChild(id) {
+  const g = childGrade(id);
+  if (g <= 1) return 'fingers';
+  if (g <= 3) return 'basics';
+  return 'mental';
+}
+
+function mfBandLabel(band) {
+  if (band === 'fingers') return '✋ Finger counting';
+  if (band === 'mental') return '🧠 Mental math';
+  return '🔟 Back to Basics';
+}
+
+function buildBasicsQueue(band) {
+  if (band === 'basics') return MathFacts.buildSession({ count: MATHFACTS_COUNT, section: 'mix' });
+  if (band === 'fingers') return genFingersSession(MATHFACTS_COUNT);
+  return genMentalSession(MATHFACTS_COUNT);
+}
+
+// Question shape matches mathFacts.js: {parts:[{t:'num'|'op'|'blank',v?}], answer, frame?, hint?}
+function mfProblem(a, op, b, answer, frame, hint) {
+  const parts = [
+    { t: 'num', v: a }, { t: 'op', v: op }, { t: 'num', v: b },
+    { t: 'op', v: '=' }, { t: 'blank' }
+  ];
+  const q = { parts, answer };
+  if (frame !== undefined) q.frame = frame;
+  if (hint) q.hint = hint;
+  return q;
+}
+
+function genFingersSession(count) {
+  const out = [], seen = new Set();
+  let guard = 0;
+  while (out.length < count && guard++ < 600) {
+    const add = Math.random() < 0.6;
+    let q;
+    if (add) {
+      const a = 1 + Math.floor(Math.random() * 8);       // 1..8
+      const b = 1 + Math.floor(Math.random() * (10 - a)); // keep sum ≤ 10
+      q = mfProblem(a, '+', b, a + b, a, `Start at ${a}, then count up ${b} more on your fingers.`);
+    } else {
+      const a = 2 + Math.floor(Math.random() * 9);        // 2..10
+      const b = 1 + Math.floor(Math.random() * a);        // 1..a
+      q = mfProblem(a, '−', b, a - b, a, `Hold up ${a} fingers, then put down ${b}.`);
+    }
+    const key = q.parts[0].v + q.parts[1].v + q.parts[2].v;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(q);
+  }
+  return out;
+}
+
+function genMentalSession(count) {
+  const out = [], seen = new Set();
+  let guard = 0;
+  while (out.length < count && guard++ < 800) {
+    const r = Math.random();
+    let q;
+    if (r < 0.4) {                                        // add within 100
+      const a = 10 + Math.floor(Math.random() * 80);      // 10..89
+      const b = 2 + Math.floor(Math.random() * (100 - a)); // sum ≤ 100
+      q = mfProblem(a, '+', b, a + b, undefined, `Add the tens, then the ones.`);
+    } else if (r < 0.75) {                                // subtract within 100
+      const a = 20 + Math.floor(Math.random() * 80);      // 20..99
+      const b = 2 + Math.floor(Math.random() * (a - 1));  // 2..a-1
+      q = mfProblem(a, '−', b, a - b, undefined, `Count back, or take the ones then the tens.`);
+    } else {                                              // multiply, product ≤ 100
+      const a = 2 + Math.floor(Math.random() * 8);        // 2..9
+      const b = 2 + Math.floor(Math.random() * 8);        // 2..9
+      q = mfProblem(a, '×', b, a * b, undefined, `Think of the ${a} times table.`);
+    }
+    const key = q.parts[0].v + q.parts[1].v + q.parts[2].v;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(q);
+  }
+  return out;
+}
+
+function startMultiplayerBasics() {
+  if (multiplayerState.players.length < 2) { alert('Select at least 2 players for multiplayer!'); return; }
+  if (!window.MathFacts) { alert('Math facts module failed to load.'); return; }
+  const players = multiplayerState.players.map(p => {
+    const band = mfBandForChild(p.id);
+    return { id: p.id, band, queue: buildBasicsQueue(band), idx: 0 };
+  });
+  mathFacts = { mp: true, players, curIdx: 0, revealed: false };
+  state.multiplayerActive = true;
+  showScreen('mathFacts');
+  document.getElementById('mathFactsPicker').style.display = 'none';
+  document.getElementById('mathFactsPlay').style.display = 'block';
+  renderMathFactsQuestion();
+}
+
+// Current player's queue + index (single-player or multiplayer).
+function mfCurrent() {
+  const mf = mathFacts;
+  if (mf.mp) { const p = mf.players[mf.curIdx]; return { queue: p.queue, idx: p.idx, player: p }; }
+  return { queue: mf.queue, idx: mf.idx, player: null };
+}
+
 function startMathFacts() {
   const childId = state.activeChild;
   if (!childId) { showScreen('home'); return; }
@@ -4783,7 +4891,9 @@ function startMathFacts() {
 function renderMathFactsSections() {
   if (!mathFacts) return;
   const c = CHILDREN[mathFacts.childId];
-  document.getElementById('mathFactsWho').textContent = `${c.emoji} ${c.name}`;
+  const whoEl = document.getElementById('mathFactsWho');
+  whoEl.textContent = `${c.emoji} ${c.name}`;
+  whoEl.style.color = '';
   document.getElementById('mathFactsPicker').style.display = 'block';
   document.getElementById('mathFactsPlay').style.display = 'none';
   const wrap = document.getElementById('mathFactsSectionBtns');
@@ -4811,7 +4921,7 @@ function startMathFactsSection(section) {
 function mathFactsSpeech(q) {
   return q.parts.map(p => {
     if (p.t === 'blank') return 'what';
-    if (p.t === 'op') return p.v === '+' ? 'plus' : (p.v === '=' ? 'equals' : 'minus');
+    if (p.t === 'op') return p.v === '+' ? 'plus' : (p.v === '=' ? 'equals' : (p.v === '×' ? 'times' : 'minus'));
     return String(p.v);
   }).join(' ');
 }
@@ -4819,9 +4929,18 @@ function mathFactsSpeech(q) {
 function renderMathFactsQuestion() {
   const mf = mathFacts;
   if (!mf) return;
-  if (mf.idx >= mf.queue.length) { finishMathFacts(); return; }
-  const q = mf.queue[mf.idx];
+  const cur = mfCurrent();
+  if (cur.idx >= cur.queue.length) { finishMathFacts(); return; }
+  const q = cur.queue[cur.idx];
   mf.revealed = false;
+
+  // Multiplayer: show whose turn it is (coloured) and their band.
+  if (mf.mp) {
+    const c = CHILDREN[cur.player.id];
+    const who = document.getElementById('mathFactsWho');
+    who.textContent = `${c.emoji} ${c.name} · ${mfBandLabel(cur.player.band)}`;
+    who.style.color = childColor(c);
+  }
 
   // Render straight from parts — the blank is wherever the module put it.
   const row = document.getElementById('mathFactsProblem');
@@ -4849,14 +4968,16 @@ function renderMathFactsQuestion() {
   document.getElementById('mathFactsTapHint').style.display = 'block';
   document.getElementById('mathFactsJudge').style.display = 'none';
   document.getElementById('mathFactsNext').style.display = 'none';
-  document.getElementById('mathFactsProgress').textContent = `${mf.idx + 1} of ${mf.queue.length}`;
+  document.getElementById('mathFactsProgress').textContent = `${cur.idx + 1} of ${cur.queue.length}`;
   speak(mathFactsSpeech(q));
 }
 
 function revealMathFacts() {
   const mf = mathFacts;
-  if (!mf || mf.revealed || mf.idx >= mf.queue.length) return;
-  const q = mf.queue[mf.idx];
+  if (!mf || mf.revealed) return;
+  const cur = mfCurrent();
+  if (cur.idx >= cur.queue.length) return;
+  const q = cur.queue[cur.idx];
   mf.revealed = true;
   const blank = document.getElementById('mfBlank');
   if (blank) { blank.textContent = q.answer; blank.classList.add('revealed'); }
@@ -4869,7 +4990,8 @@ function judgeMathFacts(gotIt) {
   const mf = mathFacts;
   if (!mf || !mf.revealed) return;
   if (gotIt) { advanceMathFacts(false); return; }
-  const q = mf.queue[mf.idx];
+  const cur = mfCurrent();
+  const q = cur.queue[cur.idx];
   const hint = document.getElementById('mathFactsHint');
   hint.textContent = '💡 ' + (q.hint || 'Have another look — this one comes back later.');
   hint.style.display = 'block';
@@ -4881,27 +5003,60 @@ function judgeMathFacts(gotIt) {
 function advanceMathFacts(requeue) {
   const mf = mathFacts;
   if (!mf) return;
+  const cur = mfCurrent();
+  const queue = cur.queue;
   // Append only — never reorder, or fact pairs come apart.
   if (requeue) {
-    const q = mf.queue[mf.idx];
-    const prev = mf.queue[mf.idx - 1], next = mf.queue[mf.idx + 1];
+    const q = queue[cur.idx];
+    const prev = queue[cur.idx - 1], next = queue[cur.idx + 1];
     // A lone half loses the point of the pair, so both come back together.
-    if (q.pairId && prev && prev.pairId === q.pairId) mf.queue.push(prev, q);
-    else if (q.pairId && next && next.pairId === q.pairId) mf.queue.push(q, next);
-    else mf.queue.push(q);
+    if (q.pairId && prev && prev.pairId === q.pairId) queue.push(prev, q);
+    else if (q.pairId && next && next.pairId === q.pairId) queue.push(q, next);
+    else queue.push(q);
   }
-  mf.idx++;
-  renderMathFactsQuestion();
+  if (mf.mp) {
+    mf.players[mf.curIdx].idx = cur.idx + 1;
+    mpAdvanceTurn();
+  } else {
+    mf.idx++;
+    renderMathFactsQuestion();
+  }
+}
+
+// Rotate to the next player who still has questions; finish when nobody does.
+function mpAdvanceTurn() {
+  const mf = mathFacts;
+  const n = mf.players.length;
+  for (let step = 1; step <= n; step++) {
+    const cand = (mf.curIdx + step) % n;
+    if (mf.players[cand].idx < mf.players[cand].queue.length) {
+      mf.curIdx = cand;
+      renderMathFactsQuestion();
+      return;
+    }
+  }
+  finishMathFacts();
 }
 
 function finishMathFacts() {
+  const mf = mathFacts;
+  if (mf && mf.mp) {
+    try { window.speechSynthesis.cancel(); } catch(e) {}
+    mathFacts = null;
+    state.multiplayerActive = false;
+    alert('Great teamwork! All done 🎉');
+    showScreen('multiplayerSetup');
+    return;
+  }
   renderMathFactsSections();
   alert('All done for now! 🎉');
 }
 
 function exitMathFacts() {
+  const wasMp = mathFacts && mathFacts.mp;
   mathFacts = null;
   try { window.speechSynthesis.cancel(); } catch(e) {}
+  if (wasMp) { state.multiplayerActive = false; showScreen('multiplayerSetup'); return; }
   showScreen('subject');
 }
 
