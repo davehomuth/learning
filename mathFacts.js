@@ -1,12 +1,12 @@
 /* mathFacts.js — "Back to Basics Math" question generator.
    Pure logic: no DOM, no app globals, no question lists. Every number
    that can reach a child — operand, answer, ten-frame count, or a number
-   inside a hint — stays within 0..14. Classic script to match
+   inside a hint — stays within 0..20. Classic script to match
    learning-core.js; also require()-able for the self-test. */
 (function (root) {
   'use strict';
 
-  var MAX = 14;
+  var MAX = 20;
   var PLUS = '+', MINUS = '\u2212', EQ = '=';   // U+2212 matches the minus used elsewhere in the app
 
   // ── seeded RNG (mulberry32) so a seed reproduces a session ──
@@ -35,7 +35,8 @@
   function blank() { return { t: 'blank' }; }
 
   // 1 ── doubles: n + n. 6 and 7 are the actual gap, so they come up twice as often.
-  var DOUBLES_POOL = [2, 3, 4, 5, 6, 6, 7, 7];
+  //      Now reaches 10 + 10 = 20 for the bigger facts.
+  var DOUBLES_POOL = [2, 3, 4, 5, 6, 6, 7, 7, 8, 9, 10];
   function genDoubles(rng) {
     var n = pick(rng, DOUBLES_POOL);
     return { section: 'doubles', parts: [num(n), op(PLUS), num(n), op(EQ), blank()], answer: n + n };
@@ -43,7 +44,7 @@
 
   // 2 ── doubles plus one: n + (n+1), either order.
   function genDoublesPlusOne(rng) {
-    var n = randInt(rng, 2, 6);
+    var n = randInt(rng, 2, 9);
     var flip = rng() < 0.5;
     var a = flip ? n + 1 : n, b = flip ? n : n + 1;
     return {
@@ -99,7 +100,7 @@
   function genPastTen(rng) {
     if (rng() < 0.5) {
       var a = randInt(rng, 6, 9);
-      var b = randInt(rng, Math.max(1, 11 - a), MAX - a);   // sum lands 11..14
+      var b = randInt(rng, Math.max(1, 11 - a), MAX - a);   // sum lands 11..20
       var gap = 10 - a, rest = b - gap;
       return {
         section: 'past-ten',
