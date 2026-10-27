@@ -3106,7 +3106,8 @@ function renderMultiplayerSetup() {
   const subjects = [
     { id: 'all', name: 'All Subjects', icon: '🎯' },
     { id: 'math', name: 'Math', icon: '🔢' },
-    { id: 'english', name: 'English', icon: '📖' }
+    { id: 'english', name: 'English', icon: '📖' },
+    { id: 'spelling', name: 'Spelling', icon: '🔤' }
   ];
   if (Object.values(CHILDREN).some(c => c.gradeWords)) subjects.push({ id: 'gradeWords', name: 'Grade Words', icon: '🎓' });
   subjectContainer.innerHTML = subjects.map(s =>
@@ -3130,6 +3131,16 @@ function toggleMPLite(id) {
   if (player) player.lite = !player.lite;
 }
 
+// Spelling is only right for kids who can spell. Littles (grade ≤1) and anyone
+// without a personal spelling list get an age-appropriate stand-in instead:
+// grade-0 English is letters & sounds, which never dead-ends the game.
+function mpEffectiveSubject(subject, childId) {
+  if (subject !== 'spelling') return subject;
+  if (childGrade(childId) <= 1) return 'english';
+  if (getSpellingWords(childId).length > 0) return 'spelling';
+  return 'english';
+}
+
 function startMultiplayer(subject) {
   if (multiplayerState.players.length < 2) {
     alert('Select at least 2 players for multiplayer!');
@@ -3141,10 +3152,10 @@ function startMultiplayer(subject) {
   multiplayerState.quizStates = {};
   state.multiplayerActive = true;
 
-  // Initialize quiz states for all players
+  // Initialize quiz states for all players (each at their own effective subject)
   for (const player of multiplayerState.players) {
     state.activeChild = player.id;
-    startQuiz(subject);
+    startQuiz(mpEffectiveSubject(subject, player.id));
     quizState._multiplayer = true;
     multiplayerState.quizStates[player.id] = quizState;
   }
